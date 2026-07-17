@@ -1,0 +1,16 @@
+{
+  "name": "Boutik — Ta boutique en ligne",
+  "short_name": "Boutik",
+  "description": "Crée ta boutique en ligne et reçois tes commandes sur WhatsApp.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F7F8F4",
+  "theme_color": "#0E8A52",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

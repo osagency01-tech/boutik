@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #14231b;
+  --cream: #f7f8f4;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-cream text-ink font-sans antialiased;
+}
+
+::selection {
+  background: #0e8a52;
+  color: #fff;
+}
+
+/* ---- Motif signature inspiré du wax ---- */
+.wax-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%230E8A52' stroke-opacity='0.10'%3E%3Ccircle cx='24' cy='24' r='7'/%3E%3Cpath d='M0 24h10M38 24h10M24 0v10M24 38v10'/%3E%3Ccircle cx='24' cy='24' r='2' fill='%23F6B932' fill-opacity='.25' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+}
+.wax-pattern-dense {
+  background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M14 3l3 5h-6zM14 25l-3-5h6zM3 14l5-3v6zM25 14l-5 3v-6z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Pastille du panier : rebond à chaque ajout */
+@keyframes pop {
+  from { transform: scale(0.4); }
+  to   { transform: scale(1); }
+}
+.animate-pop { animation: pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Bandeaux et modales — animations en CSS pur */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-slide-up { animation: slide-up 0.32s cubic-bezier(0.21, 0.6, 0.35, 1) both; }
+.animate-fade { animation: fade 0.25s ease-out both; }
+
+/* Écran de démarrage — animations en CSS pur */
+@keyframes splash-logo-in {
+  from { opacity: 0; transform: scale(0.86); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes splash-dot {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+.splash-logo { animation: splash-logo-in 0.55s cubic-bezier(0.21, 0.6, 0.35, 1) both; }
+.splash-dots span { animation: splash-dot 1s ease-in-out infinite; }
+.splash-dots { animation: drop 0.4s 0.35s both; }
+.splash-screen { transition: opacity 0.4s ease-in-out; }
+.splash-out { opacity: 0; pointer-events: none; }
+
+/* Menu mobile : simple apparition, aucun JS nécessaire */
+@keyframes drop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+.animate-drop {
+  animation: drop 0.25s cubic-bezier(0.21, 0.6, 0.35, 1);
+}
+
+/* ---- Apparition en cascade (remplace Framer Motion) ----
+   Le décalage est calculé en CSS à partir de l'index de l'item :
+   aucun JavaScript n'intervient dans l'animation elle-même. */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(20px);
+}
+[data-stagger="in"] .stagger-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.55s cubic-bezier(0.21, 0.6, 0.35, 1) calc(var(--stagger-i, 0) * var(--stagger-gap, 0.08s)),
+    transform 0.55s cubic-bezier(0.21, 0.6, 0.35, 1) calc(var(--stagger-i, 0) * var(--stagger-gap, 0.08s));
+}
+
+/* ---- Surfaces pilotées par la palette de boutique ---- */
+.shop-scope {
+  background-color: var(--bg);
+  color: var(--ink);
+}
+.shop-surface { background-color: var(--surface); }
+.shop-accent { color: var(--accent); }
+.shop-muted { color: var(--muted); }
+.shop-btn {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+.shop-btn:hover { filter: brightness(0.92); }
+.shop-banner {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--on-accent);
+}
+.shop-card {
+  background-color: var(--surface);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+}
+.shop-soft { background-color: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+/* ---- Boutons ---- */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 select-none;
+}
+.btn-primary {
+  @apply btn bg-primary text-white hover:bg-primary-dark hover:shadow-lift active:scale-[.98];
+}
+.btn-ink {
+  @apply btn bg-ink text-white hover:bg-black hover:shadow-lift active:scale-[.98];
+}
+.btn-ghost {
+  @apply btn border border-ink/15 bg-white text-ink hover:border-ink/40 active:scale-[.98];
+}
+.btn-lg { @apply px-7 py-3.5 text-base; }
+.btn-md { @apply px-5 py-2.5 text-sm; }
+.btn-sm { @apply px-4 py-2 text-xs; }
+
+.chip {
+  @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+}
+
+.card {
+  @apply rounded-2xl bg-white shadow-card;
+}
+
+.input {
+  @apply w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-sm outline-none transition-colors placeholder:text-ink/35 focus:border-primary focus:ring-2 focus:ring-primary/20;
+}
+
+.section-eyebrow {
+  @apply mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary;
+}
+
+/* Scrollbar discret */
+.nice-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+.nice-scroll::-webkit-scrollbar-thumb { background: rgba(20, 35, 27, 0.15); border-radius: 99px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
