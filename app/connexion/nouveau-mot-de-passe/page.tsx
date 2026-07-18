@@ -28,13 +28,49 @@ function NewPassword() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [exchanging, setExchanging] = useState(true);
 
-  /* Sans session, le lien est invalide ou expiré. */
+  /* Le lien de réinitialisation dépose un token dans l'URL :
+       - moderne : ?token_hash=...&type=recovery   (à échanger nous-mêmes)
+       - avec code : ?code=...                       (exchangeCodeForSession)
+       - héritée : #access_token=...                (auto via detectSessionInUrl)
+     Tant que l'échange n'est pas fini, on n'affiche pas "lien expiré". */
   useEffect(() => {
-    if (!loading && !user && !demoMode) {
+    if (demoMode) {
+      setExchanging(false);
+      return;
+    }
+    const sb = supabase();
+    if (!sb) {
+      setExchanging(false);
+      return;
+    }
+    const url = new URL(window.location.href);
+    const tokenHash = url.searchParams.get("token_hash");
+    const code = url.searchParams.get("code");
+
+    (async () => {
+      try {
+        if (tokenHash) {
+          await sb.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+        } else if (code) {
+          await sb.auth.exchangeCodeForSession(code);
+        }
+        window.history.replaceState({}, "", "/connexion/nouveau-mot-de-passe");
+      } catch {
+        /* échange raté : le garde ci-dessous affichera l'erreur */
+      } finally {
+        setExchanging(false);
+      }
+    })();
+  }, [demoMode]);
+
+  /* Sans session une fois l'échange terminé, le lien est invalide/expiré. */
+  useEffect(() => {
+    if (!loading && !exchanging && !user && !demoMode) {
       setError("Ce lien a expiré ou a déjà été utilisé. Demandes-en un nouveau.");
     }
-  }, [loading, user, demoMode]);
+  }, [loading, exchanging, user, demoMode]);
 
   const save = async () => {
     const issue = passwordIssue(password);
@@ -59,7 +95,7 @@ function NewPassword() {
     setTimeout(() => router.replace("/dashboard"), 1600);
   };
 
-  if (loading)
+  if (loading || exchanging)
     return (
       <div className="flex min-h-screen items-center justify-center bg-cream">
         <Loader2 className="animate-spin text-ink/30" />

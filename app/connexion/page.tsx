@@ -70,8 +70,13 @@ function AuthScreen() {
   const suggestion = suggestEmailFix(email);
 
   useEffect(() => {
+    /* Ne pas rediriger tant qu'on est sur un écran de code : signInWithPassword
+       ouvre brièvement une session avant qu'on la coupe pour exiger l'OTP.
+       Sans ce garde, cet instant déclenchait la redirection et l'utilisateur
+       ne voyait jamais l'écran du code. */
+    if (step === "device-otp" || step === "confirm-signup") return;
     if (!loading && user) router.replace("/dashboard");
-  }, [loading, user, router]);
+  }, [loading, user, router, step]);
 
   useEffect(() => {
     if (cooldown <= 0) return;

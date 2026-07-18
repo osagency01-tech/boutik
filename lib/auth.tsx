@@ -198,6 +198,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ---------- Inscription ---------- */
 
+  /* verifyOtp ouvre la session en mémoire, mais sa persistance passe par
+     onAuthStateChange, asynchrone. Si on navigue tout de suite, le dashboard
+     lit getSession() AVANT que la session soit écrite → il croit l'utilisateur
+     déconnecté et renvoie à l'accueil. On attend donc la session. */
+  const waitForSession = async (sb: any, tries = 20): Promise<boolean> => {
+    for (let i = 0; i < tries; i++) {
+      const { data } = await sb.auth.getSession();
+      if (data.session) return true;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return false;
+  };
+
   const signUp = async (email: string, password: string) => {
     const sb = supabase();
     if (!sb) return {};
@@ -219,6 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) return { error: humanError(error.message) };
     rememberDevice(email); // l'appareil d'inscription est de confiance
+    await waitForSession(sb);
     return {};
   };
 
@@ -247,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (otpError) return { error: humanError(otpError.message) };
       return { needsOtp: true };
     }
-
+    await waitForSession(sb);
     return {};
   };
 
@@ -273,6 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) return { error: humanError(error.message) };
     rememberDevice(clean); // plus d'OTP sur cet appareil
+    await waitForSession(sb);
     return {};
   };
 

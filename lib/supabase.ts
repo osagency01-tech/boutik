@@ -2,14 +2,6 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-/* ------------------------------------------------------------------ *
- * Client Supabase (navigateur)
- *
- * Si les variables d'env sont absentes, on ne plante pas : l'app
- * bascule en mode démo (localStorage). Ça permet de faire tourner
- * le projet sans backend, et de brancher Supabase quand il est prêt.
- * ------------------------------------------------------------------ */
-
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -17,10 +9,6 @@ export const isSupabaseConfigured = Boolean(URL && KEY);
 
 let client: ReturnType<typeof createBrowserClient> | null = null;
 
-/* Clé de préférence "Rester connecté".
-   Si le vendeur la décoche, on stocke la session en sessionStorage :
-   elle disparaît à la fermeture de l'onglet. Utile sur un téléphone
-   partagé ou un cybercafé — cas fréquent sur ce marché. */
 const REMEMBER_KEY = "boutik-remember";
 
 export const setRemember = (v: boolean) => {
@@ -37,31 +25,47 @@ export const getRemember = () => {
   }
 };
 
+const hybridStorage = {
+  getItem(key: string): string | null {
+    try {
+      return window.localStorage.getItem(key) ?? window.sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem(key: string, value: string): void {
+    try {
+      if (getRemember()) {
+        window.localStorage.setItem(key, value);
+        window.sessionStorage.removeItem(key);
+      } else {
+        window.sessionStorage.setItem(key, value);
+        window.localStorage.removeItem(key);
+      }
+    } catch {}
+  },
+  removeItem(key: string): void {
+    try {
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+    } catch {}
+  },
+};
+
 export function supabase() {
   if (!isSupabaseConfigured) return null;
   if (!client) {
     client = createBrowserClient(URL!, KEY!, {
       auth: {
-        /* Session longue : le vendeur ne doit pas rechercher un code
-           dans sa boîte mail chaque semaine. Supabase renouvelle le
-           refresh token en silence tant qu'il revient. */
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storage: typeof window === "undefined"
-          ? undefined
-          : getRemember()
-            ? window.localStorage
-            : window.sessionStorage,
+        storage: typeof window === "undefined" ? undefined : hybridStorage,
       },
     });
   }
   return client;
 }
-
-/* ------------------------------------------------------------------ *
- * Types — miroir de supabase/migrations/001_schema.sql
- * ------------------------------------------------------------------ */
 
 export type DbPlan = "gratuit" | "starter" | "business" | "premium";
 export type DbShopStatus = "brouillon" | "active" | "grace" | "suspendue" | "bannie";
@@ -167,10 +171,6 @@ export type DbOrderItem = {
   quantity: number;
 };
 
-/* ------------------------------------------------------------------ *
- * Correspondance statuts base <-> affichage
- * ------------------------------------------------------------------ */
-
 export const STATUS_LABEL: Record<DbOrderStatus, string> = {
   nouvelle: "Nouvelle",
   paiement_demande: "Paiement demandé",
@@ -190,14 +190,12 @@ export const STATUS_ORDER: DbOrderStatus[] = [
   "livree",
 ];
 
-/* URL publique d'une image du bucket */
 export function storageUrl(bucket: string, path: string | null | undefined) {
   if (!path) return undefined;
-  if (path.startsWith("data:") || path.startsWith("http")) return path; // mode démo
+  if (path.startsWith("data:") || path.startsWith("http")) return path;
   return `${URL}/storage/v1/object/public/${bucket}/${path}`;
 }
 
-/* Slug à partir d'un nom de boutique */
 export function slugify(name: string) {
   return name
     .toLowerCase()
