@@ -285,9 +285,12 @@ export function StoreProvider({
   const createShopFromConfig = async () => {
     const sb = supabase();
     if (!sb) return;
-    const { data } = await sb.auth.getUser();
-    if (!data.user) throw new Error("Non connecté");
-    const shop = await api.createShop(config, data.user.id);
+    /* getSession lit la session localement (fiable) au lieu de getUser qui
+       fait un appel réseau à /auth/v1/user — appel qui échouait en 403 et
+       cassait la création. L'id vient directement du token de session. */
+    const { data } = await sb.auth.getSession();
+    if (!data.session?.user) throw new Error("Non connecté");
+    const shop = await api.createShop(config, data.session.user.id);
     setShopId(shop.id);
     setHasShop(true);
     if (config.zones.length) await api.replaceZones(shop.id, config.zones);

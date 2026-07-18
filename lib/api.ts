@@ -152,6 +152,15 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   const sb = supabase();
   if (!sb) throw new Error("Supabase non configuré");
 
+  /* CRUCIAL : on s'assure que le client a bien chargé la session AVANT
+     d'insérer. Le client lit la session depuis localStorage de façon
+     asynchrone ; sans cette attente, l'insertion pouvait partir sans le
+     header Authorization → auth.uid() null côté base → refus RLS. */
+  const { data: sessionData } = await sb.auth.getSession();
+  if (!sessionData.session) {
+    throw new Error("Session absente. Reconnecte-toi puis réessaie.");
+  }
+
   /* Le slug doit être unique. On tente, et on suffixe en cas de collision
      plutôt que de renvoyer une erreur au vendeur. */
   const base = slugify(config.name ?? "ma-boutique") || "ma-boutique";
