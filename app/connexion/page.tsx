@@ -34,12 +34,6 @@ export default function Page() {
   );
 }
 
-/* Étapes :
-   login          -> email + mot de passe (cas normal, aucun email envoyé)
-   signup         -> création : email + mot de passe
-   confirm-signup -> code reçu à l'inscription
-   device-otp     -> mot de passe bon, mais appareil inconnu
-   forgot         -> demande de réinitialisation                      */
 type Step = "login" | "signup" | "confirm-signup" | "device-otp" | "forgot";
 
 function AuthScreen() {
@@ -70,13 +64,14 @@ function AuthScreen() {
   const suggestion = suggestEmailFix(email);
 
   useEffect(() => {
-    /* Ne pas rediriger tant qu'on est sur un écran de code : signInWithPassword
-       ouvre brièvement une session avant qu'on la coupe pour exiger l'OTP.
-       Sans ce garde, cet instant déclenchait la redirection et l'utilisateur
-       ne voyait jamais l'écran du code. */
-    if (step === "device-otp" || step === "confirm-signup") return;
+    /* Ne pas rediriger pendant qu'une connexion est en cours (busy) ni sur
+       un écran de code : signInWithPassword ouvre brièvement une session
+       avant qu'on la coupe pour exiger l'OTP. Sans ce garde, cet instant
+       déclenchait la redirection et l'utilisateur ne voyait jamais l'écran
+       du code. */
+    if (busy || step === "device-otp" || step === "confirm-signup") return;
     if (!loading && user) router.replace("/dashboard");
-  }, [loading, user, router, step]);
+  }, [loading, user, router, step, busy]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -97,13 +92,17 @@ function AuthScreen() {
     reset();
     setRemember(remember);
     const { error, needsOtp } = await signIn(email, password);
-    setBusy(false);
-    if (error) return setError(error);
+    if (error) {
+      setBusy(false);
+      return setError(error);
+    }
     if (needsOtp) {
       setStep("device-otp");
       setCooldown(45);
+      setBusy(false);
       return;
     }
+    setBusy(false);
     router.replace("/dashboard");
   };
 
@@ -543,8 +542,6 @@ function PasswordField({
     </div>
   );
 }
-
-/* Retour visuel immédiat : mieux qu'un message d'erreur après coup. */
 function StrengthMeter({ password }: { password: string }) {
   if (!password) return null;
   const s = passwordStrength(password);
@@ -571,7 +568,6 @@ function StrengthMeter({ password }: { password: string }) {
   );
 }
 
-/* Saisie du code : 6 cases, collage supporté (on copie depuis l'email). */
 function CodeInput({
   value,
   onChange,
