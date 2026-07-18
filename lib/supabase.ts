@@ -1,13 +1,13 @@
 "use client";
 
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(URL && KEY);
 
-let client: ReturnType<typeof createBrowserClient> | null = null;
+let client: SupabaseClient | null = null;
 
 const REMEMBER_KEY = "boutik-remember";
 
@@ -25,19 +25,20 @@ export const getRemember = () => {
   }
 };
 
-/* Client navigateur. createBrowserClient (@supabase/ssr) gère lui-même
-   la persistance de session via cookies : on ne lui impose PAS de storage
-   personnalisé, car cela empêchait l'écriture de la session (cause du bug
-   où l'utilisateur semblait connecté mais chaque requête partait sans
-   token → auth.uid() null → erreurs 403 / RLS). */
+/* Client navigateur classique (@supabase/supabase-js).
+   createClient persiste la session de façon fiable dans localStorage.
+   Le client SSR (createBrowserClient) ne persistait rien ici — la session
+   n'était écrite ni en cookie ni en localStorage, donc chaque requête
+   partait sans token → auth.uid() null → 403 / RLS. */
 export function supabase() {
   if (!isSupabaseConfigured) return null;
   if (!client) {
-    client = createBrowserClient(URL!, KEY!, {
+    client = createClient(URL!, KEY!, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storageKey: "boutik-auth",
       },
     });
   }
