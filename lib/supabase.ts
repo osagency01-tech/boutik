@@ -25,33 +25,11 @@ export const getRemember = () => {
   }
 };
 
-const hybridStorage = {
-  getItem(key: string): string | null {
-    try {
-      return window.localStorage.getItem(key) ?? window.sessionStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  },
-  setItem(key: string, value: string): void {
-    try {
-      if (getRemember()) {
-        window.localStorage.setItem(key, value);
-        window.sessionStorage.removeItem(key);
-      } else {
-        window.sessionStorage.setItem(key, value);
-        window.localStorage.removeItem(key);
-      }
-    } catch {}
-  },
-  removeItem(key: string): void {
-    try {
-      window.localStorage.removeItem(key);
-      window.sessionStorage.removeItem(key);
-    } catch {}
-  },
-};
-
+/* Client navigateur. createBrowserClient (@supabase/ssr) gère lui-même
+   la persistance de session via cookies : on ne lui impose PAS de storage
+   personnalisé, car cela empêchait l'écriture de la session (cause du bug
+   où l'utilisateur semblait connecté mais chaque requête partait sans
+   token → auth.uid() null → erreurs 403 / RLS). */
 export function supabase() {
   if (!isSupabaseConfigured) return null;
   if (!client) {
@@ -60,7 +38,6 @@ export function supabase() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storage: typeof window === "undefined" ? undefined : hybridStorage,
       },
     });
   }
