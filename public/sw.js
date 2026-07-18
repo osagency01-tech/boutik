@@ -11,7 +11,7 @@
  *  l'app est mise en cache.
  * ------------------------------------------------------------------ */
 
-const VERSION = "boutik-v1";
+const VERSION = "boutik-v2";
 const SHELL = ["/", "/icon-192.png", "/logo-boutik.png", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
@@ -31,6 +31,15 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
+
+  /* RÈGLE ABSOLUE : le service worker ne touche QU'À nos propres fichiers
+     (même origine). Toute requête vers un autre domaine — Google Fonts,
+     Supabase, API externes — est laissée au navigateur, sans interception.
+     Sans ce garde, le SW tentait de mettre en cache les polices Google, ce
+     que la CSP bloque, provoquant des erreurs en cascade. */
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
   /* Jamais de cache sur l'API ni l'auth : des données périmées
      sont pires qu'une erreur réseau. */
