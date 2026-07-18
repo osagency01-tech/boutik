@@ -25,11 +25,17 @@ export const getRemember = () => {
   }
 };
 
-/* Client navigateur classique (@supabase/supabase-js).
-   createClient persiste la session de façon fiable dans localStorage.
-   Le client SSR (createBrowserClient) ne persistait rien ici — la session
-   n'était écrite ni en cookie ni en localStorage, donc chaque requête
-   partait sans token → auth.uid() null → 403 / RLS. */
+function readAccessToken(): string {
+  try {
+    const raw = window.localStorage.getItem("boutik-auth");
+    if (!raw) return "";
+    const parsed = JSON.parse(raw);
+    return parsed?.access_token ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export function supabase() {
   if (!isSupabaseConfigured) return null;
   if (!client) {
@@ -40,6 +46,7 @@ export function supabase() {
         detectSessionInUrl: true,
         storageKey: "boutik-auth",
       },
+      accessToken: async () => readAccessToken(),
     });
   }
   return client;
