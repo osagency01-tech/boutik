@@ -16,9 +16,6 @@ import type { ShopConfig, Zone } from "./store";
 
 /* ------------------------------------------------------------------ *
  * Conversions base <-> front
- *
- * Le front garde ses types (ShopConfig, Product) : les écrans ne
- * changent pas. Toute la traduction se fait ici.
  * ------------------------------------------------------------------ */
 
 export function shopToConfig(s: DbShop, zones: DbZone[]): ShopConfig {
@@ -98,17 +95,14 @@ export async function fetchMyShop(): Promise<{ shop: DbShop; zones: DbZone[] } |
   const sb = supabase();
   if (!sb) return null;
 
-  /* Filtrer sur owner_id est INDISPENSABLE : la policy de lecture
-     publique autorise n'importe quelle boutique publiée. Sans ce
-     filtre, `limit(1)` renvoyait la première boutique de la base —
-     c'est-à-dire celle d'un autre vendeur. */
-  const { data: auth } = await sb.auth.getUser();
-  if (!auth?.user) return null;
+  const { data: sessionData } = await sb.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) return null;
 
   const { data: shops, error } = await sb
     .from("shops")
     .select("*")
-    .eq("owner_id", auth.user.id)
+    .eq("owner_id", userId)
     .limit(1);
   if (error) throw error;
   if (!shops?.length) return null;
@@ -152,48 +146,48 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   const sb = supabase();
   if (!sb) throw new Error("Supabase non configuré");
 
-  /* Le client singleton peut avoir été créé avant que la session soit lue
-     depuis le storage : il n'a alors pas le token en mémoire et n'attache
-     pas l'en-tête Authorization → auth.uid() null → refus RLS.
-     On force donc le client à charger la session en mémoire avant d'insérer. */
-  try {
-    const raw = typeof window !== "undefined" ? window.localStorage.getItem("boutik-auth") : null;
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.access_token && parsed?.refresh_token) {
-        await sb.auth.setSession({
-          access_token: parsed.access_token,
-          refresh_token: parsed.refresh_token,
-        });
-      }
-    }
-  } catch {
-    /* si ça échoue, getSession ci-dessous tranchera */
-  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  /* On récupère le token via getSession (fiable) et on envoie la requête
+     nous-mêmes avec le header Authorization explicite. On contourne ainsi
+     le client qui, au moment de la création (juste après connexion),
+     n'attachait pas encore le token → auth.uid() null → refus RLS. */
   const { data: sessionData } = await sb.auth.getSession();
-  if (!sessionData.session) {
+  const token = sessionData.session?.access_token;
+  if (!token) {
     throw new Error("Session absente. Reconnecte-toi puis réessaie.");
   }
 
-  /* Le slug doit être unique. On tente, et on suffixe en cas de collision
-     plutôt que de renvoyer une erreur au vendeur. */
   const base = slugify(config.name ?? "ma-boutique") || "ma-boutique";
   let slug = base;
 
   for (let i = 0; i < 5; i++) {
-    const { data, error } = await sb
-      .from("shops")
-      .insert({ ...configToShop(config), owner_id: ownerId, slug })
-      .select()
-      .single();
+    const res = await fetch(`${url}/rest/v1/shops`, {
+      method: "POST",
+      headers: {
+        apikey: anon as string,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({ ...configToShop(config), owner_id: ownerId, slug }),
+    });
 
-    if (!error) return data as DbShop;
-    if (error.code !== "23505") throw error; // pas un conflit d'unicité
+    if (res.ok) {
+      const rows = await res.json();
+      return (Array.isArray(rows) ? rows[0] : rows) as DbShop;
+    }
+
+    const errText = await res.text();
+    if (!errText.includes("23505")) {
+      throw new Error(errText || "Création impossible");
+    }
     slug = `${base}-${Math.random().toString(36).slice(2, 5)}`;
   }
   throw new Error("Impossible de trouver un lien disponible");
 }
+
 export async function isSlugAvailable(slug: string) {
   const sb = supabase();
   if (!sb) return true;
@@ -218,7 +212,6 @@ export async function publishShop(shopId: string) {
 
 /* ------------------------------------------------------------------ *
  * Zones de livraison
- * Remplacement complet : plus simple et plus sûr qu'un diff ligne à ligne.
  * ------------------------------------------------------------------ */
 
 export async function replaceZones(shopId: string, zones: Zone[]) {
@@ -284,8 +277,6 @@ export async function insertProduct(shopId: string, p: Omit<Product, "id">, posi
     .select()
     .single();
 
-  /* La base applique le quota (guard_product_quota) : on traduit
-     l'erreur SQL en message lisible pour le vendeur. */
   if (error) {
     if (error.message.includes("quota")) throw new Error("QUOTA");
     throw error;
@@ -329,7 +320,6 @@ export async function reorderProducts(ids: string[]) {
 
 /* ------------------------------------------------------------------ *
  * Images — Storage
- * Chemin <shop_id>/<fichier> : c'est ce que la policy vérifie.
  * ------------------------------------------------------------------ */
 
 export async function uploadImage(
@@ -387,8 +377,6 @@ export async function updateOrderStatus(id: string, status: DbOrderStatus, reaso
   if (error) throw error;
 }
 
-/* Création d'une commande par un visiteur (non authentifié).
-   La référence est générée en base : la générer ici créerait des collisions. */
 export async function createOrder(input: {
   shopId: string;
   customerName: string;
@@ -437,12 +425,8 @@ export async function createOrder(input: {
   return order as DbOrder;
 }
 
-
 /* ------------------------------------------------------------------ *
  * Messagerie interne
- *
- * Le client pose sa question ici plutôt que sur WhatsApp : le vendeur
- * n'est pas dérangé, et seule la COMMANDE lui parvient sur WhatsApp.
  * ------------------------------------------------------------------ */
 
 export async function fetchMessages(shopId: string): Promise<DbMessage[]> {
@@ -476,7 +460,6 @@ export async function sendMessage(input: {
     subject: input.subject || null,
     body: input.body,
   });
-  /* L'anti-flood est appliqué en base (guard_message_flood). */
   if (error) {
     if (error.message.includes("Trop de messages")) throw new Error("FLOOD");
     throw error;
