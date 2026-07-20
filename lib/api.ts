@@ -152,10 +152,25 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   const sb = supabase();
   if (!sb) throw new Error("Supabase non configuré");
 
-  /* CRUCIAL : on s'assure que le client a bien chargé la session AVANT
-     d'insérer. Le client lit la session depuis localStorage de façon
-     asynchrone ; sans cette attente, l'insertion pouvait partir sans le
-     header Authorization → auth.uid() null côté base → refus RLS. */
+  /* Le client singleton peut avoir été créé avant que la session soit lue
+     depuis le storage : il n'a alors pas le token en mémoire et n'attache
+     pas l'en-tête Authorization → auth.uid() null → refus RLS.
+     On force donc le client à charger la session en mémoire avant d'insérer. */
+  try {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem("boutik-auth") : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.access_token && parsed?.refresh_token) {
+        await sb.auth.setSession({
+          access_token: parsed.access_token,
+          refresh_token: parsed.refresh_token,
+        });
+      }
+    }
+  } catch {
+    /* si ça échoue, getSession ci-dessous tranchera */
+  }
+
   const { data: sessionData } = await sb.auth.getSession();
   if (!sessionData.session) {
     throw new Error("Session absente. Reconnecte-toi puis réessaie.");
@@ -179,7 +194,6 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   }
   throw new Error("Impossible de trouver un lien disponible");
 }
-
 export async function isSlugAvailable(slug: string) {
   const sb = supabase();
   if (!sb) return true;
