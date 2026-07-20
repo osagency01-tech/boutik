@@ -25,17 +25,6 @@ export const getRemember = () => {
   }
 };
 
-function readAccessToken(): string {
-  try {
-    const raw = window.localStorage.getItem("boutik-auth");
-    if (!raw) return "";
-    const parsed = JSON.parse(raw);
-    return parsed?.access_token ?? "";
-  } catch {
-    return "";
-  }
-}
-
 export function supabase() {
   if (!isSupabaseConfigured) return null;
   if (!client) {
@@ -46,7 +35,6 @@ export function supabase() {
         detectSessionInUrl: true,
         storageKey: "boutik-auth",
       },
-      accessToken: async () => readAccessToken(),
     });
   }
   return client;

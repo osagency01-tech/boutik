@@ -4,23 +4,6 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
-/* ------------------------------------------------------------------ *
- * Authentification
- *
- * Modèle retenu :
- *   - Inscription : email + mot de passe, confirmé par un code OTP.
- *   - Connexion habituelle : email + mot de passe. Aucun email envoyé.
- *   - Connexion depuis un appareil inconnu : code OTP envoyé par email.
- *
- * Pourquoi : un OTP à chaque connexion coûte un email à chaque fois.
- * Ici on n'en envoie qu'à l'inscription et sur nouvel appareil, soit
- * une poignée par vendeur et par an.
- *
- * Limite honnête : l'empreinte d'appareil vit dans le navigateur.
- * Elle protège contre un mot de passe volé utilisé ailleurs, pas
- * contre quelqu'un qui a déjà le téléphone déverrouillé du vendeur.
- * ------------------------------------------------------------------ */
-
 type AuthCtx = {
   user: User | null;
   session: Session | null;
@@ -30,7 +13,6 @@ type AuthCtx = {
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   confirmSignUp: (email: string, code: string) => Promise<{ error?: string }>;
 
-  /* needsOtp = mot de passe correct, mais appareil inconnu. */
   signIn: (
     email: string,
     password: string
@@ -47,8 +29,6 @@ const Ctx = createContext<AuthCtx | null>(null);
 export const isValidEmail = (v: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
-/* Le mot de passe remplace l'OTP à chaque connexion : c'est devenu
-   le maillon faible, donc on impose un minimum. */
 export function passwordIssue(p: string): string | null {
   if (p.length < 8) return "8 caractères minimum.";
   if (!/[a-zA-Z]/.test(p)) return "Ajoute au moins une lettre.";
@@ -85,14 +65,6 @@ export function suggestEmailFix(email: string): string | null {
   const fix = COMMON_TYPOS[domain];
   return fix ? email.slice(0, at + 1) + fix : null;
 }
-
-/* ------------------------------------------------------------------ *
- * Empreinte d'appareil
- *
- * Un jeton aléatoire posé au premier passage, et la liste des
- * appareils reconnus par compte. Pas de fingerprinting invasif :
- * on répond juste à « ai-je déjà vu ce navigateur avec ce compte ? ».
- * ------------------------------------------------------------------ */
 
 const DEVICE_KEY = "boutik-device-id";
 const KNOWN_KEY = "boutik-known-devices";
@@ -133,9 +105,7 @@ export function rememberDevice(email: string) {
     list.add(getDeviceId());
     map[key] = Array.from(list);
     localStorage.setItem(KNOWN_KEY, JSON.stringify(map));
-  } catch {
-    /* Navigation privée : l'OTP sera redemandé. C'est voulu. */
-  }
+  } catch {}
 }
 
 export function forgetDevices(email: string) {
@@ -147,8 +117,6 @@ export function forgetDevices(email: string) {
     localStorage.setItem(KNOWN_KEY, JSON.stringify(map));
   } catch {}
 }
-
-/* ------------------------------------------------------------------ */
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -196,12 +164,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return "Une erreur est survenue. Vérifie ta connexion et réessaie.";
   };
 
-  /* ---------- Inscription ---------- */
-
-  /* verifyOtp ouvre la session en mémoire, mais sa persistance passe par
-     onAuthStateChange, asynchrone. Si on navigue tout de suite, le dashboard
-     lit getSession() AVANT que la session soit écrite → il croit l'utilisateur
-     déconnecté et renvoie à l'accueil. On attend donc la session. */
   const waitForSession = async (sb: any, tries = 20): Promise<boolean> => {
     for (let i = 0; i < tries; i++) {
       const { data } = await sb.auth.getSession();
@@ -210,6 +172,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return false;
   };
+
+  /* ---------- Inscription ---------- */
 
   const signUp = async (email: string, password: string) => {
     const sb = supabase();
@@ -231,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       type: "signup",
     });
     if (error) return { error: humanError(error.message) };
-    rememberDevice(email); // l'appareil d'inscription est de confiance
+    rememberDevice(email);
     await waitForSession(sb);
     return {};
   };
@@ -249,18 +213,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) return { error: humanError(error.message) };
 
-    /* Mot de passe bon mais appareil inconnu : on coupe la session
-       et on exige un code. Sans cette déconnexion, la vérification
-       serait cosmétique — la session serait déjà ouverte. */
-    if (!isKnownDevice(clean)) {
-      await sb.auth.signOut();
-      const { error: otpError } = await sb.auth.signInWithOtp({
-        email: clean,
-        options: { shouldCreateUser: false },
-      });
-      if (otpError) return { error: humanError(otpError.message) };
-      return { needsOtp: true };
-    }
+    /* Connexion simple : email + mot de passe suffisent. La vérification
+       par code reste active à l'inscription (confirmSignUp). On considère
+       l'appareil comme reconnu dès la connexion réussie. */
+    rememberDevice(clean);
     await waitForSession(sb);
     return {};
   };
@@ -286,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       type: "email",
     });
     if (error) return { error: humanError(error.message) };
-    rememberDevice(clean); // plus d'OTP sur cet appareil
+    rememberDevice(clean);
     await waitForSession(sb);
     return {};
   };
