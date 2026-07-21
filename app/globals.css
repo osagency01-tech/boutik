@@ -19,6 +19,7 @@ body {
   background: #0e8a52;
   color: #fff;
 }
+
 @font-face {
   font-family: "Breathing";
   src: url("/fonts/breathing.ttf") format("truetype");
@@ -67,7 +68,6 @@ body {
 .splash-dots span { animation: splash-dot 1s ease-in-out infinite; }
 .splash-dots { animation: drop 0.4s 0.35s both; }
 .splash-screen { transition: opacity 0.4s ease-in-out; }
-.splash-out { opacity: 0; pointer-events: none; }
 
 /* Menu mobile : simple apparition, aucun JS nécessaire */
 @keyframes drop {
@@ -161,7 +161,9 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  /* ---------- Splash Boutik ---------- */
+}
+
+/* ---------- Splash Boutik ---------- */
 
 .splash-word-wrap {
   position: relative;
@@ -174,12 +176,9 @@ body {
   font-size: clamp(3.5rem, 15vw, 7rem);
   line-height: 1;
   display: block;
-  /* Pulsation douce, démarre une fois le mot écrit */
   animation: splash-breathe 2.2s ease-in-out 1.2s infinite;
 }
 
-/* Masque blanc qui se retire de gauche à droite : révèle le mot
-   comme s'il s'écrivait à la main */
 .splash-reveal {
   position: absolute;
   top: 0;
@@ -191,27 +190,16 @@ body {
 }
 
 @keyframes splash-write {
-  from {
-    left: 0;
-  }
-  to {
-    left: 100%;
-  }
+  from { left: 0; }
+  to { left: 100%; }
 }
 
 @keyframes splash-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.04);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
 }
 
-/* Fondu de sortie */
 .splash-out {
   opacity: 0;
   transition: opacity 0.4s ease-in-out;
-}
 }
