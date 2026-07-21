@@ -149,10 +149,6 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  /* On récupère le token via getSession (fiable) et on envoie la requête
-     nous-mêmes avec le header Authorization explicite. On contourne ainsi
-     le client qui, au moment de la création (juste après connexion),
-     n'attachait pas encore le token → auth.uid() null → refus RLS. */
   const { data: sessionData } = await sb.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) {
@@ -163,31 +159,30 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   let slug = base;
 
   for (let i = 0; i < 5; i++) {
-    const res = await fetch(`${url}/rest/v1/shops`, {
+    const res = await fetch(`${url}/rest/v1/rpc/create_my_shop`, {
       method: "POST",
       headers: {
         apikey: anon as string,
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-        Prefer: "return=representation",
       },
-      body: JSON.stringify({ ...configToShop(config), owner_id: ownerId, slug }),
+      body: JSON.stringify({ shop_data: { ...configToShop(config), slug } }),
     });
 
     if (res.ok) {
-      const rows = await res.json();
-      return (Array.isArray(rows) ? rows[0] : rows) as DbShop;
+      return (await res.json()) as DbShop;
     }
 
     const errText = await res.text();
-    if (!errText.includes("23505")) {
-      throw new Error(errText || "Création impossible");
+    // slug déjà pris : on réessaie avec un suffixe
+    if (errText.includes("duplicate") || errText.includes("unique") || errText.includes("23505")) {
+      slug = `${base}-${Math.random().toString(36).slice(2, 5)}`;
+      continue;
     }
-    slug = `${base}-${Math.random().toString(36).slice(2, 5)}`;
+    throw new Error(errText || "Création impossible");
   }
   throw new Error("Impossible de trouver un lien disponible");
 }
-
 export async function isSlugAvailable(slug: string) {
   const sb = supabase();
   if (!sb) return true;
