@@ -4,21 +4,58 @@ import { Reveal } from "@/components/motion";
 import { PLANS, fcfa } from "@/lib/data";
 import { PLAN_QUOTA, useStore, type Plan } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
+import * as api from "@/lib/api";
 import { COUNTRIES, getCountry, normalizePhone, validatePhone } from "@/lib/countries";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Check, Clock, CreditCard, Info, Loader2, Receipt, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /* ------------------------------------------------------------------ *
  * Abonnement
  * ------------------------------------------------------------------ */
 
+/* Formate une date ISO en français : "15 août 2026" */
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export default function SubscriptionPage() {
-  const { config, products, palette } = useStore();
+  const { config, products, palette, shopId } = useStore();
   const [selected, setSelected] = useState<Plan | null>(null);
+  const [expiry, setExpiry] = useState<string | null>(null);
 
   const quota = PLAN_QUOTA[config.plan];
   const used = products.length;
+
+  /* On charge l'abonnement actif pour afficher la vraie date d'échéance
+     (au lieu d'une date fixe). Rien à afficher tant qu'il n'y a pas
+     d'abonnement payant. */
+  useEffect(() => {
+    if (!shopId || config.plan === "Gratuit") {
+      setExpiry(null);
+      return;
+    }
+    let alive = true;
+    api.fetchActiveSubscription(shopId).then((sub) => {
+      if (alive && sub?.current_period_end) setExpiry(sub.current_period_end);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [shopId, config.plan]);
+
+  /* Nombre de jours avant l'échéance (pour un éventuel avertissement). */
+  const daysLeft = expiry
+    ? Math.ceil((new Date(expiry).getTime() - Date.now()) / 86400000)
+    : null;
 
   return (
     <div>
@@ -51,11 +88,24 @@ export default function SubscriptionPage() {
               <div className="text-right">
                 <p className="text-xs text-ink/45">Prochaine échéance</p>
                 <p className="mt-0.5 flex items-center gap-1.5 font-display font-extrabold">
-                  <Clock size={14} className="text-ink/40" /> 28 juillet 2026
+                  <Clock size={14} className="text-ink/40" />
+                  {expiry ? formatDate(expiry) : "—"}
                 </p>
               </div>
             )}
           </div>
+
+          {/* Avertissement si l'abonnement expire bientôt */}
+          {config.plan !== "Gratuit" && daysLeft !== null && daysLeft <= 7 && (
+            <div className="mt-4 flex gap-2.5 rounded-xl bg-mango-soft px-3 py-2.5">
+              <AlertCircle size={15} className="mt-px shrink-0 text-yellow-700" />
+              <p className="text-xs leading-relaxed text-yellow-900">
+                {daysLeft > 0
+                  ? `Ton abonnement expire dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}. Pense à le renouveler pour garder ta boutique en ligne.`
+                  : "Ton abonnement a expiré. Renouvelle-le pour remettre ta boutique en ligne."}
+              </p>
+            </div>
+          )}
 
           <div className="mt-5">
             <div className="flex items-center justify-between text-sm">
@@ -180,6 +230,7 @@ export default function SubscriptionPage() {
     </div>
   );
 }
+
 /* ------------------------------------------------------------------ *
  * Tunnel de paiement
  * ------------------------------------------------------------------ */
@@ -307,7 +358,7 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
 
         {/* Opérateur */}
         <label className="mb-2 mt-5 block text-sm font-bold">Opérateur Mobile Money</label>
-       <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {country.operators.map((o) => (
             <button
               key={o.code}

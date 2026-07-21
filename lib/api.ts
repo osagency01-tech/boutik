@@ -205,6 +205,29 @@ export async function publishShop(shopId: string) {
     .eq("id", shopId);
   if (error) throw error;
 }
+/* Récupère l'abonnement actif d'une boutique (le plus récent).
+   Sert à afficher la vraie date d'expiration sur la page abonnement. */
+export async function fetchActiveSubscription(shopId: string) {
+  const sb = supabase();
+  if (!sb) return null;
+
+  const { data, error } = await sb
+    .from("subscriptions")
+    .select("plan, status, current_period_end, amount")
+    .eq("shop_id", shopId)
+    .eq("status", "active")
+    .order("current_period_end", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) return null;
+  return data as {
+    plan: string;
+    status: string;
+    current_period_end: string;
+    amount: number;
+  } | null;
+}
 
 /* ------------------------------------------------------------------ *
  * Zones de livraison

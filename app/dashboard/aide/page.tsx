@@ -1,5 +1,7 @@
 "use client";
 
+import { WelcomeTour } from "@/components/welcome-tour";
+import { PlayCircle } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import { cleanMultiline, cleanText, rateLimit } from "@/lib/security";
 import { useStore } from "@/lib/store";
@@ -99,6 +101,7 @@ const FAQ = [
 ];
 
 export default function SupportPage() {
+  const [tour, setTour] = useState(false);
   const { config, palette } = useStore();
   const [sujet, setSujet] = useState("boutique");
   const [message, setMessage] = useState("");
@@ -315,6 +318,23 @@ export default function SupportPage() {
           .
         </p>
       </Reveal>
+      <button
+        onClick={() => setTour(true)}
+        className="card mb-5 flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-cream"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <PlayCircle size={20} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-bold">Revoir le tutoriel de bienvenue</span>
+          <span className="block text-xs text-ink/50">
+            Comment créer ta boutique et recevoir tes commandes
+          </span>
+        </span>
+      </button>
+      <AnimatePresence>
+        {tour && <WelcomeTour onClose={() => setTour(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

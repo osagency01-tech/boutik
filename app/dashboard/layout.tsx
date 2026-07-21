@@ -12,11 +12,13 @@ import {
   LifeBuoy,
   LogOut,
   MessageSquare,
+  MoreHorizontal,
   Package,
   Palette,
   ReceiptText,
   Shield,
   Store,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -32,9 +34,10 @@ const NAV = [
   { l: "Aide", h: "/dashboard/aide", icon: LifeBuoy },
 ];
 
-/* Barre du bas mobile : 6 onglets ne tiennent pas, on garde les 4
-   sur lesquels le vendeur passe sa journée. */
+/* Barre du bas mobile : 4 onglets du quotidien + un bouton "Plus"
+   qui ouvre le reste (Ma boutique, Abonnement, Aide, Admin). */
 const NAV_MOBILE = [NAV[0], NAV[1], NAV[2], NAV[3]];
+const NAV_MORE = [NAV[4], NAV[5], NAV[6]];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -69,6 +72,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const { signOut, demoMode, user } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (demoMode) {
@@ -86,12 +90,26 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   const nav = isAdmin ? [...NAV, { l: "Admin", h: "/dashboard/admin", icon: Shield }] : NAV;
 
+  /* Le menu "Plus" du mobile : les onglets secondaires + Admin si besoin. */
+  const moreItems = isAdmin
+    ? [...NAV_MORE, { l: "Admin", h: "/dashboard/admin", icon: Shield }]
+    : NAV_MORE;
+
+  /* Ferme le menu "Plus" à chaque changement de page. */
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [path]);
+
   /* Vendeur connecté mais sans boutique : on l'envoie créer la sienne */
   useEffect(() => {
     if (ready && !hasShop && !demoMode) router.replace("/creer");
   }, [ready, hasShop, demoMode, router]);
 
   if (!ready) return <LoadingScreen label="Chargement de ta boutique…" />;
+
+  /* Bouton d'en-tête mobile : "S'abonner" si le vendeur est encore en
+     offre Gratuite, sinon un accès direct à son abonnement. */
+  const isFree = config.plan === "Gratuit";
 
   return (
     <div className="min-h-screen bg-cream">
@@ -165,14 +183,72 @@ function Shell({ children }: { children: React.ReactNode }) {
 
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-ink/5 bg-white/85 px-4 py-3 backdrop-blur-md lg:hidden">
         <BoutikLogo className="h-6" />
-        <Link href="/boutique" className="btn-ghost btn-sm">
-          Voir ma boutique
-        </Link>
+        {isFree ? (
+          <Link href="/dashboard/abonnement" className="btn-primary btn-sm">
+            S&apos;abonner
+          </Link>
+        ) : (
+          <Link href="/dashboard/abonnement" className="btn-ghost btn-sm">
+            Mon abonnement
+          </Link>
+        )}
       </header>
 
       <div className="lg:pl-60">
         <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 lg:px-8 lg:pb-12">{children}</div>
       </div>
+
+      {/* --- Menu "Plus" (mobile) : feuille qui remonte du bas --- */}
+      {moreOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setMoreOpen(false)}
+        >
+          <div
+            className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-white p-5 pb-24"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-display text-lg font-extrabold">Menu</p>
+              <button
+                onClick={() => setMoreOpen(false)}
+                className="rounded-full p-2 text-ink/40 hover:bg-cream"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              {moreItems.map((n) => {
+                const active = path === n.h;
+                return (
+                  <Link
+                    key={n.h}
+                    href={n.h}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                      active ? "bg-primary-soft text-primary-dark" : "text-ink/70 hover:bg-cream"
+                    }`}
+                  >
+                    <n.icon size={18} /> {n.l}
+                  </Link>
+                );
+              })}
+
+              {!demoMode && (
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    router.replace("/connexion");
+                  }}
+                  className="mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-terra transition-colors hover:bg-cream"
+                >
+                  <LogOut size={18} /> Se déconnecter
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/5 bg-white/95 backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-md justify-around py-2">
@@ -190,6 +266,16 @@ function Shell({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+
+          {/* Bouton "Plus" : ouvre le menu des onglets secondaires */}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[10px] font-bold ${
+              moreItems.some((n) => n.h === path) ? "text-primary" : "text-ink/45"
+            }`}
+          >
+            <MoreHorizontal size={19} /> Plus
+          </button>
         </div>
       </nav>
     </div>

@@ -203,3 +203,18 @@ body {
   opacity: 0;
   transition: opacity 0.4s ease-in-out;
 }
+/* ------------------------------------------------------------------ *
+ * Champs de saisie : empêche le zoom automatique sur mobile
+ *
+ * iOS Safari zoome sur un champ dès que sa police est < 16px, ce qui
+ * élargit la page et donne l'impression qu'elle déborde. On force 16px
+ * sur les champs en dessous de 640px de large. L'utilisateur peut
+ * toujours zoomer manuellement (aucune restriction du viewport).
+ * ------------------------------------------------------------------ */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
