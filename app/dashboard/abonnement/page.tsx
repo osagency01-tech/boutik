@@ -4,16 +4,13 @@ import { Reveal } from "@/components/motion";
 import { PLANS, fcfa } from "@/lib/data";
 import { PLAN_QUOTA, useStore, type Plan } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
+import { COUNTRIES, getCountry, normalizePhone, validatePhone } from "@/lib/countries";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Check, Clock, CreditCard, Info, Loader2, Receipt, X } from "lucide-react";
 import { useState } from "react";
 
 /* ------------------------------------------------------------------ *
  * Abonnement
- *
- * Tout est prêt côté écran. Le branchement de l'agrégateur Mobile
- * Money se fait dans `startCheckout()` — c'est le seul endroit à
- * remplir. Le reste (offres, quotas, échéance, factures) fonctionne.
  * ------------------------------------------------------------------ */
 
 export default function SubscriptionPage() {
@@ -155,14 +152,11 @@ export default function SubscriptionPage() {
             <CreditCard size={19} />
           </span>
           <div className="flex-1">
-            <p className="text-sm font-bold">Aucun moyen de paiement enregistré</p>
+            <p className="text-sm font-bold">Mobile Money</p>
             <p className="text-xs text-ink/50">
-              Mobile Money : Wave, Orange Money, MTN MoMo, Moov.
+              Paiement au moment de l&apos;abonnement, selon ton pays et ton opérateur.
             </p>
           </div>
-          <button disabled className="btn-ghost btn-sm opacity-50">
-            Ajouter
-          </button>
         </div>
       </Reveal>
 
@@ -180,22 +174,6 @@ export default function SubscriptionPage() {
         </div>
       </Reveal>
 
-      {/* --- Note d'intégration --- */}
-      <Reveal delay={0.26}>
-        <div className="mt-6 flex gap-3 rounded-xl border border-mango/40 bg-mango-soft p-4">
-          <Info size={16} className="mt-0.5 shrink-0 text-yellow-700" />
-          <div className="text-xs leading-relaxed text-yellow-900">
-            <p className="font-bold">Paiement en attente de branchement</p>
-            <p className="mt-1">
-              L&apos;agrégateur Mobile Money n&apos;est pas encore connecté. Tout l&apos;écran
-              est prêt : il ne reste qu&apos;à remplir <code className="font-mono">startCheckout()</code>{" "}
-              dans <code className="font-mono">app/dashboard/abonnement/page.tsx</code> et le
-              webhook côté serveur.
-            </p>
-          </div>
-        </div>
-      </Reveal>
-
       <AnimatePresence>
         {selected && <CheckoutModal plan={selected} onClose={() => setSelected(null)} />}
       </AnimatePresence>
@@ -204,47 +182,62 @@ export default function SubscriptionPage() {
 }
 
 /* ------------------------------------------------------------------ *
+ * Icône opérateur
+ * ------------------------------------------------------------------ */
+
+function OperatorIcon({ icon, label }: { icon: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink/10 text-[10px] font-bold text-ink/60">
+        {label.charAt(0)}
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/operators/${icon}.png`}
+      alt={label}
+      className="h-6 w-6 rounded-md object-contain"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Tunnel de paiement
  * ------------------------------------------------------------------ */
 
-const OPERATORS = [
-  { id: "wave", label: "Wave" },
-  { id: "orange", label: "Orange Money" },
-  { id: "mtn", label: "MTN MoMo" },
-  { id: "moov", label: "Moov Money" },
-];
-
 function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   const { config, shopId } = useStore();
-  const [operator, setOperator] = useState(OPERATORS[0].id);
+
+  const [countryIso, setCountryIso] = useState("BJ");
+  const country = getCountry(countryIso) ?? COUNTRIES[0];
+
+  const [operator, setOperator] = useState(country.operators[0].code);
   const [phone, setPhone] = useState(config.phone ?? "");
   const price = PLANS.find((p) => p.name === plan)?.price ?? 0;
 
-  /* ------------------------------------------------------------------
-   * >>> POINT DE BRANCHEMENT DE L'AGRÉGATEUR <<<
-   *
-   * À implémenter le moment venu :
-   *   1. POST vers /api/checkout { plan, operator, phone, shopId }
-   *   2. Le serveur crée une intention chez l'agrégateur
-   *      (PayDunya / CinetPay / Paystack / Wave Business…)
-   *   3. Redirection vers l'URL de paiement, ou push USSD
-   *   4. Le webhook confirme -> écrit dans `payments` en service_role
-   *      -> met à jour `subscriptions` -> qui met à jour `shops.plan`
-   *
-   * Rappel sécurité (voir supabase/README.md) :
-   *   - vérifier la SIGNATURE du webhook, sinon on forge un paiement
-   *   - `idempotency_key` est unique : un webhook rejoué ne double pas
-   *   - le vendeur ne peut PAS écrire shops.plan (guard_shop_privileges)
-   * ------------------------------------------------------------------ */
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  /* Le tunnel appelle /api/checkout, qui fixe le montant côté serveur
-     et délègue à l'agrégateur configuré (lib/payment/index.ts).
-     Tant qu'aucun agrégateur n'est branché, le fournisseur factice
-     répond proprement au lieu de planter. */
+  const changeCountry = (iso: string) => {
+    setCountryIso(iso);
+    const c = getCountry(iso);
+    if (c) setOperator(c.operators[0].code);
+    setErr(null);
+  };
+
   const startCheckout = async () => {
     if (busy) return;
+
+    const phoneError = validatePhone(phone, country);
+    if (phoneError) {
+      setErr(phoneError);
+      return;
+    }
+
     setBusy(true);
     setErr(null);
 
@@ -267,7 +260,8 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
           shopId,
           plan: plan.toLowerCase(),
           operator,
-          phone,
+          phone: normalizePhone(phone, country),
+          country: country.iso,
         }),
       });
       const out = await res.json();
@@ -302,7 +296,7 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
         exit={{ y: 40, opacity: 0 }}
         transition={{ type: "spring", damping: 26, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-3xl bg-white p-6 sm:rounded-3xl"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-6 sm:rounded-3xl"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-extrabold">Passer à {plan}</h2>
@@ -322,38 +316,65 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
           <p className="mt-1 text-xs text-ink/50">Sans engagement, résiliable à tout moment.</p>
         </div>
 
+        {/* Pays */}
+        <label className="mb-1.5 mt-5 block text-sm font-bold">Pays</label>
+        <select
+          className="input"
+          value={countryIso}
+          onChange={(e) => changeCountry(e.target.value)}
+        >
+          {COUNTRIES.map((c) => (
+            <option key={c.iso} value={c.iso}>
+              {c.flag} {c.name} (+{c.dialCode})
+            </option>
+          ))}
+        </select>
+
+        {/* Opérateur */}
         <label className="mb-2 mt-5 block text-sm font-bold">Opérateur Mobile Money</label>
         <div className="grid grid-cols-2 gap-2">
-          {OPERATORS.map((o) => (
+          {country.operators.map((o) => (
             <button
-              key={o.id}
-              onClick={() => setOperator(o.id)}
-              className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
-                operator === o.id
+              key={o.code}
+              onClick={() => setOperator(o.code)}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-all ${
+                operator === o.code
                   ? "border-primary bg-primary-soft text-primary-dark"
                   : "border-ink/10 hover:border-ink/40"
               }`}
             >
-              {o.label}
+              <OperatorIcon icon={o.icon} label={o.label} />
+              <span className="truncate">{o.label}</span>
             </button>
           ))}
         </div>
 
-        <label className="mb-1.5 mt-5 block text-sm font-bold">Numéro à débiter</label>
-        <input
-          className="input"
-          type="tel"
-          inputMode="tel"
-          value={phone}
-          placeholder="07 00 00 00 00"
-          onChange={(e) => setPhone(e.target.value)}
-        />
+        {/* Numéro */}
+        <label className="mb-1.5 mt-5 block text-sm font-bold">
+          Numéro à débiter ({country.nsnLength} chiffres)
+        </label>
+        <div className="flex items-stretch gap-2">
+          <span className="flex items-center rounded-xl bg-cream px-3 text-sm font-semibold text-ink/60">
+            +{country.dialCode}
+          </span>
+          <input
+            className="input flex-1"
+            type="tel"
+            inputMode="tel"
+            value={phone}
+            placeholder="01 97 11 29 09"
+            onChange={(e) => {
+              setPhone(e.target.value);
+              setErr(null);
+            }}
+          />
+        </div>
 
         <div className="mt-4 flex gap-2.5 rounded-xl bg-cream p-3">
           <AlertCircle size={15} className="mt-px shrink-0 text-ink/40" />
           <p className="text-[11px] leading-relaxed text-ink/60">
-            Le Mobile Money ne permet pas le prélèvement automatique dans tous les pays. Tu
-            recevras un rappel WhatsApp 3 jours avant chaque échéance.
+            Un message Mobile Money sera envoyé sur ce numéro pour valider le paiement. Vérifie
+            que le numéro correspond bien à l&apos;opérateur choisi.
           </p>
         </div>
 
