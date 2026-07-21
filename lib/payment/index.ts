@@ -117,8 +117,11 @@ export function getProvider(): PaymentProvider {
 
 export function normalizeMsisdn(phone: string, countryCode = "229"): string {
   const d = phone.replace(/\D/g, "");
+  /* Déjà au format international (commence par l'indicatif). */
   if (d.startsWith(countryCode)) return d.slice(0, 15);
-  return (countryCode + d.replace(/^0+/, "")).slice(0, 15);
+  /* Bénin : les numéros à 10 chiffres commencent par 01 — ce 0 fait
+     partie du numéro, on ne le retire PAS. On préfixe juste l'indicatif. */
+  return (countryCode + d).slice(0, 15);
 }
 
 export function makeIdempotencyKey(shopId: string, plan: PlanId): string {
