@@ -183,6 +183,7 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   }
   throw new Error("Impossible de trouver un lien disponible");
 }
+
 export async function isSlugAvailable(slug: string) {
   const sb = supabase();
   if (!sb) return true;
@@ -330,10 +331,28 @@ export async function uploadImage(
   const { error } = await sb.storage.from(bucket).upload(path, file, {
     upsert: true,
     contentType: "image/jpeg",
-    cacheControl: "3600",
+    /* Cache 1 an : les images produits ne changent quasi jamais. Le
+       navigateur du client les garde, elles ne sont pas retéléchargées
+       à chaque visite -> gros gain sur l'EGRESS Supabase. Le paramètre
+       de version (?v=) dans l'URL force le rafraîchissement quand une
+       photo est remplacée. */
+    cacheControl: "31536000",
   });
   if (error) throw error;
   return path;
+}
+
+/* Construit l'URL publique d'une image du Storage, avec un paramètre
+   de version basé sur l'instant : quand une photo est remplacée
+   (même chemin), ce ?v= force le navigateur à recharger la nouvelle
+   au lieu de servir l'ancienne depuis son cache long. */
+export function publicImageUrl(
+  bucket: "shop-logos" | "product-images",
+  path: string
+): string {
+  const base = storageUrl(bucket, path);
+  if (!base) return "";
+  return `${base}?v=${Date.now()}`;
 }
 
 export async function setProductImage(shopId: string, productId: string, path: string) {

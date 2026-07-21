@@ -44,10 +44,6 @@ export type ShopConfig = {
   published: boolean;
 };
 
-
-
-
-
 /* Ce que chaque offre débloque */
 export const TIER_ACCESS: Record<Plan, Tier[]> = {
   Gratuit: ["Starter"],
@@ -55,7 +51,6 @@ export const TIER_ACCESS: Record<Plan, Tier[]> = {
   Business: ["Starter", "Business"],
   Premium: ["Starter", "Business", "Premium"],
 };
-
 
 export const canUseTemplate = (plan: Plan, id: TemplateId) =>
   TIER_ACCESS[plan].includes(templateTier(id));
@@ -77,10 +72,6 @@ export const PLAN_QUOTA: Record<Plan, number> = {
   Business: 50,
   Premium: Infinity,
 };
-
-
-
-
 
 /* ------------------------------------------------------------------ */
 /*  Valeurs par défaut (boutique démo)                                 */
@@ -320,17 +311,25 @@ export function StoreProvider({
 
     if (!shopId) return false;
     /* Écriture serveur : c'est la base qui fait autorité sur le quota.
-       On recharge derrière pour récupérer l'id réel. */
+       On insère localement le produit retourné plutôt que de recharger
+       tout le catalogue — une requête de moins par ajout. */
     (async () => {
       try {
         setSaveState("saving");
         const row = await api.insertProduct(shopId, p, products.length);
+        let image = p.image;
         if (p.image?.startsWith("data:")) {
           const blob = await (await fetch(p.image)).blob();
           const path = await api.uploadImage("product-images", shopId, blob, `${row.id}.jpg`);
           await api.setProductImage(shopId, row.id, path);
+          /* URL construite localement, avec un paramètre de version
+             pour forcer le rafraîchissement quand la photo change. */
+          image = api.publicImageUrl("product-images", path);
         }
-        setProducts(await api.fetchProducts(shopId));
+        setProducts((ps) => [
+          { ...p, id: row.id, image },
+          ...ps.filter((x) => x.id !== row.id),
+        ]);
         setSaveState("saved");
         setTimeout(() => setSaveState("idle"), 1500);
       } catch (e: any) {
@@ -352,7 +351,10 @@ export function StoreProvider({
           const blob = await (await fetch(patch.image)).blob();
           const path = await api.uploadImage("product-images", shopId, blob, `${id}.jpg`);
           await api.setProductImage(shopId, id, path);
-          setProducts(await api.fetchProducts(shopId));
+          /* On met à jour localement l'URL de l'image (avec version)
+             au lieu de retélécharger tout le catalogue. */
+          const freshUrl = api.publicImageUrl("product-images", path);
+          setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, image: freshUrl } : p)));
         }
         setSaveState("saved");
         setTimeout(() => setSaveState("idle"), 1500);
