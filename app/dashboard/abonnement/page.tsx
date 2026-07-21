@@ -180,31 +180,6 @@ export default function SubscriptionPage() {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ *
- * Icône opérateur
- * ------------------------------------------------------------------ */
-
-function OperatorIcon({ icon, label }: { icon: string; label: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink/10 text-[10px] font-bold text-ink/60">
-        {label.charAt(0)}
-      </span>
-    );
-  }
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`/operators/${icon}.png`}
-      alt={label}
-      className="h-6 w-6 rounded-md object-contain"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
 /* ------------------------------------------------------------------ *
  * Tunnel de paiement
  * ------------------------------------------------------------------ */
@@ -332,19 +307,18 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
 
         {/* Opérateur */}
         <label className="mb-2 mt-5 block text-sm font-bold">Opérateur Mobile Money</label>
-        <div className="grid grid-cols-2 gap-2">
+       <div className="grid grid-cols-2 gap-2">
           {country.operators.map((o) => (
             <button
               key={o.code}
               onClick={() => setOperator(o.code)}
-              className={`flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-all ${
+              className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
                 operator === o.code
                   ? "border-primary bg-primary-soft text-primary-dark"
                   : "border-ink/10 hover:border-ink/40"
               }`}
             >
-              <OperatorIcon icon={o.icon} label={o.label} />
-              <span className="truncate">{o.label}</span>
+              {o.label}
             </button>
           ))}
         </div>
