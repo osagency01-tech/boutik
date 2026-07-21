@@ -64,11 +64,12 @@ export class SebpayProvider implements PaymentProvider {
         body: JSON.stringify({
           amount,
           currency: "XOF",
-          customer_phone: input.phone,
-          customer_network: OPERATOR_TO_SEBPAY[input.operator] ?? "MTN",
-          reference: input.idempotencyKey,
+          country: "BJ",
+          phone: input.phone,
+          operator: OPERATOR_TO_SEBPAY[input.operator] ?? "MTN",
+          external_reference: input.idempotencyKey,
           description: `Abonnement ${input.plan}`,
-          callback_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/webhooks/paiement`,
+          callback_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.boutik-app.com"}/api/webhooks/paiement`,
         }),
       });
 
@@ -129,8 +130,8 @@ if (!res.ok) {
     const operatorRaw = (p.customer_network || p.provider || "").toUpperCase();
 
     return {
-      reference: p.transaction_id || p.reference || "",
-      idempotencyKey: p.reference ?? null,
+      reference: p.transaction_id || p.external_reference || p.reference || "",
+      idempotencyKey: p.external_reference ?? p.reference ?? null,
       status,
       amount: Number(p.amount) || 0,
       operator: SEBPAY_TO_OPERATOR[operatorRaw] ?? null,
