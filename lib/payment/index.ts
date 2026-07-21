@@ -115,7 +115,7 @@ export function getProvider(): PaymentProvider {
  * Utilitaires communs
  * -------------------------------------------------------------------- */
 
-export function normalizeMsisdn(phone: string, countryCode = "225"): string {
+export function normalizeMsisdn(phone: string, countryCode = "229"): string {
   const d = phone.replace(/\D/g, "");
   if (d.startsWith(countryCode)) return d.slice(0, 15);
   return (countryCode + d.replace(/^0+/, "")).slice(0, 15);

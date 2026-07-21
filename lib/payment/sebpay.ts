@@ -73,13 +73,15 @@ export class SebpayProvider implements PaymentProvider {
       });
 
       const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
+if (!res.ok) {
+        const detail =
+          (data && (data.errors || data.detail || data.details)) || null;
         return {
           kind: "error",
           message:
-            (data && (data.message || data.error)) ||
-            "Le paiement n'a pas pu etre initie. Reessaie.",
+            ((data && (data.message || data.error)) ||
+              "Le paiement n'a pas pu etre initie.") +
+            (detail ? " — " + JSON.stringify(detail) : ""),
         };
       }
 
