@@ -18,6 +18,7 @@ import {
   ReceiptText,
   Shield,
   Store,
+  User,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -32,10 +33,12 @@ const NAV = [
   { l: "Ma boutique", h: "/dashboard/boutique", icon: Palette },
   { l: "Abonnement", h: "/dashboard/abonnement", icon: CreditCard },
   { l: "Aide", h: "/dashboard/aide", icon: LifeBuoy },
+  { l: "Mon profil", h: "/dashboard/profil", icon: User },
 ];
 
 /* Barre du bas mobile : 4 onglets du quotidien + un bouton "Plus"
-   qui ouvre le reste (Ma boutique, Abonnement, Aide, Admin). */
+   qui ouvre le reste (Ma boutique, Abonnement, Aide, Admin).
+   Le profil, lui, est accessible par l'icône en haut à droite. */
 const NAV_MOBILE = [NAV[0], NAV[1], NAV[2], NAV[3]];
 const NAV_MORE = [NAV[4], NAV[5], NAV[6]];
 
@@ -183,15 +186,28 @@ function Shell({ children }: { children: React.ReactNode }) {
 
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-ink/5 bg-white/85 px-4 py-3 backdrop-blur-md lg:hidden">
         <BoutikLogo className="h-6" />
-        {isFree ? (
-          <Link href="/dashboard/abonnement" className="btn-primary btn-sm">
-            S&apos;abonner
+        <div className="flex items-center gap-2">
+          {isFree ? (
+            <Link href="/dashboard/abonnement" className="btn-primary btn-sm">
+              S&apos;abonner
+            </Link>
+          ) : (
+            <Link href="/dashboard/abonnement" className="btn-ghost btn-sm">
+              Mon abonnement
+            </Link>
+          )}
+          <Link
+            href="/dashboard/profil"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
+              path === "/dashboard/profil"
+                ? "bg-primary-soft text-primary"
+                : "bg-cream text-ink/50 hover:text-ink"
+            }`}
+            aria-label="Mon profil"
+          >
+            <User size={18} />
           </Link>
-        ) : (
-          <Link href="/dashboard/abonnement" className="btn-ghost btn-sm">
-            Mon abonnement
-          </Link>
-        )}
+        </div>
       </header>
 
       <div className="lg:pl-60">
