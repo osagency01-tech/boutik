@@ -22,10 +22,10 @@ body {
 
 @font-face {
   font-family: "Breathing";
-  src: url("/fonts/breathing.ttf") format("truetype");
+  src: url("/fonts/breathing.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
 /* ---- Motif signature inspiré du wax ---- */
@@ -177,6 +177,9 @@ body {
   line-height: 1;
   display: block;
   animation: splash-breathe 2.2s ease-in-out 1.2s infinite;
+  /* Réserve la place avant l'arrivée de la police : évite le
+     décalage quand `swap` bascule de la police de secours à Breathing. */
+  min-height: 1em;
 }
 
 .splash-reveal {

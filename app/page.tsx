@@ -1,6 +1,7 @@
 "use client";
 
 import { BoutikLogo } from "@/components/brand";
+import Splash from "@/components/splash";   // ligne 3
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { WhatsAppIcon } from "@/components/phone-icon";
 import dynamic from "next/dynamic";
@@ -11,6 +12,7 @@ import dynamic from "next/dynamic";
 const PhoneDemo = dynamic(() => import("@/components/phone-demo"), {
   ssr: false,
   loading: () => <PhoneSkeleton />,
+  
 });
 
 function PhoneSkeleton() {
@@ -19,6 +21,9 @@ function PhoneSkeleton() {
       <div className="h-[560px] animate-pulse rounded-[2.4rem] bg-ink/5" />
     </div>
   );
+  /* Écran de démarrage : uniquement sur l'accueil, plus dans le layout
+   racine où il pesait sur le dashboard et les boutiques clientes. */
+const Splash = dynamic(() => import("@/components/splash"), { ssr: false });
 }
 
 /* Ne monte le téléphone animé que lorsqu'il approche de l'écran.
@@ -76,11 +81,9 @@ import { useEffect, useRef, useState } from "react";
 export default function Landing() {
   return (
     <main>
+      <Splash />
       <Header />
       <Hero />
-      {/* Preuve immédiate : le visiteur voit de vraies boutiques sans
-          défiler. Elles étaient à 4 écrans plus bas — donc jamais vues
-          sur mobile. */}
       <ShopStrip />
       <Realities />
       <Templates />
@@ -107,7 +110,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-ink/5 bg-cream/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Logo />
+        <Logo priority />
         <nav className="hidden items-center gap-7 text-sm font-medium text-ink/70 md:flex">
           {links.map(([l, h]) => (
             <a key={h} href={h} className="transition-colors hover:text-ink">
@@ -152,10 +155,11 @@ function Header() {
   );
 }
 
-function Logo({ light = false }: { light?: boolean }) {
-  return (
-    <BoutikLogo className={`h-8 ${light ? "brightness-0 invert" : ""}`} />
-  );
+
+
+/* Footer : tout en bas de page, chargement différé par défaut. */
+function Logo({ priority = false }: { priority?: boolean }) {
+  return <BoutikLogo className="h-8" priority={priority} />;
 }
 
 /* ---------------- Hero ---------------- */
