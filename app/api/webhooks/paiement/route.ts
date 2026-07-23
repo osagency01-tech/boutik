@@ -1,4 +1,4 @@
-import { getProvider } from "@/lib/payment";
+import { getProvider, PLAN_PRICES, type PlanId } from "@/lib/payment";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
@@ -22,9 +22,21 @@ function admin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
+  /* SebPay ne signe pas ses webhooks. A defaut de HMAC, on restreint
+   l'origine. Laisser SEBPAY_WEBHOOK_IPS vide desactive le filtre :
+   pratique en local, a renseigner imperativement en production. */
+const SEBPAY_IPS = (process.env.SEBPAY_WEBHOOK_IPS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function callerIp(req: Request): string {
+  return (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
+}
 }
 
 export async function POST(req: Request) {
+  
   const raw = await req.text();
   const headers: Record<string, string> = {};
   req.headers.forEach((v, k) => (headers[k] = v));
@@ -84,6 +96,27 @@ export async function POST(req: Request) {
   const [shopId, plan] = (event.idempotencyKey ?? "").split(":");
   if (!shopId || !plan) {
     return NextResponse.json({ error: "reference incomplete" }, { status: 400 });
+  }
+
+  /* Le plan est extrait de la reference, donc d'une chaine qui transite
+     par l'agregateur. On ne credite jamais une offre dont le tarif ne
+     correspond pas au montant reellement encaisse. */
+  if (!(plan in PLAN_PRICES)) {
+    return NextResponse.json({ error: "offre inconnue" }, { status: 400 });
+  }
+  const attendu = PLAN_PRICES[plan as PlanId];
+  if (event.amount !== attendu) {
+    await sb.from("audit_log").insert({
+      shop_id: shopId,
+      action: "payment_amount_mismatch",
+      target: plan,
+      metadata: {
+        recu: event.amount,
+        attendu,
+        reference: event.reference,
+      },
+    });
+    return NextResponse.json({ error: "montant incoherent" }, { status: 400 });
   }
 
   await sb.from("payments").insert({

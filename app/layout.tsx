@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Splash from "@/components/splash";   // ligne 3
 import dynamic from "next/dynamic";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { SITE_URL } from "@/lib/config";

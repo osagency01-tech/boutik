@@ -57,24 +57,34 @@ export class SebpayProvider implements PaymentProvider {
   async createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
     const amount = PLAN_PRICES[input.plan];
 
+    /* Sorti dans une variable pour pouvoir le journaliser tel quel. */
+    const payload = {
+      amount,
+      currency: "XOF",
+      country: "BJ",
+      phone: input.phone,
+      operator: OPERATOR_TO_SEBPAY[input.operator] ?? "MTN",
+      external_reference: input.idempotencyKey,
+      description: `Abonnement ${input.plan}`,
+      callback_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.boutik-app.com"}/api/webhooks/paiement`,
+    };
+
+    /* --- DIAGNOSTIC TEMPORAIRE — retirer une fois le push retabli --- */
+    console.log("[sebpay] ENVOYE:", JSON.stringify(payload));
+
     try {
       const res = await fetch(`${BASE_URL}/collections`, {
         method: "POST",
         headers: this.headers(),
-        body: JSON.stringify({
-          amount,
-          currency: "XOF",
-          country: "BJ",
-          phone: input.phone,
-          operator: OPERATOR_TO_SEBPAY[input.operator] ?? "MTN",
-          external_reference: input.idempotencyKey,
-          description: `Abonnement ${input.plan}`,
-          callback_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.boutik-app.com"}/api/webhooks/paiement`,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
-if (!res.ok) {
+
+      /* --- DIAGNOSTIC TEMPORAIRE --- */
+      console.log("[sebpay] RECU:", res.status, JSON.stringify(data));
+
+      if (!res.ok) {
         const detail =
           (data && (data.errors || data.detail || data.details)) || null;
         return {
@@ -94,7 +104,10 @@ if (!res.ok) {
         message:
           "Un message vient d'etre envoye sur ton telephone. Compose ton code Mobile Money pour valider le paiement.",
       };
-    } catch {
+    } catch (err) {
+      /* --- DIAGNOSTIC TEMPORAIRE --- */
+      console.log("[sebpay] EXCEPTION:", String(err));
+
       return {
         kind: "error",
         message: "Connexion au service de paiement impossible. Reessaie.",
@@ -147,6 +160,10 @@ if (!res.ok) {
       });
       if (!res.ok) return false;
       const data = await res.json().catch(() => ({}));
+
+      /* --- DIAGNOSTIC TEMPORAIRE --- */
+      console.log("[sebpay] STATUT:", transactionId, JSON.stringify(data));
+
       const s = (data.status || "").toLowerCase();
       return s === "success" || s === "successful" || s === "paid";
     } catch {

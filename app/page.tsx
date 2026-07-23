@@ -1,7 +1,6 @@
 "use client";
 
 import { BoutikLogo } from "@/components/brand";
-import Splash from "@/components/splash";   // ligne 3
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { WhatsAppIcon } from "@/components/phone-icon";
 import dynamic from "next/dynamic";
@@ -21,10 +20,11 @@ function PhoneSkeleton() {
       <div className="h-[560px] animate-pulse rounded-[2.4rem] bg-ink/5" />
     </div>
   );
-  /* Écran de démarrage : uniquement sur l'accueil, plus dans le layout
+}
+
+/* Écran de démarrage : uniquement sur l'accueil, plus dans le layout
    racine où il pesait sur le dashboard et les boutiques clientes. */
 const Splash = dynamic(() => import("@/components/splash"), { ssr: false });
-}
 
 /* Ne monte le téléphone animé que lorsqu'il approche de l'écran.
    Sans ça, Framer Motion (~53 Ko) est téléchargé dès l'arrivée sur la
