@@ -17,7 +17,7 @@ type Form = { name: string; phone: string; address: string; zone: string; note: 
 
 export default function CheckoutPage() {
   const { detailed, total, clear } = useCart();
-  const { config, palette, shopId, demoMode } = useStore();
+  const { config, palette, shopId, demoMode, basePath } = useStore();
   const [form, setForm] = useState<Form>({
     name: "",
     phone: "",
@@ -174,7 +174,7 @@ export default function CheckoutPage() {
             <WhatsAppIcon className="h-5 w-5" /> Envoyer au vendeur sur WhatsApp
           </a>
           <Link
-            href="/boutique"
+            href={basePath}
             className="mt-4 inline-block text-sm font-semibold text-ink/50 hover:text-ink"
           >
             Retour à la boutique
@@ -189,7 +189,7 @@ export default function CheckoutPage() {
       <div className="pt-24 text-center">
         <h1 className="font-display text-2xl font-extrabold">Ton panier est vide</h1>
         <Link
-          href="/boutique/produits"
+          href={`${basePath}/produits`}
           className="btn btn-md mt-5 text-white"
           style={{ backgroundColor: palette.accent }}
         >
@@ -202,7 +202,7 @@ export default function CheckoutPage() {
   return (
     <div className="pt-8">
       <Link
-        href="/boutique/panier"
+        href={`${basePath}/panier`}
         className="inline-flex items-center gap-1.5 text-sm font-semibold shop-muted hover:text-ink"
       >
         <ArrowLeft size={15} /> Retour au panier

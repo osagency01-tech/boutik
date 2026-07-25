@@ -11,7 +11,7 @@
  *  l'app est mise en cache.
  * ------------------------------------------------------------------ */
 
-const VERSION = "boutik-v2";
+const VERSION = "boutik-v3";
 const SHELL = ["/", "/icon-192.png", "/logo-boutik.png", "/manifest.json"];
 
 self.addEventListener("install", (e) => {

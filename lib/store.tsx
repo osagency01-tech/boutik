@@ -8,6 +8,7 @@ import { TEMPLATE_INFO, templateTier, type TemplateId, type Tier } from "./templ
 export { TEMPLATE_INFO, templateTier };
 export type { TemplateId, Tier };
 import * as api from "./api";
+import { demoShopToConfig, demoShopToProducts } from "./demo-shops";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 /* ------------------------------------------------------------------ */
@@ -23,6 +24,10 @@ export type ShopConfig = {
   tagline: string;
   logo?: string;
   logoIcon: string;
+  /* Image de fond de la grande bannière d'accueil (modèles classique,
+     food, modern). Optionnelle : sans elle, la bannière reste au
+     dégradé de couleur uni, comme avant. */
+  bannerImage?: string;
   palette: string;
   template: TemplateId;
   bannerBadge: string;
@@ -131,6 +136,10 @@ type StoreCtx = {
   ready: boolean;
   resetDemo: () => void;
   startFresh: () => void;
+  /* Préfixe des routes internes de la boutique (produits, panier, commande…).
+     "/boutique" par défaut (aperçu vendeur), "/b/<slug>" pour une boutique
+     publique, "/demo" pour la boutique de démonstration. */
+  basePath: string;
   /* --- backend --- */
   shopId: string | null;
   demoMode: boolean;
@@ -141,6 +150,22 @@ type StoreCtx = {
   hasShop: boolean;
 };
 
+/* Envoie un data: URI (photo choisie par le vendeur, encodée en base64
+   par fileToDataUrl) vers le Storage : jamais de base64 en base. Utilisé
+   pour le logo/la bannière comme pour les photos produit — `path` sert
+   aux tables qui référencent le fichier (product_images), `url` est ce
+   qu'on affiche. */
+async function uploadDataUri(
+  bucket: "shop-logos" | "product-images",
+  shopId: string,
+  dataUri: string,
+  name: string
+): Promise<{ path: string; url: string }> {
+  const blob = await (await fetch(dataUri)).blob();
+  const path = await api.uploadImage(bucket, shopId, blob, name);
+  return { path, url: api.publicImageUrl(bucket, path) };
+}
+
 const Ctx = createContext<StoreCtx | null>(null);
 const KEY = "boutik-store-v1";
 
@@ -148,6 +173,8 @@ export function StoreProvider({
   children,
   slug,
   demo,
+  demoTemplate,
+  basePath = "/boutique",
 }: {
   children: React.ReactNode;
   /* Si fourni : on charge la boutique publique de ce slug (vitrine).
@@ -157,6 +184,11 @@ export function StoreProvider({
      on ne touche JAMAIS à la base. Sans ce garde-fou, l'aperçu
      affichait la boutique d'un vrai vendeur. */
   demo?: boolean;
+  /* Avec `demo` : quel modèle de démonstration charger automatiquement
+     (config + produits + vraies photos). Sans ce prop, `demo` seul
+     attend que la page injecte tout elle-même (cas de /apercu). */
+  demoTemplate?: TemplateId;
+  basePath?: string;
 }) {
   const [config, setConfigState] = useState<ShopConfig>(DEFAULT_CONFIG);
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
@@ -172,6 +204,16 @@ export function StoreProvider({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = async () => {
+    /* --- Boutique de démo autonome (ex. /demo) : on injecte directement
+       la config + les produits du modèle demandé, vraies photos incluses. */
+    if (demo && demoTemplate) {
+      setConfigState({ ...DEFAULT_CONFIG, ...demoShopToConfig(demoTemplate) });
+      setProducts(demoShopToProducts(demoTemplate));
+      setHasShop(true);
+      setReady(true);
+      return;
+    }
+
     /* --- Aperçu de modèle : rien à charger, la page injecte tout --- */
     if (demo) {
       setHasShop(true);
@@ -251,6 +293,13 @@ export function StoreProvider({
 
     setSaveState("saving");
     try {
+      /* Comme pour une photo produit : on n'écrit jamais un data: URI en
+         base, on l'envoie au Storage et on ne garde que le chemin/URL. */
+      if (patch.bannerImage?.startsWith("data:")) {
+        const { url } = await uploadDataUri("shop-logos", shopId, patch.bannerImage, "banner.jpg");
+        patch.bannerImage = url;
+        setConfigState((c) => ({ ...c, bannerImage: url }));
+      }
       await api.updateShop(shopId, patch);
       if (patch.zones) await api.replaceZones(shopId, patch.zones);
       setSaveState("saved");
@@ -319,12 +368,9 @@ export function StoreProvider({
         const row = await api.insertProduct(shopId, p, products.length);
         let image = p.image;
         if (p.image?.startsWith("data:")) {
-          const blob = await (await fetch(p.image)).blob();
-          const path = await api.uploadImage("product-images", shopId, blob, `${row.id}.jpg`);
+          const { path, url } = await uploadDataUri("product-images", shopId, p.image, `${row.id}.jpg`);
           await api.setProductImage(shopId, row.id, path);
-          /* URL construite localement, avec un paramètre de version
-             pour forcer le rafraîchissement quand la photo change. */
-          image = api.publicImageUrl("product-images", path);
+          image = url;
         }
         setProducts((ps) => [
           { ...p, id: row.id, image },
@@ -348,13 +394,11 @@ export function StoreProvider({
         setSaveState("saving");
         await api.patchProduct(id, patch);
         if (patch.image?.startsWith("data:")) {
-          const blob = await (await fetch(patch.image)).blob();
-          const path = await api.uploadImage("product-images", shopId, blob, `${id}.jpg`);
+          const { path, url } = await uploadDataUri("product-images", shopId, patch.image, `${id}.jpg`);
           await api.setProductImage(shopId, id, path);
-          /* On met à jour localement l'URL de l'image (avec version)
-             au lieu de retélécharger tout le catalogue. */
-          const freshUrl = api.publicImageUrl("product-images", path);
-          setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, image: freshUrl } : p)));
+          /* On met à jour localement l'URL de l'image au lieu de
+             retélécharger tout le catalogue. */
+          setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, image: url } : p)));
         }
         setSaveState("saved");
         setTimeout(() => setSaveState("idle"), 1500);
@@ -443,7 +487,7 @@ export function StoreProvider({
   return (
     <Ctx.Provider
       value={{ config, palette, setConfig, products, setProducts, addProduct, updateProduct, deleteProduct, duplicateProduct, moveProduct, quota, photoQuota, ready, resetDemo, startFresh,
-        shopId, demoMode, error, saveState, reload, createShopFromConfig, hasShop }}
+        shopId, demoMode, error, saveState, reload, createShopFromConfig, hasShop, basePath }}
     >
       {children}
     </Ctx.Provider>

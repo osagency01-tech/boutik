@@ -32,13 +32,15 @@ export default function Splash() {
     } catch {}
 
     /* Deux temps : on lance le fondu de sortie, puis on démonte.
-       1,9 s d'affichage : le temps que le mot s'écrive (1,1 s) et
-       respire un instant. */
-    const t1 = setTimeout(() => setLeaving(true), 1900);
+       2,6 s d'affichage : le mot s'écrit (1,1 s), puis respire un
+       bon moment (démarre à 1,2 s) avant de s'effacer — assez pour
+       voir le mouvement, sans faire croire que la page est bloquée
+       derrière un écran blanc plein cadre. */
+    const t1 = setTimeout(() => setLeaving(true), 2600);
     const t2 = setTimeout(() => {
       setShow(false);
       setLeaving(false);
-    }, 2300);
+    }, 3000);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);

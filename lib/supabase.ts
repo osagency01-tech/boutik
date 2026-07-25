@@ -59,6 +59,7 @@ export type DbShop = {
   tagline: string | null;
   logo_path: string | null;
   logo_icon: string;
+  banner_image_path: string | null;
   about: string | null;
   palette: string;
   template: string;

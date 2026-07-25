@@ -16,7 +16,7 @@ body {
 }
 
 ::selection {
-  background: #0e8a52;
+  background: #0d8450;
   color: #fff;
 }
 
@@ -205,6 +205,13 @@ body {
 .splash-out {
   opacity: 0;
   transition: opacity 0.4s ease-in-out;
+}
+
+/* Version réduite, utilisée en boucle sur les pages d'attente
+   (LoadingScreen) : même respiration, sans le tracé d'écriture. */
+.splash-word--sm {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  min-height: 0;
 }
 /* ------------------------------------------------------------------ *
  * Champs de saisie : empêche le zoom automatique sur mobile

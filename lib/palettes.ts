@@ -94,7 +94,7 @@ export const PALETTES: Palette[] = [
     id: "marche",
     name: "Vert marché",
     family: "Naturel",
-    accent: "#0E8A52",
+    accent: "#0D8450",
     accent2: "#46B37B",
     bg: "#F5F9F6",
     surface: "#FFFFFF",

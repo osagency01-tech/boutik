@@ -10,7 +10,7 @@ import Link from "next/link";
 
 export default function CartPage() {
   const { detailed, setQty, remove, total } = useCart();
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
 
   if (detailed.length === 0)
     return (
@@ -27,7 +27,7 @@ export default function CartPage() {
           en moins d'une minute.
         </p>
         <Link
-          href="/boutique/produits"
+          href={`${basePath}/produits`}
           className="btn btn-lg mt-7 text-white hover:shadow-lift"
           style={{ backgroundColor: palette.accent }}
         >
@@ -115,7 +115,7 @@ export default function CartPage() {
             </span>
           </div>
           <Link
-            href="/boutique/commande"
+            href={`${basePath}/commande`}
             className="btn btn-lg mt-6 w-full text-white hover:shadow-lift"
             style={{ backgroundColor: palette.accent }}
           >

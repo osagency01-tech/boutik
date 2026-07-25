@@ -9,10 +9,18 @@ export function ProductVisual({
   product,
   className = "",
   iconSize = 40,
+  focusTop = false,
 }: {
   product: Product;
   className?: string;
   iconSize?: number;
+  /* Les photos vendeur sont recadrées en carré à l'import (photo-editor.tsx),
+     puis re-recadrées ici par object-cover pour chaque gabarit. Sur les
+     héros très hauts et étroits (Luxury, Fashion, Vitrine), un carré coupe
+     une bonne partie de la hauteur : privilégier le haut plutôt que le
+     centre garde plus sûrement le produit visible (visage, sommet d'un
+     vêtement porté, haut d'un objet) que le bas. */
+  focusTop?: boolean;
 }) {
   const { config, palette } = useStore();
   return (
@@ -22,7 +30,7 @@ export function ProductVisual({
         <img
           src={product.image}
           alt={product.name}
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover ${focusTop ? "object-top" : ""}`}
           loading="lazy"
         />
       ) : (
@@ -43,10 +51,10 @@ export function ProductVisual({
 }
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   return (
     <div className="shop-card group overflow-hidden transition-transform duration-200 hover:-translate-y-1">
-      <Link href={`/boutique/produits/${product.id}`} className="block">
+      <Link href={`${basePath}/produits/${product.id}`} className="block">
         <ProductVisual product={product} className="h-44 sm:h-52" iconSize={44} />
         <div className="p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/40">

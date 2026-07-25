@@ -99,16 +99,24 @@ export default function PhoneDemo() {
           </motion.p>
         </AnimatePresence>
         <p className="mt-2 text-xs text-ink/35 sm:hidden">Glisse pour voir les étapes</p>
-        <div className="mt-3 flex justify-center gap-2">
+        <div className="mt-3 flex justify-center">
           {STEPS.map((s) => (
+            /* La puce reste petite (visuel de type carrousel), mais le
+               bouton garde une zone tactile d'au moins 24x24px via le
+               padding — sans ça, ces points sont trop petits/rapprochés
+               pour être touchés fiablement au doigt. */
             <button
               key={s}
               aria-label={LABELS[s]}
               onClick={() => pick(s)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                s === step ? "w-7 bg-primary" : "w-2 bg-ink/15 hover:bg-ink/30"
-              }`}
-            />
+              className="group flex items-center justify-center p-2"
+            >
+              <span
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  s === step ? "w-7 bg-primary" : "w-2 bg-ink/15 group-hover:bg-ink/30"
+                }`}
+              />
+            </button>
           ))}
         </div>
       </div>

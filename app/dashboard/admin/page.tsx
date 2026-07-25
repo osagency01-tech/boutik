@@ -2,7 +2,8 @@
 
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { ErrorScreen, LoadingScreen, SkeletonList } from "@/components/states";
-import { fcfa } from "@/lib/data";
+import { demoWave, fcfa } from "@/lib/data";
+import { TEMPLATE_INFO } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -59,6 +60,14 @@ type TopShop = {
   derniere_commande: string | null;
 };
 type Growth = { mois: string; creees: number; publiees: number; payantes: number };
+type OrdersDaily = {
+  jour: string;
+  commandes: number;
+  volume: number;
+  livrees: number;
+  annulees: number;
+};
+type TemplateUsage = { template: string; utilisations: number; payantes: number };
 type Stats = {
   shops_total: number;
   shops_actives: number;
@@ -111,6 +120,31 @@ const D = {
     { id: "4", name: "Baobab Soins", slug: "baobab-soins", plan: "starter", commandes: 93, volume: 740_000, derniere_commande: null },
     { id: "5", name: "SAPE & CO", slug: "sape-co", plan: "premium", commandes: 78, volume: 2_100_000, derniere_commande: new Date().toISOString() },
   ] as TopShop[],
+  /* 30 derniers jours, variation déterministe (pas de hasard : le
+     graphique ne doit pas changer d'un rendu à l'autre). */
+  ordersDaily: Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const commandes = Math.max(3, Math.round(17 * (1 + demoWave(i, 0.9, 0.35) * 0.5)));
+    return {
+      jour: d.toISOString().slice(0, 10),
+      commandes,
+      volume: commandes * 32_000,
+      livrees: Math.round(commandes * 0.7),
+      annulees: Math.round(commandes * 0.05),
+    };
+  }) as OrdersDaily[],
+  templates: [
+    { template: "classique", utilisations: 58, payantes: 31 },
+    { template: "catalogue", utilisations: 34, payantes: 19 },
+    { template: "food", utilisations: 29, payantes: 18 },
+    { template: "fashion", utilisations: 26, payantes: 22 },
+    { template: "modern", utilisations: 21, payantes: 17 },
+    { template: "vitrine", utilisations: 18, payantes: 9 },
+    { template: "beauty", utilisations: 15, payantes: 12 },
+    { template: "artisan", utilisations: 9, payantes: 6 },
+    { template: "luxury", utilisations: 4, payantes: 4 },
+  ] as TemplateUsage[],
 };
 
 const PLAN_STYLE: Record<string, string> = {
@@ -128,6 +162,8 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [growth, setGrowth] = useState<Growth[]>([]);
   const [top, setTop] = useState<TopShop[]>([]);
+  const [ordersDaily, setOrdersDaily] = useState<OrdersDaily[]>([]);
+  const [templates, setTemplates] = useState<TemplateUsage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [q, setQ] = useState("");
@@ -145,6 +181,8 @@ export default function AdminPage() {
       setStats(D.stats);
       setGrowth(D.growth);
       setTop(D.top);
+      setOrdersDaily(D.ordersDaily);
+      setTemplates(D.templates);
       setLoading(false);
       return;
     }
@@ -165,13 +203,15 @@ export default function AdminPage() {
       }
       setIsAdmin(true);
 
-      const [m, f, h, s, g, t] = await Promise.all([
+      const [m, f, h, s, g, t, od, tpl] = await Promise.all([
         sb.from("admin_mrr").select("*").maybeSingle(),
         sb.from("admin_funnel").select("*").maybeSingle(),
         sb.from("admin_health").select("*").maybeSingle(),
         sb.from("admin_stats").select("*").maybeSingle(),
         sb.from("admin_growth").select("*"),
         sb.from("admin_top_shops").select("*"),
+        sb.from("admin_orders_daily").select("*"),
+        sb.from("admin_templates").select("*"),
       ]);
       setMrr(m.data as Mrr);
       setFunnel(f.data as Funnel);
@@ -179,6 +219,8 @@ export default function AdminPage() {
       setStats(s.data as Stats);
       setGrowth((g.data ?? []) as Growth[]);
       setTop((t.data ?? []) as TopShop[]);
+      setOrdersDaily((od.data ?? []) as OrdersDaily[]);
+      setTemplates((tpl.data ?? []) as TemplateUsage[]);
     } catch {
       setError(true);
     }
@@ -228,6 +270,10 @@ export default function AdminPage() {
     (health?.en_impaye ?? 0) +
     (health?.publiees_sans_produit ?? 0) +
     (stats?.signalements_ouverts ?? 0);
+
+  /* Calculés une fois, pas à chaque ligne de leur .map() respectif. */
+  const maxCommandesJour = Math.max(...ordersDaily.map((d) => d.commandes), 1);
+  const maxTemplateUsage = Math.max(...templates.map((t) => t.utilisations), 1);
 
   return (
     <div>
@@ -407,6 +453,83 @@ export default function AdminPage() {
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-ink/15" /> Gratuites
               </span>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {/* ---------- Activité récente ---------- */}
+      {ordersDaily.length > 0 && (
+        <Reveal delay={0.2}>
+          <div className="card mt-8 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-display font-extrabold">Activité (30 derniers jours)</p>
+                <p className="mt-0.5 text-xs text-ink/50">Commandes, toutes boutiques confondues</p>
+              </div>
+              <div className="flex gap-5 text-right text-xs">
+                <div>
+                  <p className="font-display text-base font-extrabold">
+                    {ordersDaily.reduce((s, d) => s + d.commandes, 0)}
+                  </p>
+                  <p className="text-ink/40">commandes</p>
+                </div>
+                <div>
+                  <p className="font-display text-base font-extrabold text-primary">
+                    {fcfa(ordersDaily.reduce((s, d) => s + d.volume, 0))}
+                  </p>
+                  <p className="text-ink/40">volume</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex h-24 items-end gap-[3px]">
+              {ordersDaily.map((d) => {
+                const h = Math.max(2, Math.round((d.commandes / maxCommandesJour) * 90));
+                return (
+                  <div
+                    key={d.jour}
+                    className="flex h-full flex-1 flex-col justify-end"
+                    title={`${d.jour} — ${d.commandes} commande${d.commandes > 1 ? "s" : ""} · ${fcfa(d.volume)}`}
+                  >
+                    <div className="w-full rounded-t-[2px] bg-primary/70" style={{ height: h }} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {/* ---------- Modèles populaires ---------- */}
+      {templates.length > 0 && (
+        <Reveal delay={0.22}>
+          <div className="card mt-8 p-5">
+            <p className="font-display font-extrabold">Modèles populaires</p>
+            <p className="mt-0.5 text-xs text-ink/50">
+              Ce que choisissent les vendeurs — utile pour savoir où investir
+            </p>
+            <div className="mt-4 space-y-2.5">
+              {templates.map((t) => {
+                const pct = (t.utilisations / maxTemplateUsage) * 100;
+                const info = TEMPLATE_INFO.find((ti) => ti.id === (t.template as any));
+                return (
+                  <div key={t.template}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold">{info?.name ?? t.template}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-ink/40">{t.payantes} payantes</span>
+                        <span className="font-bold">{t.utilisations}</span>
+                      </span>
+                    </div>
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-cream">
+                      <div
+                        className="h-full rounded-full bg-primary transition-[width] duration-700"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </Reveal>

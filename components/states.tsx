@@ -52,8 +52,10 @@ export function OfflineBanner() {
 
 export function LoadingScreen({ label = "Chargement…" }: { label?: string }) {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
-      <Loader2 size={24} className="animate-spin text-ink/30" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3">
+      <span className="splash-word splash-word--sm" aria-hidden>
+        Boutik
+      </span>
       <p className="text-sm text-ink/45">{label}</p>
     </div>
   );

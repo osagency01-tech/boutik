@@ -1,3 +1,5 @@
+import type { Product } from "./data";
+import type { ShopConfig } from "./store";
 import type { TemplateId } from "./templates";
 
 /* ------------------------------------------------------------------ *
@@ -20,10 +22,12 @@ export type DemoProduct = {
   desc: string;
 };
 
-/* Visuel d'un produit de démo. Les fichiers sont générés aux couleurs
-   de chaque boutique (public/demo/). Une boutique sans photos donne
-   l'impression d'être vide — c'est exactement ce qu'on ne veut pas
-   montrer à un vendeur qu'on essaie de convaincre. */
+/* Visuel d'un produit de démo (public/demo/). Pour "classique" (Kadi
+   Store, utilisée par /demo, la vraie boutique de démonstration) ce
+   sont de vraies photos — Pexels, licence Pexels : libres d'usage
+   commercial, sans attribution requise. Un carré de couleur généré ou
+   une boutique sans photos donne l'impression d'être vide — ce n'est
+   pas ce qu'on veut montrer à un vendeur qu'on essaie de convaincre. */
 export const demoImage = (template: string, index: number) =>
   `/demo/${template}-${index % 6}.jpg`;
 
@@ -32,6 +36,9 @@ export type DemoShop = {
   name: string;
   tagline: string;
   logoIcon: string;
+  /* Image de fond de bannière — seuls les modèles avec un gros bloc
+     coloré (classique, food, modern) en tirent parti. */
+  bannerImage?: string;
   palette: string;
   badge: string;
   title: string;
@@ -49,6 +56,7 @@ export const DEMO_SHOPS: Record<TemplateId, DemoShop> = {
     name: "Kadi Store",
     tagline: "Mode, wax & artisanat — Abidjan",
     logoIcon: "shirt",
+    bannerImage: demoImage("classique", 0),
     palette: "terracotta",
     badge: "Nouvelle collection",
     title: "Le wax qui fait tourner les têtes.",
@@ -251,3 +259,48 @@ export const DEMO_SHOPS: Record<TemplateId, DemoShop> = {
 };
 
 export const getDemoShop = (t: TemplateId): DemoShop => DEMO_SHOPS[t] ?? DEMO_SHOPS.classique;
+
+/* ------------------------------------------------------------------ *
+ * Conversion vers les types de la boutique réelle
+ *
+ * Utilisé pour injecter une boutique de démo dans le StoreProvider
+ * (aperçu de modèle sur la landing, et la vraie boutique démo /demo) :
+ * même forme que ce qu'un vendeur enregistrerait.
+ * ------------------------------------------------------------------ */
+
+export function demoShopToConfig(t: TemplateId): Partial<ShopConfig> {
+  const shop = getDemoShop(t);
+  return {
+    template: shop.template,
+    name: shop.name,
+    tagline: shop.tagline,
+    logoIcon: shop.logoIcon,
+    logo: undefined,
+    bannerImage: shop.bannerImage,
+    palette: shop.palette,
+    bannerBadge: shop.badge,
+    bannerTitle: shop.title,
+    bannerSubtitle: shop.subtitle,
+    ctaLabel: shop.cta,
+    perks: shop.perks,
+    about: shop.about,
+    featuredEyebrow: "Sélection",
+    featuredTitle: "Nos produits",
+  };
+}
+
+export function demoShopToProducts(t: TemplateId): Product[] {
+  const shop = getDemoShop(t);
+  return shop.products.map((pr, i) => ({
+    id: `demo-${t}-${i}`,
+    name: pr.name,
+    price: pr.price,
+    oldPrice: pr.oldPrice,
+    category: pr.category,
+    stock: 10,
+    icon: pr.icon,
+    image: demoImage(t, i),
+    description: pr.desc,
+    featured: i < 4,
+  }));
+}

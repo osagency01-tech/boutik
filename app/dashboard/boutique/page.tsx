@@ -1,5 +1,6 @@
 "use client";
 
+import { BannerBackground } from "@/components/banner-media";
 import { Reveal } from "@/components/motion";
 import { SaveIndicator } from "@/components/states";
 import { SHOP_ICONS, ShopLogo } from "@/components/icons";
@@ -232,8 +233,9 @@ function LivePreview() {
               className="wax-pattern-dense relative overflow-hidden rounded-xl p-3 text-white"
               style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}B3)` }}
             >
-              <p className="text-[7px] font-bold uppercase tracking-[0.15em] opacity-80">{config.bannerBadge}</p>
-              <p className="mt-1 font-display text-[13px] font-extrabold leading-tight">{config.bannerTitle}</p>
+              <BannerBackground image={config.bannerImage} accent={palette.accent} />
+              <p className="relative text-[7px] font-bold uppercase tracking-[0.15em] opacity-80">{config.bannerBadge}</p>
+              <p className="relative mt-1 font-display text-[13px] font-extrabold leading-tight">{config.bannerTitle}</p>
             </div>
             <div className="mt-2.5 grid grid-cols-2 gap-2">
               {shown.map((p) => <MiniCard key={p.id} p={p} accent={palette.accent} />)}
@@ -320,9 +322,10 @@ function LivePreview() {
 
         {config.template === "food" && (
           <>
-            <div className="rounded-xl p-2.5 text-center text-white" style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}C0)` }}>
-              <p className="text-[6px] font-bold uppercase tracking-widest opacity-85">{config.bannerBadge}</p>
-              <p className="mt-0.5 font-display text-[11px] font-extrabold leading-tight">{config.bannerTitle}</p>
+            <div className="relative overflow-hidden rounded-xl p-2.5 text-center text-white" style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}C0)` }}>
+              <BannerBackground image={config.bannerImage} accent={palette.accent} />
+              <p className="relative text-[6px] font-bold uppercase tracking-widest opacity-85">{config.bannerBadge}</p>
+              <p className="relative mt-0.5 font-display text-[11px] font-extrabold leading-tight">{config.bannerTitle}</p>
             </div>
             <div className="mt-2 space-y-1.5">
               {products.slice(0, 6).map((p) => (
@@ -361,11 +364,12 @@ function LivePreview() {
           <>
             <div className="grid grid-cols-3 grid-rows-2 gap-1.5">
               <div
-                className="col-span-2 row-span-2 rounded-xl p-2 text-white"
+                className="relative col-span-2 row-span-2 overflow-hidden rounded-xl p-2 text-white"
                 style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}AA)` }}
               >
-                <p className="text-[5px] font-black uppercase tracking-widest opacity-80">{config.bannerBadge}</p>
-                <p className="mt-1 font-display text-[11px] font-extrabold leading-none">{config.bannerTitle}</p>
+                <BannerBackground image={config.bannerImage} accent={palette.accent} />
+                <p className="relative text-[5px] font-black uppercase tracking-widest opacity-80">{config.bannerBadge}</p>
+                <p className="relative mt-1 font-display text-[11px] font-extrabold leading-none">{config.bannerTitle}</p>
               </div>
               {shown[0] && <MiniVisual p={shown[0]} className="h-full min-h-[28px] rounded-xl" />}
               <div className="rounded-xl bg-ink p-1.5">
@@ -704,7 +708,22 @@ function DesignTab({ touch }: { touch: () => void }) {
 }
 
 function AccueilTab({ touch }: { touch: () => void }) {
-  const { config, setConfig } = useStore();
+  const { config, setConfig, palette } = useStore();
+  const bannerFileRef = useRef<HTMLInputElement>(null);
+  const [bannerBusy, setBannerBusy] = useState(false);
+
+  const pickBanner = async (f?: File) => {
+    if (!f) return;
+    setBannerBusy(true);
+    try {
+      const url = await fileToDataUrl(f, 1600);
+      setConfig({ bannerImage: url });
+      touch();
+    } catch {
+      alert("Ce fichier n'a pas pu être chargé. Essaie une image JPG ou PNG.");
+    }
+    setBannerBusy(false);
+  };
 
   const setPerk = (i: number, v: string) => {
     const perks = config.perks.map((p, idx) => (idx === i ? v : p));
@@ -722,6 +741,54 @@ function AccueilTab({ touch }: { touch: () => void }) {
 
   return (
     <>
+      <Field
+        label="Image de fond de la bannière"
+        hint="Visible sur les modèles Classique, Food et Modern — une photo derrière le dégradé de couleur. Optionnel."
+      >
+        <div className="space-y-2">
+          {config.bannerImage && (
+            <div className="relative overflow-hidden rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={config.bannerImage}
+                alt=""
+                className="h-28 w-full object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: `linear-gradient(135deg, ${palette.accent}B3, ${palette.accent}A6)` }}
+              />
+            </div>
+          )}
+          <input
+            ref={bannerFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => pickBanner(e.target.files?.[0])}
+          />
+          <button
+            onClick={() => bannerFileRef.current?.click()}
+            disabled={bannerBusy}
+            className="btn-ghost btn-sm w-full"
+          >
+            <Upload size={14} />{" "}
+            {bannerBusy ? "Chargement…" : config.bannerImage ? "Changer l'image" : "Importer une image"}
+          </button>
+          {config.bannerImage && (
+            <button
+              onClick={() => {
+                setConfig({ bannerImage: undefined });
+                touch();
+              }}
+              className="text-xs font-semibold text-ink/45 hover:text-terra"
+            >
+              Retirer l&apos;image
+            </button>
+          )}
+        </div>
+      </Field>
+
       <Field label="Petit texte au-dessus du titre" hint="Ex. « Nouvelle collection », « Promo du mois ».">
         <input
           className="input"

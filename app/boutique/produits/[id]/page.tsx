@@ -12,7 +12,7 @@ import { useState } from "react";
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
-  const { config, products, ready, palette } = useStore();
+  const { config, products, ready, palette, basePath } = useStore();
   const product = products.find((p) => p.id === id);
   const { add } = useCart();
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function ProductPage() {
       <div className="pt-24 text-center">
         <h1 className="font-display text-2xl font-extrabold">Produit introuvable</h1>
         <p className="mt-2 text-sm shop-muted">Il a peut-être été retiré de la boutique.</p>
-        <Link href="/boutique/produits" className="btn-primary btn-md mt-5">
+        <Link href={`${basePath}/produits`} className="btn-primary btn-md mt-5">
           Voir les produits
         </Link>
       </div>
@@ -42,13 +42,13 @@ export default function ProductPage() {
     add(product.id, currentSize, currentColor, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1600);
-    if (goCart) router.push("/boutique/panier");
+    if (goCart) router.push(`${basePath}/panier`);
   };
 
   return (
     <div className="pt-8">
       <Link
-        href="/boutique/produits"
+        href={`${basePath}/produits`}
         className="inline-flex items-center gap-1.5 text-sm font-semibold shop-muted hover:text-ink"
       >
         <ArrowLeft size={15} /> Retour aux produits

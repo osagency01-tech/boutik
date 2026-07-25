@@ -3,8 +3,9 @@
 import { NotificationCard } from "@/components/install-prompt";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import OnboardingGuide from "@/components/onboarding";
+import { SalesChart, type DayPoint } from "@/components/sales-chart";
 import { WelcomeTour } from "@/components/welcome-tour";
-import { ORDERS, STATUS_STYLE, fcfa, type Order } from "@/lib/data";
+import { ORDERS, STATUS_STYLE, demoWave, fcfa, type Order } from "@/lib/data";
 import { shopDomain, shopUrl } from "@/lib/config";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
@@ -53,12 +54,68 @@ function dbOrderToDisplay(o: any): Order {
   };
 }
 
+const PAID_STATUSES = ["payee", "preparation", "expediee", "livree"];
+
+const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+const sameMonth = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+
+/* Regroupe les commandes d'UN mois par jour, pour le graphique de ventes.
+   Un seul passage sur `orders` (les commandes du vendeur, déjà filtrées
+   sur ce mois par fetchOrdersInRange) au lieu de re-filtrer tout le
+   tableau une fois par jour du mois. */
+function dailyBuckets(orders: any[], monthDate: Date): DayPoint[] {
+  const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+  const days: DayPoint[] = Array.from({ length: daysInMonth }, (_, i) => ({
+    key: `${monthDate.getFullYear()}-${monthDate.getMonth()}-${i + 1}`,
+    day: i + 1,
+    sales: 0,
+    count: 0,
+  }));
+  for (const o of orders) {
+    if (!PAID_STATUSES.includes(o.status)) continue;
+    const bucket = days[new Date(o.created_at).getDate() - 1];
+    if (!bucket) continue;
+    bucket.sales += o.total ?? 0;
+    bucket.count += 1;
+  }
+  return days;
+}
+
+/* Boutique pas encore publiée : jours d'exemple, avec une activité qui
+   décroît plus le mois consulté est ancien (reflète un commerce qui
+   grandit) et une variation jour à jour déterministe (pas de hasard :
+   le graphique ne doit pas changer d'un rendu à l'autre). Le mois
+   courant reste proche des "184 500 F / 31 commandes" déjà affichés
+   dans les tuiles au-dessus. */
+function demoDaily(monthDate: Date): DayPoint[] {
+  const now = new Date();
+  const offset = (now.getFullYear() - monthDate.getFullYear()) * 12 + (now.getMonth() - monthDate.getMonth());
+  const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+  const base = Math.max(700, 6400 - offset * 850);
+  const days: DayPoint[] = [];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const factor = Math.max(0, 1 + demoWave(day, 1.7, 0.6, offset) * 0.6);
+    const sales = Math.round((base * factor) / 500) * 500;
+    days.push({
+      key: `demo-${offset}-${day}`,
+      day,
+      sales,
+      count: sales > 0 ? Math.max(1, Math.round(sales / 6000)) : 0,
+    });
+  }
+  return days;
+}
+
 export default function Overview() {
   const { config, products, palette, shopId } = useStore();
   const { user, demoMode } = useAuth();
   const [copied, setCopied] = useState(false);
   const [realOrders, setRealOrders] = useState<Order[]>([]);
   const [realStats, setRealStats] = useState({ sales: 0, count: 0 });
+  const [chartMonth, setChartMonth] = useState(() => startOfMonth(new Date()));
+  const [days, setDays] = useState<DayPoint[]>([]);
+  const [daysLoading, setDaysLoading] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
   const published = config.published;
@@ -78,29 +135,56 @@ export default function Overview() {
       });
   }, [user, demoMode]);
 
-  /* Une fois la boutique publiée, on charge les vraies commandes depuis
-     la base et on calcule les vraies statistiques du mois. */
+  /* Une fois la boutique publiée : commandes récentes (liste + stats du
+     mois en cours, toujours "aujourd'hui" quel que soit le mois consulté
+     dans le graphique) depuis les 100 dernières commandes — largement
+     suffisant pour "ce mois-ci". */
   useEffect(() => {
     if (!published || !shopId) return;
     let alive = true;
     api.fetchOrders(shopId).then((orders) => {
       if (!alive) return;
-      const display = orders.map(dbOrderToDisplay);
-      setRealOrders(display);
-
+      setRealOrders(orders.map(dbOrderToDisplay));
       const now = new Date();
-      const paidThisMonth = orders.filter((o: any) => {
-        const d = new Date(o.created_at);
-        const isPaid = ["payee", "preparation", "expediee", "livree"].includes(o.status);
-        return isPaid && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const inMonth = orders.filter(
+        (o: any) => PAID_STATUSES.includes(o.status) && sameMonth(new Date(o.created_at), now)
+      );
+      setRealStats({
+        sales: inMonth.reduce((s: number, o: any) => s + (o.total ?? 0), 0),
+        count: inMonth.length,
       });
-      const sales = paidThisMonth.reduce((s: number, o: any) => s + (o.total ?? 0), 0);
-      setRealStats({ sales, count: paidThisMonth.length });
     });
     return () => {
       alive = false;
     };
   }, [published, shopId]);
+
+  /* Graphique : le mois consulté peut être n'importe lequel de
+     l'historique, donc une requête bornée par date plutôt que le
+     plafond de 100 commandes récentes (qui ne couvrirait pas un mois
+     ancien pour une boutique déjà active). */
+  useEffect(() => {
+    if (!published || !shopId) {
+      setDays(demoDaily(chartMonth));
+      return;
+    }
+    let alive = true;
+    setDaysLoading(true);
+    const start = chartMonth;
+    const end = new Date(chartMonth.getFullYear(), chartMonth.getMonth() + 1, 1);
+    api
+      .fetchOrdersInRange(shopId, start, end)
+      .then((orders) => {
+        if (!alive) return;
+        setDays(dailyBuckets(orders, chartMonth));
+      })
+      .finally(() => {
+        if (alive) setDaysLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [published, shopId, chartMonth]);
 
   const slug =
     config.name
@@ -197,6 +281,18 @@ export default function Overview() {
           </StaggerItem>
         ))}
       </Stagger>
+
+      <Reveal delay={0.1}>
+        <SalesChart
+          days={days}
+          monthDate={chartMonth}
+          loading={daysLoading}
+          accent={palette.accent}
+          onPrevMonth={() => setChartMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+          onNextMonth={() => setChartMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+          canGoNext={chartMonth.getTime() < startOfMonth(new Date()).getTime()}
+        />
+      </Reveal>
 
       <Reveal delay={0.12}>
         <div className="card mt-6 grid gap-3 p-5 sm:grid-cols-2">
@@ -295,7 +391,7 @@ export default function Overview() {
               <Share2 size={16} /> Partage ta boutique
             </p>
             <p className="mt-0.5 truncate text-sm text-white/80">
-              {url} — colle ce lien dans ton statut WhatsApp.
+              {url} — colle ce lien sur tes réseaux.
             </p>
             {!published && (
               <p className="mt-2 text-xs text-white/90">

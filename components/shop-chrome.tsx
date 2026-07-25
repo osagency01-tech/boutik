@@ -8,27 +8,32 @@ import { useStore } from "@/lib/store";
 import { ArrowLeft, Menu, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-
-const NAV = [
-  ["Accueil", "/boutique"],
-  ["Produits", "/boutique/produits"],
-  ["Livraison", "/boutique/livraison"],
-  ["À propos", "/boutique/a-propos"],
-  ["Contact", "/boutique/contact"],
-];
+import { useMemo, useState } from "react";
 
 export default function ShopChrome({
   children,
   preview = false,
+  demo = false,
 }: {
   children: React.ReactNode;
   preview?: boolean;
+  demo?: boolean;
 }) {
   const { count } = useCart();
-  const { config, palette, ready, error, reload, hasShop } = useStore();
+  const { config, palette, ready, error, reload, hasShop, basePath } = useStore();
   const path = usePathname();
   const [open, setOpen] = useState(false);
+
+  const NAV = useMemo(
+    () => [
+      ["Accueil", basePath],
+      ["Produits", `${basePath}/produits`],
+      ["Livraison", `${basePath}/livraison`],
+      ["À propos", `${basePath}/a-propos`],
+      ["Contact", `${basePath}/contact`],
+    ],
+    [basePath]
+  );
 
   if (!ready) return <LoadingScreen label="Chargement de la boutique…" />;
   if (error) return <ErrorScreen onRetry={reload} />;
@@ -55,10 +60,22 @@ export default function ShopChrome({
           </Link>
         </div>
       )}
+      {demo && (
+        <div className="bg-ink px-4 py-2 text-center text-xs font-medium text-white/80">
+          Boutique de démonstration ·{" "}
+          <Link href="/creer" className="underline underline-offset-2 hover:text-white">
+            Créer la mienne
+          </Link>{" "}
+          ·{" "}
+          <Link href="/" className="underline underline-offset-2 hover:text-white">
+            Boutik
+          </Link>
+        </div>
+      )}
 
       <header className="shop-surface sticky top-0 z-40 border-b border-black/5 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/boutique" className="flex min-w-0 items-center gap-2.5">
+          <Link href={basePath} className="flex min-w-0 items-center gap-2.5">
             <ShopLogo
               logo={config.logo}
               icon={config.logoIcon}
@@ -88,7 +105,7 @@ export default function ShopChrome({
           </nav>
           <div className="flex shrink-0 items-center gap-2">
             <Link
-              href="/boutique/panier"
+              href={`${basePath}/panier`}
               className="relative rounded-full border border-ink/10 bg-white p-2.5 transition-colors hover:border-ink/30"
               aria-label="Panier"
             >

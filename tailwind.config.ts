@@ -7,7 +7,10 @@ const config: Config = {
       colors: {
         ink: "#14231B",
         cream: "#F7F8F4",
-        primary: { DEFAULT: "#0E8A52", dark: "#0A6B40", soft: "#E3F2EA" },
+        /* DEFAULT très légèrement assombri par rapport à l'original
+           (#0E8A52) : en blanc sur ce vert, le contraste était de 4.39:1,
+           sous le seuil WCAG AA de 4.5:1 pour le texte des boutons. */
+        primary: { DEFAULT: "#0D8450", dark: "#0A6B40", soft: "#E3F2EA" },
         mango: { DEFAULT: "#F6B932", soft: "#FDF3DC" },
         terra: { DEFAULT: "#E2674A", soft: "#FBEAE5" },
       },

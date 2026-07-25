@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { PRODUCTS, type Product } from "./data";
+import type { Product } from "./data";
+import { useStore } from "./store";
 
 export type CartLine = { id: string; size?: string; color?: string; qty: number };
 
@@ -18,21 +19,36 @@ type CartCtx = {
 
 const Ctx = createContext<CartCtx | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  /* Isole le panier par boutique dans localStorage : sans ça, le panier
+     d'un vendeur visité plus tôt réapparaîtrait chez un autre. */
+  storageKey = "boutik-cart",
+}: {
+  children: React.ReactNode;
+  storageKey?: string;
+}) {
+  /* Les lignes ne stockent qu'un id : il faut les produits réels de LA
+     boutique montée (pas une liste statique) pour les résoudre — sinon
+     le panier semble toujours vide dès qu'on n'est pas sur Kadi Store. */
+  const { products } = useStore();
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    setReady(false);
     try {
-      const raw = localStorage.getItem("boutik-cart");
-      if (raw) setLines(JSON.parse(raw));
-    } catch {}
+      const raw = localStorage.getItem(storageKey);
+      setLines(raw ? JSON.parse(raw) : []);
+    } catch {
+      setLines([]);
+    }
     setReady(true);
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
-    if (ready) localStorage.setItem("boutik-cart", JSON.stringify(lines));
-  }, [lines, ready]);
+    if (ready) localStorage.setItem(storageKey, JSON.stringify(lines));
+  }, [lines, ready, storageKey]);
 
   const same = (l: CartLine, id: string, size?: string, color?: string) =>
     l.id === id && l.size === size && l.color === color;
@@ -68,9 +84,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const detailed = useMemo(
     () =>
       lines
-        .map((l) => ({ ...l, product: PRODUCTS.find((p) => p.id === l.id)! }))
+        .map((l) => ({ ...l, product: products.find((p) => p.id === l.id)! }))
         .filter((l) => l.product),
-    [lines]
+    [lines, products]
   );
 
   const count = detailed.reduce((s, l) => s + l.qty, 0);

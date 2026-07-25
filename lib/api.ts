@@ -24,6 +24,7 @@ export function shopToConfig(s: DbShop, zones: DbZone[]): ShopConfig {
     tagline: s.tagline ?? "",
     logo: storageUrl("shop-logos", s.logo_path),
     logoIcon: s.logo_icon,
+    bannerImage: storageUrl("shop-logos", s.banner_image_path),
     palette: s.palette,
     template: s.template as ShopConfig["template"],
     bannerBadge: s.banner_badge ?? "",
@@ -50,6 +51,10 @@ export function configToShop(c: Partial<ShopConfig>): Partial<DbShop> {
   if (c.name !== undefined) out.name = c.name;
   if (c.tagline !== undefined) out.tagline = c.tagline;
   if (c.logoIcon !== undefined) out.logo_icon = c.logoIcon;
+  /* `bannerImage` arrive ici déjà transformée : `flush()` (lib/store.tsx)
+     l'a envoyée au Storage avant d'appeler updateShop, donc c'est une
+     URL publique, jamais un data: URI. */
+  if (c.bannerImage !== undefined) out.banner_image_path = c.bannerImage || null;
   if (c.palette !== undefined) out.palette = c.palette;
   if (c.template !== undefined) out.template = c.template;
   if (c.bannerBadge !== undefined) out.banner_badge = c.bannerBadge;
@@ -403,6 +408,31 @@ export async function fetchOrders(shopId: string): Promise<DbOrder[]> {
     .limit(100);
   if (error) throw error;
   return (data ?? []) as DbOrder[];
+}
+
+/* Commandes d'un mois précis (bornes exclusives en fin) : utilisé par le
+   graphique de ventes pour naviguer dans l'historique. Contrairement à
+   fetchOrders (plafonnée à 100, pour l'aperçu récent), une fenêtre d'un
+   mois n'a pas besoin de plafond arbitraire.
+   Le graphique n'a besoin que du montant, du statut et de la date : pas
+   de jointure order_items (potentiellement volumineuse sur un mois
+   entier, et jamais lue par l'appelant). */
+export async function fetchOrdersInRange(
+  shopId: string,
+  start: Date,
+  end: Date
+): Promise<Pick<DbOrder, "created_at" | "status" | "total">[]> {
+  const sb = supabase();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("orders")
+    .select("created_at, status, total")
+    .eq("shop_id", shopId)
+    .gte("created_at", start.toISOString())
+    .lt("created_at", end.toISOString())
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Pick<DbOrder, "created_at" | "status" | "total">[];
 }
 
 export async function updateOrderStatus(id: string, status: DbOrderStatus, reason?: string) {

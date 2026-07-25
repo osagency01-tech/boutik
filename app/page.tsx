@@ -122,7 +122,7 @@ function Header() {
           <Link href="/dashboard" className="btn-ghost btn-md">
             Espace vendeur
           </Link>
-          <Link href="/boutique" className="btn-primary btn-md">
+          <Link href="/demo" className="btn-primary btn-md">
             Voir une boutique démo
           </Link>
         </div>
@@ -142,7 +142,7 @@ function Header() {
                 {l}
               </a>
             ))}
-            <Link href="/boutique" className="btn-primary btn-md mt-2">
+            <Link href="/demo" className="btn-primary btn-md mt-2">
               Voir une boutique démo
             </Link>
             <Link href="/dashboard" className="btn-ghost btn-md">
@@ -193,7 +193,7 @@ function Hero() {
               <Link href="/creer" className="btn-primary btn-lg">
                 Créer ma boutique gratuitement <ArrowRight size={18} />
               </Link>
-              <Link href="/boutique" className="btn-ghost btn-lg">
+              <Link href="/demo" className="btn-ghost btn-lg">
                 Voir la démo
               </Link>
             </div>
@@ -634,7 +634,7 @@ function FinalCta() {
               Créer ma boutique <ArrowRight size={18} />
             </Link>
             <Link
-              href="/boutique"
+              href="/demo"
               className="btn border border-white/25 text-white hover:bg-white/10 btn-lg"
             >
               Voir la boutique démo

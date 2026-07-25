@@ -1,6 +1,7 @@
 "use client";
 
 import { BoutikLogo } from "@/components/brand";
+import { LoadingScreen } from "@/components/states";
 import {
   AuthProvider,
   isValidEmail,
@@ -170,12 +171,7 @@ function AuthScreen() {
     setInfo("Si un compte existe, un lien de réinitialisation vient d'être envoyé.");
   };
 
-  if (loading)
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-cream">
-        <Loader2 className="animate-spin text-ink/30" />
-      </div>
-    );
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="flex min-h-screen flex-col bg-cream">

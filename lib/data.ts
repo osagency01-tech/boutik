@@ -1,6 +1,14 @@
 export const fcfa = (n: number) =>
   n.toLocaleString("fr-FR").replace(/\u202f/g, " ") + " F";
 
+/* Variation deterministe (pas de Math.random : les graphiques de demo ne
+   doivent pas changer d'un rendu a l'autre) utilisee pour generer des
+   series de donnees d'exemple plausibles - commandes par jour, ventes
+   par mois. freq1/freq2 donnent a chaque graphique son propre rythme
+   sans dupliquer la formule. */
+export const demoWave = (i: number, freq1: number, freq2: number, offset = 0) =>
+  Math.sin(i * freq1 + offset) * 0.5 + Math.cos(i * freq2) * 0.3;
+
 export type Product = {
   id: string;
   name: string;

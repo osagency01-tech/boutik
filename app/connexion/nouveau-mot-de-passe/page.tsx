@@ -1,6 +1,7 @@
 "use client";
 
 import { BoutikLogo } from "@/components/brand";
+import { LoadingScreen } from "@/components/states";
 import { AuthProvider, passwordIssue, passwordStrength, rememberDevice, useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
@@ -95,12 +96,7 @@ function NewPassword() {
     setTimeout(() => router.replace("/dashboard"), 1600);
   };
 
-  if (loading || exchanging)
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-cream">
-        <Loader2 className="animate-spin text-ink/30" />
-      </div>
-    );
+  if (loading || exchanging) return <LoadingScreen />;
 
   return (
     <div className="flex min-h-screen flex-col bg-cream">

@@ -1,5 +1,6 @@
 "use client";
 
+import { BannerBackground, BannerLogoBadge } from "@/components/banner-media";
 import { ShopLogo } from "@/components/icons";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { ProductVisual } from "@/components/product-card";
@@ -12,7 +13,7 @@ import Link from "next/link";
 /* Magazine : visuel plein cadre, titre superposé, défilé de nouveautés */
 
 export function FashionTemplate() {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   const products = useShopProducts();
   const hero = products.find((p) => p.featured) ?? products[0];
   const rest = products.filter((p) => p.id !== hero?.id);
@@ -21,8 +22,8 @@ export function FashionTemplate() {
     <div className="pt-6">
       {hero && (
         <Reveal>
-          <Link href={`/boutique/produits/${hero.id}`} className="group relative block">
-            <ProductVisual product={hero} className="h-[440px] rounded-2xl sm:h-[540px]" iconSize={110} />
+          <Link href={`${basePath}/produits/${hero.id}`} className="group relative block">
+            <ProductVisual product={hero} className="h-[440px] rounded-2xl sm:h-[540px]" iconSize={110} focusTop />
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-10">
               <p className="text-[10px] font-bold uppercase tracking-[0.35em] opacity-85">
@@ -42,7 +43,7 @@ export function FashionTemplate() {
       <Reveal>
         <div className="mt-12 flex items-baseline justify-between border-b-2 border-ink pb-3">
           <h2 className="font-display text-xl font-extrabold uppercase tracking-tight">Le défilé</h2>
-          <Link href="/boutique/produits" className="text-xs font-bold uppercase tracking-widest hover:underline">
+          <Link href={`${basePath}/produits`} className="text-xs font-bold uppercase tracking-widest hover:underline">
             Tout voir
           </Link>
         </div>
@@ -52,7 +53,7 @@ export function FashionTemplate() {
       <Stagger className="nice-scroll mt-6 flex gap-4 overflow-x-auto pb-3" gap={0.06}>
         {rest.map((p) => (
           <StaggerItem key={p.id} className="w-[210px] shrink-0 sm:w-[250px]">
-            <Link href={`/boutique/produits/${p.id}`} className="group block">
+            <Link href={`${basePath}/produits/${p.id}`} className="group block">
               <ProductVisual product={p} className="h-[280px] rounded-xl sm:h-[330px]" />
               <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.2em] text-ink/40">
                 {p.category}
@@ -83,7 +84,7 @@ export function FashionTemplate() {
 /* Doux : formes arrondies, teintes pastel, bénéfices produits */
 
 export function BeautyTemplate() {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   const products = useShopProducts();
   const featured = products.filter((p) => p.featured);
   const shown = (featured.length ? featured : products).slice(0, 3);
@@ -116,7 +117,7 @@ export function BeautyTemplate() {
             {config.bannerSubtitle}
           </p>
           <Link
-            href="/boutique/produits"
+            href={`${basePath}/produits`}
             className="btn relative mt-8 rounded-full px-8 py-3.5 text-sm text-white hover:shadow-lift"
             style={{ backgroundColor: palette.accent }}
           >
@@ -172,7 +173,7 @@ export function BeautyTemplate() {
                     {fcfa(p.price)}
                   </span>
                   <Link
-                    href={`/boutique/produits/${p.id}`}
+                    href={`${basePath}/produits/${p.id}`}
                     className="btn rounded-full border px-5 py-2 text-xs font-bold"
                     style={{ borderColor: palette.accent, color: palette.accent }}
                   >
@@ -207,7 +208,7 @@ export function BeautyTemplate() {
 /* Menu : catégories en sections, lignes lisibles, prix à droite */
 
 export function FoodTemplate() {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   const products = useShopProducts();
   const cats = Array.from(new Set(products.map((p) => p.category)));
 
@@ -218,17 +219,25 @@ export function FoodTemplate() {
           className="wax-pattern-dense relative overflow-hidden rounded-3xl px-6 py-12 text-center text-white"
           style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}C0)` }}
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.25em] opacity-85">
+          <BannerBackground image={config.bannerImage} accent={palette.accent} />
+          <BannerLogoBadge
+            logo={config.logo}
+            icon={config.logoIcon}
+            name={config.name}
+            accent={palette.accent}
+            size={32}
+          />
+          <p className="relative text-[11px] font-bold uppercase tracking-[0.25em] opacity-85">
             {config.bannerBadge}
           </p>
-          <h1 className="mx-auto mt-3 max-w-lg font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+          <h1 className="relative mx-auto mt-3 max-w-lg font-display text-3xl font-extrabold leading-tight sm:text-4xl">
             {config.bannerTitle}
           </h1>
           <a
             href={`https://wa.me/${config.whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn mt-6 bg-white px-6 py-3 text-sm hover:bg-cream"
+            className="btn relative mt-6 bg-white px-6 py-3 text-sm hover:bg-cream"
             style={{ color: palette.accent }}
           >
             Commander maintenant
@@ -260,7 +269,7 @@ export function FoodTemplate() {
               .map((p) => (
                 <StaggerItem key={p.id}>
                   <Link
-                    href={`/boutique/produits/${p.id}`}
+                    href={`${basePath}/produits/${p.id}`}
                     className="shop-card flex items-center gap-4 p-3 transition-shadow hover:shadow-lift"
                   >
                     <ProductVisual
@@ -301,7 +310,7 @@ export function FoodTemplate() {
 /* Sombre, lettrage très espacé, beaucoup de vide, sérif implicite */
 
 export function LuxuryTemplate() {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   const products = useShopProducts();
   const hero = products.find((p) => p.featured) ?? products[0];
   const rest = products.filter((p) => p.id !== hero?.id);
@@ -323,8 +332,8 @@ export function LuxuryTemplate() {
 
       {hero && (
         <Reveal delay={0.1}>
-          <Link href={`/boutique/produits/${hero.id}`} className="group mx-auto mt-16 block max-w-3xl">
-            <ProductVisual product={hero} className="h-[400px] sm:h-[520px]" iconSize={110} />
+          <Link href={`${basePath}/produits/${hero.id}`} className="group mx-auto mt-16 block max-w-3xl">
+            <ProductVisual product={hero} className="h-[400px] sm:h-[520px]" iconSize={110} focusTop />
             <div className="mt-6 text-center">
               <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/40">
                 {hero.category}
@@ -349,7 +358,7 @@ export function LuxuryTemplate() {
       <Stagger className="mx-auto mt-12 grid max-w-4xl gap-x-8 gap-y-16 sm:grid-cols-2" gap={0.1}>
         {rest.map((p) => (
           <StaggerItem key={p.id}>
-            <Link href={`/boutique/produits/${p.id}`} className="group block">
+            <Link href={`${basePath}/produits/${p.id}`} className="group block">
               <ProductVisual product={p} className="h-80" />
               <div className="mt-5 text-center">
                 <h3 className="font-display text-sm font-light uppercase tracking-[0.2em] group-hover:opacity-70">
@@ -382,7 +391,7 @@ export function LuxuryTemplate() {
 /* Grille asymétrique type bento, blocs colorés, angles vifs */
 
 export function ModernTemplate() {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   const products = useShopProducts();
   const p = products;
 
@@ -395,16 +404,24 @@ export function ModernTemplate() {
             className="wax-pattern-dense relative overflow-hidden rounded-2xl p-6 text-white sm:col-span-2 sm:row-span-2"
             style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}AA)` }}
           >
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
+            <BannerBackground image={config.bannerImage} accent={palette.accent} />
+            <BannerLogoBadge
+              logo={config.logo}
+              icon={config.logoIcon}
+              name={config.name}
+              accent={palette.accent}
+              size={24}
+            />
+            <p className="relative text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
               {config.bannerBadge}
             </p>
-            <h1 className="mt-3 max-w-sm font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
+            <h1 className="relative mt-3 max-w-sm font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
               {config.bannerTitle}
             </h1>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed opacity-85">{config.bannerSubtitle}</p>
+            <p className="relative mt-4 max-w-xs text-sm leading-relaxed opacity-85">{config.bannerSubtitle}</p>
             <Link
-              href="/boutique/produits"
-              className="btn mt-8 rounded-lg bg-white px-5 py-2.5 text-xs font-black uppercase tracking-wider"
+              href={`${basePath}/produits`}
+              className="btn relative mt-8 rounded-lg bg-white px-5 py-2.5 text-xs font-black uppercase tracking-wider"
               style={{ color: palette.accent }}
             >
               Explorer <ArrowRight size={14} />
@@ -412,7 +429,7 @@ export function ModernTemplate() {
           </div>
 
           {p[0] && (
-            <Link href={`/boutique/produits/${p[0].id}`} className="group relative overflow-hidden rounded-2xl">
+            <Link href={`${basePath}/produits/${p[0].id}`} className="group relative overflow-hidden rounded-2xl">
               <ProductVisual product={p[0]} className="h-44 sm:h-full" />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-3">
                 <p className="text-[11px] font-black uppercase tracking-wide text-white">{p[0].name}</p>
@@ -446,7 +463,7 @@ export function ModernTemplate() {
         {p.slice(1).map((prod, i) => (
           <StaggerItem key={prod.id} className={i % 5 === 0 ? "col-span-2" : ""}>
             <Link
-              href={`/boutique/produits/${prod.id}`}
+              href={`${basePath}/produits/${prod.id}`}
               className="group block overflow-hidden rounded-2xl bg-white shadow-card transition-all hover:-translate-y-1 hover:shadow-lift"
             >
               <ProductVisual product={prod} className={i % 5 === 0 ? "h-40" : "h-36"} />
@@ -468,7 +485,7 @@ export function ModernTemplate() {
 /* Chaleureux, raconté : chaque pièce numérotée avec son histoire */
 
 export function ArtisanTemplate() {
-  const { config, palette } = useStore();
+  const { config, palette, basePath } = useStore();
   const products = useShopProducts();
 
   return (
@@ -509,7 +526,7 @@ export function ArtisanTemplate() {
         {products.map((p, i) => (
           <Reveal key={p.id}>
             <div className={`grid items-center gap-8 md:grid-cols-2 ${i % 2 ? "md:[direction:rtl]" : ""}`}>
-              <Link href={`/boutique/produits/${p.id}`} className="group relative block [direction:ltr]">
+              <Link href={`${basePath}/produits/${p.id}`} className="group relative block [direction:ltr]">
                 <ProductVisual product={p} className="h-80 rounded-2xl sm:h-96" iconSize={90} />
                 <span
                   className="absolute -left-3 -top-3 flex h-12 w-12 items-center justify-center rounded-full font-display text-sm font-extrabold text-white shadow-lift"
@@ -529,7 +546,7 @@ export function ArtisanTemplate() {
                     {fcfa(p.price)}
                   </span>
                   <Link
-                    href={`/boutique/produits/${p.id}`}
+                    href={`${basePath}/produits/${p.id}`}
                     className="text-xs font-bold uppercase tracking-widest hover:underline"
                     style={{ color: palette.accent }}
                   >
