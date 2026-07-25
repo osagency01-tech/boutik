@@ -1,6 +1,7 @@
 "use client";
 
 import { BoutikLogo } from "@/components/brand";
+import { GoogleIcon } from "@/components/google-icon";
 import { LoadingScreen } from "@/components/states";
 import {
   AuthProvider,
@@ -45,6 +46,7 @@ function AuthScreen() {
     sendDeviceOtp,
     verifyDeviceOtp,
     resetPassword,
+    signInWithGoogle,
     user,
     loading,
     demoMode,
@@ -54,7 +56,9 @@ function AuthScreen() {
   const [step, setStep] = useState<Step>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [code, setCode] = useState("");
   const [remember, setRememberState] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -112,6 +116,7 @@ function AuthScreen() {
     if (!isValidEmail(email)) return setError("Entre une adresse email valide.");
     const issue = passwordIssue(password);
     if (issue) return setError(issue);
+    if (password !== password2) return setError("Les mots de passe ne correspondent pas.");
     setBusy(true);
     reset();
     setRemember(remember);
@@ -120,6 +125,20 @@ function AuthScreen() {
     if (error) return setError(error);
     setStep("confirm-signup");
     setCooldown(45);
+  };
+
+  /* Google vérifie déjà l'email lui-même : pas de code à saisir ensuite,
+     contrairement à l'inscription par mot de passe. */
+  const doGoogle = async () => {
+    setGoogleBusy(true);
+    reset();
+    setRemember(remember);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setGoogleBusy(false);
+      setError(error);
+    }
+    /* Sinon : redirection vers Google, cette page se démonte. */
   };
 
   const doConfirm = async () => {
@@ -204,7 +223,10 @@ function AuthScreen() {
                 Entre ton email et ton mot de passe.
               </p>
 
-              <label className="mb-1.5 mt-7 block text-sm font-bold">Adresse email</label>
+              <GoogleButton onClick={doGoogle} busy={googleBusy} disabled={demoMode || busy} />
+              <Divider />
+
+              <label className="mb-1.5 mt-1 block text-sm font-bold">Adresse email</label>
               <input
                 className="input"
                 type="email"
@@ -279,7 +301,7 @@ function AuthScreen() {
                   onClick={() => {
                     setStep("signup");
                     reset();
-                    setPassword("");
+                    setPassword(""); setPassword2("");
                   }}
                   className="font-bold text-primary hover:underline"
                 >
@@ -301,7 +323,7 @@ function AuthScreen() {
                 onClick={() => {
                   setStep("login");
                   reset();
-                  setPassword("");
+                  setPassword(""); setPassword2("");
                 }}
                 className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/55 hover:text-ink"
               >
@@ -313,7 +335,10 @@ function AuthScreen() {
                 Un code de confirmation te sera envoyé par email.
               </p>
 
-              <label className="mb-1.5 mt-7 block text-sm font-bold">Adresse email</label>
+              <GoogleButton onClick={doGoogle} busy={googleBusy} disabled={demoMode || busy} />
+              <Divider />
+
+              <label className="mb-1.5 mt-1 block text-sm font-bold">Adresse email</label>
               <input
                 className="input"
                 type="email"
@@ -345,6 +370,22 @@ function AuthScreen() {
                 disabled={demoMode}
               />
               <StrengthMeter password={password} />
+
+              <label className="mb-1.5 mt-4 block text-sm font-bold">Confirme ton mot de passe</label>
+              <PasswordField
+                value={password2}
+                onChange={setPassword2}
+                onEnter={doSignUp}
+                show={showPwd}
+                toggle={() => setShowPwd(!showPwd)}
+                autoComplete="new-password"
+                disabled={demoMode}
+              />
+              {password2 && password2 !== password && (
+                <p className="mt-1.5 text-xs font-semibold text-terra">
+                  Les mots de passe ne correspondent pas.
+                </p>
+              )}
 
               {error && <p className="mt-3 text-sm font-semibold text-terra">{error}</p>}
 
@@ -496,6 +537,38 @@ function AuthScreen() {
 }
 
 /* ------------------------------------------------------------------ */
+
+function GoogleButton({
+  onClick,
+  busy,
+  disabled,
+}: {
+  onClick: () => void;
+  busy: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || busy}
+      className="btn-ghost btn-lg mt-6 w-full border border-ink/10 disabled:opacity-40"
+    >
+      {busy ? <Loader2 size={17} className="animate-spin" /> : <GoogleIcon className="h-4 w-4" />}
+      Continuer avec Google
+    </button>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="my-5 flex items-center gap-3">
+      <span className="h-px flex-1 bg-ink/10" />
+      <span className="text-xs font-semibold text-ink/40">ou</span>
+      <span className="h-px flex-1 bg-ink/10" />
+    </div>
+  );
+}
 
 function PasswordField({
   value,

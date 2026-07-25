@@ -21,6 +21,7 @@ type AuthCtx = {
   verifyDeviceOtp: (email: string, code: string) => Promise<{ error?: string }>;
 
   resetPassword: (email: string) => Promise<{ error?: string }>;
+  signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 };
 
@@ -263,6 +264,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return {};
   };
 
+  /* Google gère lui-même la vérification de l'email : pas d'étape OTP
+     après coup, contrairement à l'inscription par mot de passe.
+     `detectSessionInUrl` (lib/supabase.ts) capte la session au retour
+     sur cette page — pas besoin de route de callback dédiée. */
+  const signInWithGoogle = async () => {
+    const sb = supabase();
+    if (!sb) return {};
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo:
+          typeof window !== "undefined" ? `${window.location.origin}/connexion` : undefined,
+      },
+    });
+    if (error) return { error: humanError(error.message) };
+    return {};
+  };
+
   const signOut = async () => {
     const sb = supabase();
     if (sb) await sb.auth.signOut();
@@ -283,6 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendDeviceOtp,
         verifyDeviceOtp,
         resetPassword,
+        signInWithGoogle,
         signOut,
       }}
     >

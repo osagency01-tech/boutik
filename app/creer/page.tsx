@@ -6,6 +6,8 @@ import PalettePicker from "@/components/palette-picker";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { LoadingScreen } from "@/components/states";
 import TemplateSketch from "@/components/template-sketch";
+import { ShopNicheFields } from "@/components/shop-niche-fields";
+import { WhatsAppInput } from "@/components/whatsapp-input";
 import {
   StoreProvider,
   TEMPLATE_INFO,
@@ -265,16 +267,10 @@ function Step1() {
             onChange={(e) => setConfig({ name: e.target.value })}
           />
         </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-bold">Que vends-tu, et où ?</label>
-          <input
-            className="input"
-            value={config.tagline}
-            maxLength={60}
-            placeholder="Ex. Mode & accessoires — Abidjan"
-            onChange={(e) => setConfig({ tagline: e.target.value })}
-          />
-        </div>
+        <ShopNicheFields
+          tagline={config.tagline}
+          onChange={(tagline) => setConfig({ tagline })}
+        />
         <div>
           <label className="mb-1.5 block text-sm font-bold">Ton logo</label>
           <div className="flex items-center gap-4">
@@ -435,18 +431,11 @@ function Step3() {
       <div className="mt-6 space-y-5">
         <div>
           <label className="mb-1.5 block text-sm font-bold">Numéro WhatsApp</label>
-          <input
-            className="input"
+          <WhatsAppInput
             autoFocus
-            inputMode="numeric"
             value={config.whatsapp}
-            placeholder="2250700000000"
-            onChange={(e) => setConfig({ whatsapp: e.target.value.replace(/\D/g, "") })}
+            onChange={(digits) => setConfig({ whatsapp: digits })}
           />
-          <p className="mt-1.5 text-xs text-ink/55">
-            Indicatif pays + numéro, sans + ni espaces. Ex. Côte d&apos;Ivoire : 225 07 00 00 00 00 →
-            2250700000000
-          </p>
         </div>
         <div className="rounded-xl bg-cream p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-ink/55">Aperçu</p>

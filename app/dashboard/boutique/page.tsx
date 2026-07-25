@@ -5,7 +5,9 @@ import { Reveal } from "@/components/motion";
 import { SaveIndicator } from "@/components/states";
 import { SHOP_ICONS, ShopLogo } from "@/components/icons";
 import PalettePicker from "@/components/palette-picker";
+import { ShopNicheFields } from "@/components/shop-niche-fields";
 import TemplateSketch from "@/components/template-sketch";
+import { WhatsAppInput } from "@/components/whatsapp-input";
 import { fcfa } from "@/lib/data";
 import {
   TEMPLATE_INFO,
@@ -501,18 +503,13 @@ function IdentiteTab({ touch }: { touch: () => void }) {
         />
       </Field>
 
-      <Field label="Slogan" hint="Une ligne courte qui dit ce que tu vends et où.">
-        <input
-          className="input"
-          value={config.tagline}
-          maxLength={60}
-          placeholder="Ex. Mode & accessoires — Dakar"
-          onChange={(e) => {
-            setConfig({ tagline: e.target.value });
-            touch();
-          }}
-        />
-      </Field>
+      <ShopNicheFields
+        tagline={config.tagline}
+        onChange={(tagline) => {
+          setConfig({ tagline });
+          touch();
+        }}
+      />
 
       <Field label="Logo" hint="Importe ton logo. Format carré conseillé, JPG ou PNG.">
         <div className="flex items-center gap-4">
@@ -907,16 +904,11 @@ function ContactTab({ touch }: { touch: () => void }) {
   const { config, setConfig, palette } = useStore();
   return (
     <>
-      <Field
-        label="Numéro WhatsApp"
-        hint="Format international, sans + ni espaces. Ex. 2250700000000. C'est là qu'arrivent tes commandes."
-      >
-        <input
-          className="input"
+      <Field label="Numéro WhatsApp" hint="C'est là qu'arrivent tes commandes.">
+        <WhatsAppInput
           value={config.whatsapp}
-          inputMode="numeric"
-          onChange={(e) => {
-            setConfig({ whatsapp: e.target.value.replace(/\D/g, "") });
+          onChange={(digits) => {
+            setConfig({ whatsapp: digits });
             touch();
           }}
         />

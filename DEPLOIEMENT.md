@@ -71,6 +71,28 @@ Sur le site : Dashboard → active « Recevoir mes notifications » sur un vrai 
 
 ---
 
+## 1 ter. Connexion Google
+
+Sans cette étape, le bouton « Continuer avec Google » affiche une erreur — l'inscription par email + mot de passe + code continue de fonctionner normalement, elle n'en dépend pas.
+
+### a. Créer le client OAuth (Google Cloud Console)
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → créer un projet (ou en choisir un existant)
+2. **APIs & Services → OAuth consent screen** : type *External*, renseigne le nom de l'app (« Boutik ») et un email de contact
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID** : type *Web application*
+4. **Authorized redirect URIs** → ajoute l'URL de callback de ton projet Supabase (visible à l'étape suivante, sous la forme `https://<ta-ref>.supabase.co/auth/v1/callback`)
+5. Copie le **Client ID** et le **Client Secret** générés
+
+### b. Brancher sur Supabase
+
+Supabase → **Authentication → Providers → Google** → active, colle le Client ID et le Client Secret, enregistre.
+
+### c. Vérifier
+
+Sur le site, page Connexion : clique « Continuer avec Google », choisis un compte Google de test → tu dois être redirigé vers `/dashboard` (ou `/creer` si aucune boutique n'existe encore).
+
+---
+
 ## 2. Email — sinon personne ne peut créer de compte
 
 Le SMTP intégré de Supabase est bridé à **3-4 emails/heure**. Inutilisable.
@@ -199,6 +221,7 @@ Sans ça, les messages s'accumulent et les boutiques impayées restent en ligne.
 ## 7. Vérifier avant d'ouvrir aux vrais vendeurs
 
 - [ ] Créer un compte → le code arrive **en moins d'une minute**
+- [ ] Créer un compte via « Continuer avec Google » → redirection directe, sans code
 - [ ] Se connecter depuis un **autre téléphone** → un code est demandé
 - [ ] Créer une boutique → `boutik-app.com/b/<slug>` répond
 - [ ] Ajouter un produit avec une **vraie photo** prise au téléphone

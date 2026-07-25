@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
-import { Bricolage_Grotesque, Inter } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE_URL } from "@/lib/config";
 import "./globals.css";
 
@@ -11,6 +12,13 @@ import "./globals.css";
  * domaine : plus d'aller-retour vers fonts.googleapis.com puis
  * fonts.gstatic.com avant le premier pixel (~1,8 s gagnées en 4G).
  * Le CSS est inliné dans la page, donc plus rien ne bloque le rendu.
+ *
+ * Geomini (texte courant, remplace Inter) n'est pas encore dans la
+ * liste de polices intégrée à cette version de Next — trop récente
+ * sur Google Fonts. Le fichier variable est donc auto-hébergé ici
+ * (public/fonts/geomini.woff2, téléchargé depuis fonts.gstatic.com)
+ * et servi via next/font/local, qui donne les mêmes optimisations
+ * (préchargement, font-display: swap) que next/font/google.
  * ------------------------------------------------------------------ */
 
 const bricolage = Bricolage_Grotesque({
@@ -20,9 +28,9 @@ const bricolage = Bricolage_Grotesque({
   display: "swap",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const geomini = localFont({
+  src: "../public/fonts/geomini.woff2",
+  weight: "400 700",
   variable: "--font-sans",
   display: "swap",
 });
@@ -57,7 +65,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${bricolage.variable} ${inter.variable}`}>
+    <html lang="fr" className={`${bricolage.variable} ${geomini.variable}`}>
       <body>
         {children}
         <InstallPrompt />
