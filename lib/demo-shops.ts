@@ -36,6 +36,8 @@ export type DemoShop = {
   name: string;
   tagline: string;
   logoIcon: string;
+  /* Vrai logo (image), affiché à la place de l'icône générique. */
+  logo?: string;
   /* Image de fond de bannière — seuls les modèles avec un gros bloc
      coloré (classique, food, modern) en tirent parti. */
   bannerImage?: string;
@@ -56,6 +58,7 @@ export const DEMO_SHOPS: Record<TemplateId, DemoShop> = {
     name: "Kadi Store",
     tagline: "Mode, wax & artisanat — Abidjan",
     logoIcon: "shirt",
+    logo: "/demo/classique-logo.svg",
     bannerImage: demoImage("classique", 0),
     palette: "terracotta",
     badge: "Nouvelle collection",
@@ -275,7 +278,7 @@ export function demoShopToConfig(t: TemplateId): Partial<ShopConfig> {
     name: shop.name,
     tagline: shop.tagline,
     logoIcon: shop.logoIcon,
-    logo: undefined,
+    logo: shop.logo,
     bannerImage: shop.bannerImage,
     palette: shop.palette,
     bannerBadge: shop.badge,

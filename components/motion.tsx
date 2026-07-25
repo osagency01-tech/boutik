@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Children, cloneElement, isValidElement, useEffect, useRef, useState } from "react";
 
 /* ------------------------------------------------------------------ *
  * Animations d'apparition — sans dépendance
@@ -95,10 +95,6 @@ export function Reveal({
   );
 }
 
-/* Contexte minimal pour que StaggerItem connaisse son rang sans
-   que l'appelant ait à le passer. */
-let staggerIndex = 0;
-
 export function Stagger({
   children,
   className,
@@ -110,7 +106,6 @@ export function Stagger({
 }) {
   const { ref, seen } = useInView<HTMLDivElement>();
   const reduce = usePrefersReducedMotion();
-  staggerIndex = 0;
 
   return (
     <div
@@ -123,7 +118,16 @@ export function Stagger({
         } as React.CSSProperties
       }
     >
-      {children}
+      {/* Le rang de chaque StaggerItem vient de sa position dans
+          `children`, pas d'un compteur global mutable : un compteur
+          partagé entre toutes les sections de la page ne survit pas au
+          double rendu du Strict Mode (React l'incrémente deux fois),
+          ce qui désynchronisait le rendu serveur du rendu client —
+          une vraie erreur d'hydratation, pas juste un avertissement
+          cosmétique. */}
+      {Children.map(children, (child, i) =>
+        isValidElement(child) ? cloneElement(child as React.ReactElement<{ index?: number }>, { index: i }) : child
+      )}
     </div>
   );
 }
@@ -131,16 +135,16 @@ export function Stagger({
 export function StaggerItem({
   children,
   className,
+  index = 0,
 }: {
   children: React.ReactNode;
   className?: string;
+  index?: number;
 }) {
-  const [i] = useState(() => staggerIndex++);
-
   return (
     <div
       className={`stagger-item ${className ?? ""}`}
-      style={{ "--stagger-i": i } as React.CSSProperties}
+      style={{ "--stagger-i": index } as React.CSSProperties}
     >
       {children}
     </div>

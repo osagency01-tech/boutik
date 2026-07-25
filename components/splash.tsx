@@ -14,17 +14,28 @@ import { useEffect, useState } from "react";
 const SEEN_KEY = "boutik-splash-seen";
 
 export default function Splash() {
+  /* Lu une seule fois, avant que ce composant n'écrive quoi que ce soit :
+     capture l'état du sessionStorage tel qu'il était AVANT ce montage.
+     Important en développement (React Strict Mode) : l'effet ci-dessous
+     est monté, nettoyé puis remonté délibérément. Si on relisait
+     sessionStorage directement dans l'effet, le premier passage marquait
+     "vu" avant même que le second ne s'exécute — le second se croyait
+     alors déjà affiché, ne relançait pas les minuteurs, et le splash
+     restait bloqué à l'écran pour de bon (le premier jeu de minuteurs
+     ayant été annulé par le nettoyage du premier passage). */
+  const [alreadySeen] = useState(() => {
+    try {
+      return sessionStorage.getItem(SEEN_KEY) === "1";
+    } catch {
+      /* navigation privée : on n'insiste pas */
+      return true;
+    }
+  });
   const [show, setShow] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    let seen = true;
-    try {
-      seen = sessionStorage.getItem(SEEN_KEY) === "1";
-    } catch {
-      /* navigation privée : on n'insiste pas */
-    }
-    if (seen) return;
+    if (alreadySeen) return;
 
     setShow(true);
     try {
@@ -45,7 +56,7 @@ export default function Splash() {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, []);
+  }, [alreadySeen]);
 
   if (!show) return null;
 
