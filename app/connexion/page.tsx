@@ -246,7 +246,7 @@ function AuthScreen() {
                   />
                   <span className="text-sm">
                     <span className="font-semibold">Rester connecté</span>
-                    <span className="block text-xs text-ink/45">
+                    <span className="block text-xs text-ink/55">
                       Décoche si c&apos;est un téléphone partagé.
                     </span>
                   </span>
@@ -397,7 +397,7 @@ function AuthScreen() {
                   : "Entre le code à 6 chiffres envoyé à "}
                 <span className="font-bold text-ink">{email}</span>.
               </p>
-              <p className="mt-2 text-xs text-ink/45">
+              <p className="mt-2 text-xs text-ink/55">
                 Rien reçu ? Regarde dans les spams ou l&apos;onglet Promotions.
               </p>
 
@@ -557,7 +557,7 @@ function StrengthMeter({ password }: { password: string }) {
           />
         ))}
       </div>
-      <p className={`mt-1.5 text-xs ${issue ? "text-ink/45" : "font-semibold text-ink/60"}`}>
+      <p className={`mt-1.5 text-xs ${issue ? "text-ink/55" : "font-semibold text-ink/60"}`}>
         {issue ?? labels[s]}
       </p>
     </div>

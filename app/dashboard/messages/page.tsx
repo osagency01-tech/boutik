@@ -177,12 +177,12 @@ export default function MessagesPage() {
                       <p className={`truncate text-sm ${isUnread ? "font-extrabold" : "font-semibold"}`}>
                         {m.sender_name}
                         {m.subject && (
-                          <span className="font-normal text-ink/45"> · {m.subject}</span>
+                          <span className="font-normal text-ink/55"> · {m.subject}</span>
                         )}
                       </p>
                       <p className="truncate text-xs text-ink/50">{m.body}</p>
                     </div>
-                    <span className="shrink-0 text-[11px] text-ink/40">
+                    <span className="shrink-0 text-[11px] text-ink/50">
                       {timeAgo(m.created_at)}
                     </span>
                   </button>
@@ -226,13 +226,13 @@ export default function MessagesPage() {
                             )}
                             <button
                               onClick={() => remove(m.id)}
-                              className="btn-ghost btn-sm ml-auto text-ink/45 hover:text-terra"
+                              className="btn-ghost btn-sm ml-auto text-ink/55 hover:text-terra"
                             >
                               <Trash2 size={13} /> Supprimer
                             </button>
                           </div>
 
-                          <p className="mt-3 text-[11px] text-ink/40">
+                          <p className="mt-3 text-[11px] text-ink/50">
                             De {m.sender_name}
                             {m.sender_phone ? ` · ${m.sender_phone}` : ""} ·{" "}
                             {new Date(m.created_at).toLocaleString("fr-FR", {

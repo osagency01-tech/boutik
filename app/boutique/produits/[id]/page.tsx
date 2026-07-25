@@ -21,7 +21,7 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  if (!ready) return <div className="pt-20 text-center text-sm text-ink/40">Chargement…</div>;
+  if (!ready) return <div className="pt-20 text-center text-sm text-ink/50">Chargement…</div>;
 
   if (!product)
     return (
@@ -81,7 +81,7 @@ export default function ProductPage() {
               {fcfa(product.price)}
             </span>
             {product.oldPrice && (
-              <span className="text-lg text-ink/40 line-through">{fcfa(product.oldPrice)}</span>
+              <span className="text-lg text-ink/50 line-through">{fcfa(product.oldPrice)}</span>
             )}
           </div>
           <p className={`mt-2 text-sm font-semibold ${out ? "text-terra" : "text-primary-dark"}`}>

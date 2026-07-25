@@ -57,7 +57,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <Link href={`${basePath}/produits/${product.id}`} className="block">
         <ProductVisual product={product} className="h-44 sm:h-52" iconSize={44} />
         <div className="p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/40">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/50">
             {product.category}
           </p>
           <h3 className="mt-1 truncate font-display font-bold transition-opacity group-hover:opacity-70">
@@ -68,7 +68,7 @@ export default function ProductCard({ product }: { product: Product }) {
               {fcfa(product.price)}
             </span>
             {product.oldPrice && (
-              <span className="text-xs text-ink/40 line-through">{fcfa(product.oldPrice)}</span>
+              <span className="text-xs text-ink/50 line-through">{fcfa(product.oldPrice)}</span>
             )}
           </div>
         </div>

@@ -10,7 +10,7 @@ export default function Confidentialite() {
   return (
     <article>
       <h1 className="font-display text-3xl font-extrabold">Politique de confidentialité</h1>
-      <p className="mt-2 text-sm text-ink/45">Dernière mise à jour : juillet 2026</p>
+      <p className="mt-2 text-sm text-ink/55">Dernière mise à jour : juillet 2026</p>
 
       <Section n="1" t="Qui traite quoi">
         <p>Deux rôles distincts, qui n&apos;engagent pas les mêmes responsabilités :</p>

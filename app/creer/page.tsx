@@ -108,7 +108,7 @@ function Wizard() {
               Partir de la boutique d&apos;exemple
             </button>
           </div>
-          <p className="mt-4 text-xs text-ink/40">
+          <p className="mt-4 text-xs text-ink/50">
             L&apos;exemple te laisse voir une boutique déjà remplie. Tu pourras tout remplacer.
           </p>
         </motion.div>
@@ -153,7 +153,7 @@ function Wizard() {
     <div className="min-h-screen bg-cream">
       <header className="mx-auto flex max-w-2xl items-center justify-between px-4 py-5">
         <BoutikLogo className="h-7" />
-        <span className="text-xs font-semibold text-ink/45">
+        <span className="text-xs font-semibold text-ink/55">
           Étape {step + 1} sur {STEPS.length}
         </span>
       </header>
@@ -304,7 +304,7 @@ function Step1() {
               {config.logo && (
                 <button
                   onClick={() => setConfig({ logo: undefined })}
-                  className="text-xs font-semibold text-ink/45 hover:text-terra"
+                  className="text-xs font-semibold text-ink/55 hover:text-terra"
                 >
                   Retirer
                 </button>
@@ -357,7 +357,7 @@ function Step2() {
       <div className="mt-6 space-y-6">
         <div>
           <label className="mb-2 block text-sm font-bold">Palette de couleurs</label>
-          <p className="mb-3 text-xs text-ink/45">
+          <p className="mb-3 text-xs text-ink/55">
             Choisis une ambiance : les couleurs sont déjà accordées entre elles.
           </p>
           <PalettePicker
@@ -367,14 +367,14 @@ function Step2() {
         </div>
         <div>
           <label className="mb-2 block text-sm font-bold">Modèle de boutique</label>
-          <p className="mb-3 text-xs text-ink/45">
+          <p className="mb-3 text-xs text-ink/55">
             Les modèles Business et Premium se débloquent avec l&apos;offre correspondante.
           </p>
           <div className="space-y-4">
             {(["Starter", "Business", "Premium"] as const).map((tier) => (
               <div key={tier}>
                 <div className="mb-2 flex items-center gap-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/45">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/55">
                     {tier}
                   </p>
                   <span className="h-px flex-1 bg-ink/8" />
@@ -443,13 +443,13 @@ function Step3() {
             placeholder="2250700000000"
             onChange={(e) => setConfig({ whatsapp: e.target.value.replace(/\D/g, "") })}
           />
-          <p className="mt-1.5 text-xs text-ink/45">
+          <p className="mt-1.5 text-xs text-ink/55">
             Indicatif pays + numéro, sans + ni espaces. Ex. Côte d&apos;Ivoire : 225 07 00 00 00 00 →
             2250700000000
           </p>
         </div>
         <div className="rounded-xl bg-cream p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-ink/45">Aperçu</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-ink/55">Aperçu</p>
           <div className="mt-2 flex items-center gap-2.5">
             <ShopLogo
               logo={config.logo}

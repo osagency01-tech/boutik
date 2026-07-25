@@ -20,24 +20,24 @@ export function FashionTemplate() {
 
   return (
     <div className="pt-6">
+      {/* Pas de Reveal sur le héros : premier contenu visible, un fondu
+          retardé ici pénalise le LCP pour rien. */}
       {hero && (
-        <Reveal>
-          <Link href={`${basePath}/produits/${hero.id}`} className="group relative block">
-            <ProductVisual product={hero} className="h-[440px] rounded-2xl sm:h-[540px]" iconSize={110} focusTop />
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-10">
-              <p className="text-[10px] font-bold uppercase tracking-[0.35em] opacity-85">
-                {config.bannerBadge}
-              </p>
-              <h1 className="mt-3 max-w-lg font-display text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl">
-                {config.bannerTitle}
-              </h1>
-              <span className="mt-6 inline-flex items-center gap-2 border-b-2 border-white pb-1 text-sm font-bold uppercase tracking-widest">
-                Voir la pièce <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-              </span>
-            </div>
-          </Link>
-        </Reveal>
+        <Link href={`${basePath}/produits/${hero.id}`} className="group relative block">
+          <ProductVisual product={hero} className="h-[440px] rounded-2xl sm:h-[540px]" iconSize={110} focusTop />
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-10">
+            <p className="text-[10px] font-bold uppercase tracking-[0.35em] opacity-85">
+              {config.bannerBadge}
+            </p>
+            <h1 className="mt-3 max-w-lg font-display text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl">
+              {config.bannerTitle}
+            </h1>
+            <span className="mt-6 inline-flex items-center gap-2 border-b-2 border-white pb-1 text-sm font-bold uppercase tracking-widest">
+              Voir la pièce <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+            </span>
+          </div>
+        </Link>
       )}
 
       <Reveal>
@@ -55,7 +55,7 @@ export function FashionTemplate() {
           <StaggerItem key={p.id} className="w-[210px] shrink-0 sm:w-[250px]">
             <Link href={`${basePath}/produits/${p.id}`} className="group block">
               <ProductVisual product={p} className="h-[280px] rounded-xl sm:h-[330px]" />
-              <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.2em] text-ink/40">
+              <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.2em] text-ink/50">
                 {p.category}
               </p>
               <h3 className="mt-1 font-display text-sm font-bold uppercase group-hover:underline">
@@ -91,40 +91,39 @@ export function BeautyTemplate() {
 
   return (
     <div className="pt-8">
-      <Reveal>
+      {/* Pas de Reveal sur le héros : cf. FashionTemplate. */}
+      <div
+        className="relative overflow-hidden rounded-[2.5rem] px-6 py-16 text-center sm:px-12"
+        style={{ backgroundColor: palette.accent + "14" }}
+      >
         <div
-          className="relative overflow-hidden rounded-[2.5rem] px-6 py-16 text-center sm:px-12"
-          style={{ backgroundColor: palette.accent + "14" }}
+          className="absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl"
+          style={{ backgroundColor: palette.accent + "30" }}
+        />
+        <div
+          className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full blur-3xl"
+          style={{ backgroundColor: palette.accent + "22" }}
+        />
+        <p
+          className="relative inline-flex items-center gap-1.5 rounded-full bg-white/70 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest"
+          style={{ color: palette.accent }}
         >
-          <div
-            className="absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl"
-            style={{ backgroundColor: palette.accent + "30" }}
-          />
-          <div
-            className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full blur-3xl"
-            style={{ backgroundColor: palette.accent + "22" }}
-          />
-          <p
-            className="relative inline-flex items-center gap-1.5 rounded-full bg-white/70 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-            style={{ color: palette.accent }}
-          >
-            <Sparkles size={12} /> {config.bannerBadge}
-          </p>
-          <h1 className="relative mx-auto mt-5 max-w-lg font-display text-3xl font-extrabold leading-tight sm:text-5xl">
-            {config.bannerTitle}
-          </h1>
-          <p className="relative mx-auto mt-4 max-w-sm text-sm leading-relaxed shop-muted">
-            {config.bannerSubtitle}
-          </p>
-          <Link
-            href={`${basePath}/produits`}
-            className="btn relative mt-8 rounded-full px-8 py-3.5 text-sm text-white hover:shadow-lift"
-            style={{ backgroundColor: palette.accent }}
-          >
-            Découvrir les soins <ArrowRight size={16} />
-          </Link>
-        </div>
-      </Reveal>
+          <Sparkles size={12} /> {config.bannerBadge}
+        </p>
+        <h1 className="relative mx-auto mt-5 max-w-lg font-display text-3xl font-extrabold leading-tight sm:text-5xl">
+          {config.bannerTitle}
+        </h1>
+        <p className="relative mx-auto mt-4 max-w-sm text-sm leading-relaxed shop-muted">
+          {config.bannerSubtitle}
+        </p>
+        <Link
+          href={`${basePath}/produits`}
+          className="btn relative mt-8 rounded-full px-8 py-3.5 text-sm text-white hover:shadow-lift"
+          style={{ backgroundColor: palette.accent }}
+        >
+          Découvrir les soins <ArrowRight size={16} />
+        </Link>
+      </div>
 
       <Stagger className="mt-6 grid gap-3 sm:grid-cols-3">
         {[
@@ -214,36 +213,35 @@ export function FoodTemplate() {
 
   return (
     <div className="pt-8">
-      <Reveal>
-        <div
-          className="wax-pattern-dense relative overflow-hidden rounded-3xl px-6 py-12 text-center text-white"
-          style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}C0)` }}
+      {/* Pas de Reveal sur le héros : cf. FashionTemplate. */}
+      <div
+        className="wax-pattern-dense relative overflow-hidden rounded-3xl px-6 py-12 text-center text-white"
+        style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}C0)` }}
+      >
+        <BannerBackground image={config.bannerImage} accent={palette.accent} />
+        <BannerLogoBadge
+          logo={config.logo}
+          icon={config.logoIcon}
+          name={config.name}
+          accent={palette.accent}
+          size={32}
+        />
+        <p className="relative text-[11px] font-bold uppercase tracking-[0.25em] opacity-85">
+          {config.bannerBadge}
+        </p>
+        <h1 className="relative mx-auto mt-3 max-w-lg font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+          {config.bannerTitle}
+        </h1>
+        <a
+          href={`https://wa.me/${config.whatsapp}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn relative mt-6 bg-white px-6 py-3 text-sm hover:bg-cream"
+          style={{ color: palette.accent }}
         >
-          <BannerBackground image={config.bannerImage} accent={palette.accent} />
-          <BannerLogoBadge
-            logo={config.logo}
-            icon={config.logoIcon}
-            name={config.name}
-            accent={palette.accent}
-            size={32}
-          />
-          <p className="relative text-[11px] font-bold uppercase tracking-[0.25em] opacity-85">
-            {config.bannerBadge}
-          </p>
-          <h1 className="relative mx-auto mt-3 max-w-lg font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-            {config.bannerTitle}
-          </h1>
-          <a
-            href={`https://wa.me/${config.whatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn relative mt-6 bg-white px-6 py-3 text-sm hover:bg-cream"
-            style={{ color: palette.accent }}
-          >
-            Commander maintenant
-          </a>
-        </div>
-      </Reveal>
+          Commander maintenant
+        </a>
+      </div>
 
       {/* Ancres catégories */}
       <div className="nice-scroll sticky top-[68px] z-30 -mx-4 mt-6 flex gap-2 overflow-x-auto bg-cream/90 px-4 py-3 backdrop-blur-md">
@@ -293,7 +291,7 @@ export function FoodTemplate() {
                         {fcfa(p.price)}
                       </p>
                       {p.oldPrice && (
-                        <p className="text-[11px] text-ink/40 line-through">{fcfa(p.oldPrice)}</p>
+                        <p className="text-[11px] text-ink/50 line-through">{fcfa(p.oldPrice)}</p>
                       )}
                     </div>
                   </Link>
@@ -317,36 +315,33 @@ export function LuxuryTemplate() {
 
   return (
     <div className="-mx-4 -mb-24 bg-ink px-4 pb-24 pt-14 text-white">
-      <Reveal>
-        <p className="text-center text-[10px] font-bold uppercase tracking-[0.5em] text-white/45">
-          {config.bannerBadge}
-        </p>
-        <h1 className="mx-auto mt-8 max-w-2xl text-center font-display text-3xl font-light uppercase leading-[1.15] tracking-[0.12em] sm:text-4xl">
-          {config.bannerTitle}
-        </h1>
-        <div className="mx-auto mt-8 h-px w-16" style={{ backgroundColor: palette.accent }} />
-        <p className="mx-auto mt-8 max-w-md text-center text-sm font-light leading-loose text-white/55">
-          {config.bannerSubtitle}
-        </p>
-      </Reveal>
+      {/* Pas de Reveal sur le héros : cf. FashionTemplate. */}
+      <p className="text-center text-[10px] font-bold uppercase tracking-[0.5em] text-white/45">
+        {config.bannerBadge}
+      </p>
+      <h1 className="mx-auto mt-8 max-w-2xl text-center font-display text-3xl font-light uppercase leading-[1.15] tracking-[0.12em] sm:text-4xl">
+        {config.bannerTitle}
+      </h1>
+      <div className="mx-auto mt-8 h-px w-16" style={{ backgroundColor: palette.accent }} />
+      <p className="mx-auto mt-8 max-w-md text-center text-sm font-light leading-loose text-white/55">
+        {config.bannerSubtitle}
+      </p>
 
       {hero && (
-        <Reveal delay={0.1}>
-          <Link href={`${basePath}/produits/${hero.id}`} className="group mx-auto mt-16 block max-w-3xl">
-            <ProductVisual product={hero} className="h-[400px] sm:h-[520px]" iconSize={110} focusTop />
-            <div className="mt-6 text-center">
-              <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/40">
-                {hero.category}
-              </p>
-              <h2 className="mt-3 font-display text-xl font-light uppercase tracking-[0.2em] group-hover:opacity-70">
-                {hero.name}
-              </h2>
-              <p className="mt-2 text-sm tracking-[0.15em]" style={{ color: palette.accent }}>
-                {fcfa(hero.price)}
-              </p>
-            </div>
-          </Link>
-        </Reveal>
+        <Link href={`${basePath}/produits/${hero.id}`} className="group mx-auto mt-16 block max-w-3xl">
+          <ProductVisual product={hero} className="h-[400px] sm:h-[520px]" iconSize={110} focusTop />
+          <div className="mt-6 text-center">
+            <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/40">
+              {hero.category}
+            </p>
+            <h2 className="mt-3 font-display text-xl font-light uppercase tracking-[0.2em] group-hover:opacity-70">
+              {hero.name}
+            </h2>
+            <p className="mt-2 text-sm tracking-[0.15em]" style={{ color: palette.accent }}>
+              {fcfa(hero.price)}
+            </p>
+          </div>
+        </Link>
       )}
 
       <Reveal>
@@ -397,9 +392,8 @@ export function ModernTemplate() {
 
   return (
     <div className="pt-6">
-      {/* Bento hero */}
-      <Reveal>
-        <div className="grid gap-3 sm:grid-cols-3 sm:grid-rows-2">
+      {/* Bento hero — pas de Reveal : cf. FashionTemplate. */}
+      <div className="grid gap-3 sm:grid-cols-3 sm:grid-rows-2">
           <div
             className="wax-pattern-dense relative overflow-hidden rounded-2xl p-6 text-white sm:col-span-2 sm:row-span-2"
             style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}AA)` }}
@@ -451,7 +445,6 @@ export function ModernTemplate() {
             </div>
           </div>
         </div>
-      </Reveal>
 
       {/* Grille asymétrique */}
       <Reveal>
@@ -490,36 +483,35 @@ export function ArtisanTemplate() {
 
   return (
     <div className="pt-10">
-      <Reveal>
-        <div className="mx-auto max-w-xl text-center">
-          <div className="mx-auto w-fit">
-            <ShopLogo
-              logo={config.logo}
-              icon={config.logoIcon}
-              name={config.name}
-              accent={palette.accent}
-              size={56}
-            />
-          </div>
-          <p
-            className="mt-6 text-[11px] font-bold uppercase tracking-[0.3em]"
-            style={{ color: palette.accent }}
-          >
-            {config.bannerBadge}
-          </p>
-          <h1 className="mt-4 font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-            {config.bannerTitle}
-          </h1>
-          <p className="mt-4 text-sm leading-loose shop-muted">{config.bannerSubtitle}</p>
-          <div className="mx-auto mt-8 flex items-center gap-3">
-            <span className="h-px flex-1" style={{ backgroundColor: palette.accent + "40" }} />
-            <span className="text-lg" style={{ color: palette.accent }}>
-              ❖
-            </span>
-            <span className="h-px flex-1" style={{ backgroundColor: palette.accent + "40" }} />
-          </div>
+      {/* Pas de Reveal ici : cf. FashionTemplate. */}
+      <div className="mx-auto max-w-xl text-center">
+        <div className="mx-auto w-fit">
+          <ShopLogo
+            logo={config.logo}
+            icon={config.logoIcon}
+            name={config.name}
+            accent={palette.accent}
+            size={56}
+          />
         </div>
-      </Reveal>
+        <p
+          className="mt-6 text-[11px] font-bold uppercase tracking-[0.3em]"
+          style={{ color: palette.accent }}
+        >
+          {config.bannerBadge}
+        </p>
+        <h1 className="mt-4 font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+          {config.bannerTitle}
+        </h1>
+        <p className="mt-4 text-sm leading-loose shop-muted">{config.bannerSubtitle}</p>
+        <div className="mx-auto mt-8 flex items-center gap-3">
+          <span className="h-px flex-1" style={{ backgroundColor: palette.accent + "40" }} />
+          <span className="text-lg" style={{ color: palette.accent }}>
+            ❖
+          </span>
+          <span className="h-px flex-1" style={{ backgroundColor: palette.accent + "40" }} />
+        </div>
+      </div>
 
       {/* Pièces numérotées — l'ordre a du sens : c'est l'atelier qui présente */}
       <div className="mt-16 space-y-20">
@@ -536,7 +528,7 @@ export function ArtisanTemplate() {
                 </span>
               </Link>
               <div className="[direction:ltr]">
-                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-ink/40">
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-ink/50">
                   {p.category}
                 </p>
                 <h3 className="mt-2 font-display text-2xl font-extrabold">{p.name}</h3>

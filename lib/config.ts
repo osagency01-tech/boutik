@@ -10,8 +10,10 @@ export const SITE_DOMAIN = "boutik-app.com";
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || `https://${SITE_DOMAIN}`;
 
-/** Adresse publique d'une boutique : <slug>.boutik-app.com */
-export const shopUrl = (slug: string) => `https://${slug}.${SITE_DOMAIN}`;
-export const shopDomain = (slug: string) => `${slug}.${SITE_DOMAIN}`;
+/** Adresse publique d'une boutique : boutik-app.com/b/<slug>
+    (lien direct, pas de sous-domaine — ça évite de dépendre d'un
+    enregistrement DNS wildcard chez l'hébergeur). */
+export const shopUrl = (slug: string) => `${SITE_URL}/b/${slug}`;
+export const shopDomain = (slug: string) => `${SITE_DOMAIN}/b/${slug}`;
 
 export const SUPPORT_EMAIL = `support@${SITE_DOMAIN}`;

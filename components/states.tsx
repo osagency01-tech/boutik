@@ -56,7 +56,7 @@ export function LoadingScreen({ label = "Chargement…" }: { label?: string }) {
       <span className="splash-word splash-word--sm" aria-hidden>
         Boutik
       </span>
-      <p className="text-sm text-ink/45">{label}</p>
+      <p className="text-sm text-ink/55">{label}</p>
     </div>
   );
 }

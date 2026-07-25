@@ -1,24 +1,28 @@
-"use client";
-
 /* Vraie boutique de démonstration, montrée depuis la landing (bouton
    "Voir une boutique démo") : produits et photos réels de Kadi Store,
    navigation et commande fonctionnelles, mais rien n'est persisté
-   (StoreProvider ne touche jamais la base en mode `demo`). */
+   (StoreProvider ne touche jamais la base en mode `demo`).
 
-import ShopChrome from "@/components/shop-chrome";
-import { CartProvider } from "@/lib/cart";
-import { StoreProvider } from "@/lib/store";
-import dynamic from "next/dynamic";
+   Server Component : demoShopToConfig/demoShopToProducts sont pures
+   (lib/demo-shops.ts), donc le HTML envoyé au navigateur contient déjà
+   la boutique — pas d'écran "chargement…" avant le vrai contenu. */
 
-const Splash = dynamic(() => import("@/components/splash"), { ssr: false });
+import ShopProviders from "@/components/shop-providers";
+import { demoShopToConfig, demoShopToProducts } from "@/lib/demo-shops";
 
 export default function DemoShopLayout({ children }: { children: React.ReactNode }) {
+  const config = demoShopToConfig("classique");
+  const products = demoShopToProducts("classique");
+
   return (
-    <StoreProvider demo demoTemplate="classique" basePath="/demo">
-      <CartProvider storageKey="boutik-cart-demo">
-        <Splash />
-        <ShopChrome demo>{children}</ShopChrome>
-      </CartProvider>
-    </StoreProvider>
+    <ShopProviders
+      basePath="/demo"
+      cartKey="boutik-cart-demo"
+      demo
+      initialConfig={config}
+      initialProducts={products}
+    >
+      {children}
+    </ShopProviders>
   );
 }

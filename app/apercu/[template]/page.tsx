@@ -95,7 +95,7 @@ export default function TemplatePreview() {
                 {info.tier}
               </span>
             </p>
-            <p className="truncate text-[11px] text-ink/45">
+            <p className="truncate text-[11px] text-ink/55">
               Modèle {idx + 1} sur {TEMPLATE_INFO.length} · aperçu avec des produits d&apos;exemple
             </p>
           </div>

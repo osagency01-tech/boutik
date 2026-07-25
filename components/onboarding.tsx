@@ -1,8 +1,10 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { subscribeToPush } from "@/lib/push";
 import {
   ArrowRight,
+  Bell,
   Check,
   Circle,
   Package,
@@ -32,8 +34,9 @@ import { useEffect, useState } from "react";
 const DISMISS_KEY = "boutik-guide-fini";
 
 export default function OnboardingGuide() {
-  const { config, products, palette, ready } = useStore();
+  const { config, products, palette, ready, shopId, demoMode } = useStore();
   const [hidden, setHidden] = useState(true);
+  const [notifGranted, setNotifGranted] = useState(false);
 
   useEffect(() => {
     try {
@@ -41,7 +44,29 @@ export default function OnboardingGuide() {
     } catch {
       setHidden(false);
     }
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifGranted(Notification.permission === "granted");
+    }
   }, []);
+
+  /* Même geste que NotificationCard (états.tsx) : la permission
+     DOIT être demandée depuis un clic, jamais au chargement. */
+  const askNotifications = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    try {
+      const res = await Notification.requestPermission();
+      setNotifGranted(res === "granted");
+      if (res === "granted") {
+        new Notification("Notifications activées", {
+          body: "Tu seras prévenu dès qu'une commande arrive.",
+          icon: "/icon-192.png",
+        });
+        await subscribeToPush(shopId, demoMode);
+      }
+    } catch {
+      /* Safari lève si l'appel n'est pas dans un geste utilisateur */
+    }
+  };
 
   if (!ready || hidden) return null;
 
@@ -89,6 +114,14 @@ export default function OnboardingGuide() {
       hint: "Pour la rendre visible de tes clients",
       href: "/dashboard/abonnement",
       cta: "Publier",
+    },
+    {
+      done: notifGranted,
+      label: "Installer Boutik pour recevoir tes notifications de commande",
+      hint: "Sois prévenu dès qu'un client commande, même l'application fermée",
+      href: null,
+      cta: "Activer",
+      action: askNotifications,
     },
   ];
 
@@ -216,6 +249,15 @@ export default function OnboardingGuide() {
                       >
                         {s.cta} <ArrowRight size={13} />
                       </Link>
+                    )}
+                    {isNext && !s.href && s.action && (
+                      <button
+                        onClick={s.action}
+                        className="btn btn-sm shrink-0 text-white"
+                        style={{ backgroundColor: palette.accent }}
+                      >
+                        <Bell size={13} /> {s.cta}
+                      </button>
                     )}
                   </div>
                 );

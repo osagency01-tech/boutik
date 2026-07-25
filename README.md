@@ -210,13 +210,13 @@ Luminosité, contraste, zoom, rotation, fond uni, **recadrage carré automatique
 
 `components/onboarding.tsx` — un vendeur qui arrive sur un dashboard vide ne revient pas.
 
-Checklist en 5 étapes qui **se cochent seules** à partir de l'état réel : on ne demande jamais « as-tu fait ceci ? », on regarde. Une seule aide affichée à la fois. Disparaît définitivement une fois terminée.
+Checklist en 6 étapes qui **se cochent seules** à partir de l'état réel : on ne demande jamais « as-tu fait ceci ? », on regarde. Une seule aide affichée à la fois. Disparaît définitivement une fois terminée.
 
 ## PWA & notifications
 
 - **Service worker** (`public/sw.js`) — le cache ne touche **jamais** l'API : une commande périmée est pire qu'une erreur réseau. Seuls la coquille et les images sont mises en cache.
 - **Installation** — bouton natif sur Android ; sur iOS, aucune API n'existe, donc le geste est **expliqué** (Partager → Sur l'écran d'accueil). Personne ne le devine.
-- **Push** — la permission n'est demandée qu'après une action qui la justifie. Un refus est définitif : demander trop tôt, c'est perdre le canal à vie.
+- **Push, de bout en bout** — la permission n'est demandée qu'après une action qui la justifie (un refus est définitif : demander trop tôt, c'est perdre le canal à vie). Une fois accordée, `lib/push.ts` abonne le navigateur (VAPID) et enregistre l'abonnement (`push_subscriptions`, `supabase/migrations/007_push_subscriptions.sql`). Une nouvelle commande déclenche un trigger Postgres (`pg_net`) qui appelle l'Edge Function `supabase/functions/notify-order`, laquelle envoie le vrai push. Déploiement (clés VAPID, migration, Edge Function) documenté dans `DEPLOIEMENT.md`.
 
 ## Bons de commande PDF
 
@@ -284,4 +284,4 @@ Voir `supabase/README.md` pour la mise en route et les décisions de sécurité.
 4. Upload images → Storage (buckets et policies déjà créés)
 5. Génération PDF serveur des bons de commande
 6. Agrégateur Mobile Money → doit piloter `shops.plan` via `subscriptions`
-7. PWA : manifest + service worker + push
+7. ~~PWA : manifest + service worker + push~~ — **fait**, notifications de commande envoyées de bout en bout (voir « PWA & notifications » plus haut)

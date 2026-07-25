@@ -224,13 +224,13 @@ export default function SupportPage() {
             {/* Réponse automatique : donne une piste immédiate plutôt
                 qu'un simple "on a bien reçu". */}
             <div className="mt-4 rounded-xl bg-cream p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink/45">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink/55">
                 Réponse automatique
               </p>
               <p className="mt-2 text-sm leading-relaxed text-ink/70">{sent.message}</p>
             </div>
 
-            <p className="mt-4 text-xs leading-relaxed text-ink/45">
+            <p className="mt-4 text-xs leading-relaxed text-ink/55">
               Un accusé de réception a été envoyé à ton adresse email. Garde la référence{" "}
               <span className="font-mono font-bold text-ink/60">{sent.ref}</span> si tu nous
               recontactes.
@@ -310,7 +310,7 @@ export default function SupportPage() {
       </AnimatePresence>
 
       <Reveal delay={0.18}>
-        <p className="mt-6 text-center text-xs text-ink/40">
+        <p className="mt-6 text-center text-xs text-ink/50">
           Tu cherches à contacter un client ? C&apos;est dans{" "}
           <Link href="/dashboard/messages" className="font-bold underline">
             Messages

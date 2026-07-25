@@ -3,6 +3,7 @@
 import { BoutikLogo } from "@/components/brand";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { WhatsAppIcon } from "@/components/phone-icon";
+import Splash from "@/components/splash";
 import dynamic from "next/dynamic";
 
 /* Chargé après le premier rendu : le téléphone animé embarque Framer
@@ -22,9 +23,6 @@ function PhoneSkeleton() {
   );
 }
 
-/* Écran de démarrage : uniquement sur l'accueil, plus dans le layout
-   racine où il pesait sur le dashboard et les boutiques clientes. */
-const Splash = dynamic(() => import("@/components/splash"), { ssr: false });
 
 /* Ne monte le téléphone animé que lorsqu'il approche de l'écran.
    Sans ça, Framer Motion (~53 Ko) est téléchargé dès l'arrivée sur la
@@ -164,55 +162,48 @@ function Logo({ priority = false }: { priority?: boolean }) {
 
 /* ---------------- Hero ---------------- */
 
+/* Pas de Reveal ici : ce bloc est ce que le visiteur voit en premier,
+   sans avoir à faire défiler — un fondu retardé dessus n'ajoute qu'une
+   attente artificielle avant l'affichage, ce qui pénalise directement
+   le LCP (mesuré : ~1,6 s de délai rien que pour ce fondu). Le reveal
+   au défilement garde tout son sens plus bas sur la page. */
 function Hero() {
   return (
     <section className="wax-pattern relative overflow-hidden">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 md:grid-cols-2 md:pt-20 lg:gap-8">
         <div>
-          <Reveal>
-            <span className="chip bg-primary-soft text-primary-dark">
-              <WhatsAppIcon className="h-3.5 w-3.5" /> Discute moins, vends plus. Optimise ton temps.
-            </span>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
-              Ta boutique en ligne,
-              <br />
-              <span className="text-primary">prête en 10 minutes.</span>
-            </h1>
-          </Reveal>
-          <Reveal delay={0.16}>
-            <p className="mt-5 max-w-md text-lg leading-relaxed text-ink/65">
-              Crée ta boutique en quelques minutes, reçois tes
-  commandes sans discuter, encaisse par Mobile Money.
-  Pensé pour les vendeurs africains, depuis un téléphone.
-            </p>
-          </Reveal>
-          <Reveal delay={0.24}>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/creer" className="btn-primary btn-lg">
-                Créer ma boutique gratuitement <ArrowRight size={18} />
-              </Link>
-              <Link href="/demo" className="btn-ghost btn-lg">
-                Voir la démo
-              </Link>
-            </div>
-          </Reveal>
-          <Reveal delay={0.32}>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-ink/60">
-              {["0 % de commission sur tes ventes", "Sans engagement", "À partir de 999 F/mois"].map(
-                (t) => (
-                  <li key={t} className="flex items-center gap-1.5">
-                    <Check size={15} className="text-primary" /> {t}
-                  </li>
-                )
-              )}
-            </ul>
-          </Reveal>
+          <span className="chip bg-primary-soft text-primary-dark">
+            <WhatsAppIcon className="h-3.5 w-3.5" /> Discute moins, vends plus. Optimise ton temps.
+          </span>
+          <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+            Ta boutique en ligne,
+            <br />
+            <span className="text-primary">prête en 10 minutes.</span>
+          </h1>
+          <p className="mt-5 max-w-md text-lg leading-relaxed text-ink/65">
+            Crée ta boutique en quelques minutes, reçois tes
+commandes sans discuter, encaisse par Mobile Money.
+Pensé pour les vendeurs africains, depuis un téléphone.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href="/creer" className="btn-primary btn-lg">
+              Créer ma boutique gratuitement <ArrowRight size={18} />
+            </Link>
+            <Link href="/demo" className="btn-ghost btn-lg">
+              Voir la démo
+            </Link>
+          </div>
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-ink/60">
+            {["0 % de commission sur tes ventes", "Sans engagement", "À partir de 999 F/mois"].map(
+              (t) => (
+                <li key={t} className="flex items-center gap-1.5">
+                  <Check size={15} className="text-primary" /> {t}
+                </li>
+              )
+            )}
+          </ul>
         </div>
-        <Reveal delay={0.2} y={40}>
-          <LazyPhone />
-        </Reveal>
+        <LazyPhone />
       </div>
     </section>
   );
@@ -304,7 +295,7 @@ function HowItWorks() {
     {
       n: "2",
       t: "Partage ton lien",
-      d: "Ta boutique a sa propre adresse : ta-boutique.boutik-app.com. Partage-la sur WhatsApp, Facebook, TikTok.",
+      d: "Ta boutique a sa propre adresse : boutik-app.com/b/ta-boutique. Partage-la sur WhatsApp, Facebook, TikTok.",
     },
     {
       n: "3",
@@ -505,7 +496,7 @@ function Pricing() {
                 </p>
                 <p className="mt-3 font-display text-4xl font-extrabold">
                   {fcfa(p.price)}
-                  <span className={`text-base font-semibold ${p.highlight ? "text-white/50" : "text-ink/40"}`}>
+                  <span className={`text-base font-semibold ${p.highlight ? "text-white/50" : "text-ink/50"}`}>
                     {" "}/ mois
                   </span>
                 </p>

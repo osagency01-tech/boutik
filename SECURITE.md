@@ -40,7 +40,7 @@ RLS seul ne suffisait pas : un vendeur a le droit de modifier sa boutique, mais 
 | Attaque | Résultat |
 |---|---|
 | `<script>alert(1)</script>` en slug | `script-alert-1-script` |
-| `evil.attaquant.com` en slug | `evil-attaquant-com` (point retiré → pas de sous-domaine imbriqué) |
+| `evil.attaquant.com` en slug | `evil-attaquant-com` (point retiré → pas de segment d'URL détourné) |
 | `../../etc/passwd` | `etc-passwd` |
 | `javascript:alert(document.cookie)` | rejeté |
 | `data:text/html,<script>` | rejeté |

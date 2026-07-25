@@ -9,6 +9,12 @@ import { useEffect, useState } from "react";
  * droite comme tracé à la main, puis respire doucement. Affiché une
  * fois par session (pas à chaque navigation) : passé la première fois,
  * c'est une perte de temps pour le vendeur qui revient souvent.
+ *
+ * Rendu côté serveur (pas de dynamic ssr:false) et visible par défaut
+ * (`show` démarre à `true`) : c'est ce qui garantit qu'il est vraiment
+ * la toute première chose peinte à l'écran, avant même que le JS ne
+ * s'exécute — sinon la page arrivait en premier, le temps que le
+ * bundle du splash se charge, puis le splash apparaissait par-dessus.
  * ------------------------------------------------------------------ */
 
 const SEEN_KEY = "boutik-splash-seen";
@@ -22,22 +28,30 @@ export default function Splash() {
      "vu" avant même que le second ne s'exécute — le second se croyait
      alors déjà affiché, ne relançait pas les minuteurs, et le splash
      restait bloqué à l'écran pour de bon (le premier jeu de minuteurs
-     ayant été annulé par le nettoyage du premier passage). */
+     ayant été annulé par le nettoyage du premier passage). Sans
+     `sessionStorage` (rendu serveur), la capture échoue et vaut `true` :
+     sans conséquence, seule la valeur calculée côté client compte, le
+     serveur ne produit que le HTML initial. */
   const [alreadySeen] = useState(() => {
     try {
       return sessionStorage.getItem(SEEN_KEY) === "1";
     } catch {
-      /* navigation privée : on n'insiste pas */
       return true;
     }
   });
-  const [show, setShow] = useState(false);
+  /* Visible par défaut, y compris avant hydratation : si la session a
+     déjà vu le splash, l'effet ci-dessous le masque presque aussitôt
+     (un rendu, imperceptible) plutôt que de risquer un flash de la
+     page brute avant que le JS ne décide quoi que ce soit. */
+  const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (alreadySeen) return;
+    if (alreadySeen) {
+      setShow(false);
+      return;
+    }
 
-    setShow(true);
     try {
       sessionStorage.setItem(SEEN_KEY, "1");
     } catch {}

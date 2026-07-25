@@ -1,6 +1,9 @@
 "use client";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { storageUrl } from "./storage-url";
+
+export { storageUrl };
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -163,12 +166,6 @@ export const STATUS_ORDER: DbOrderStatus[] = [
   "expediee",
   "livree",
 ];
-
-export function storageUrl(bucket: string, path: string | null | undefined) {
-  if (!path) return undefined;
-  if (path.startsWith("data:") || path.startsWith("http")) return path;
-  return `${URL}/storage/v1/object/public/${bucket}/${path}`;
-}
 
 export function slugify(name: string) {
   return name

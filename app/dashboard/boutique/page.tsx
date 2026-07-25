@@ -137,7 +137,7 @@ export default function ShopEditor() {
                 touch();
               }
             }}
-            className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-ink/45 hover:text-terra"
+            className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-ink/55 hover:text-terra"
           >
             <RotateCcw size={12} /> Réinitialiser la boutique de démo
           </button>
@@ -145,7 +145,7 @@ export default function ShopEditor() {
 
         {/* ---------- Aperçu direct (desktop) ---------- */}
         <div className="sticky top-6 hidden lg:block">
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink/45">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink/55">
             <Eye size={13} /> Aperçu en direct
           </p>
           <LivePreview />
@@ -178,7 +178,7 @@ export default function ShopEditor() {
               className="mt-auto rounded-t-3xl bg-cream p-4 pb-6"
             >
               <div className="mb-3 flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink/45">
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink/55">
                   <Eye size={13} /> Aperçu en direct
                 </p>
                 <button
@@ -220,7 +220,7 @@ function LivePreview() {
         />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-[11px] font-extrabold leading-tight">{config.name || "Ma boutique"}</p>
-          <p className="truncate text-[8px] leading-tight text-ink/45">{config.tagline}</p>
+          <p className="truncate text-[8px] leading-tight text-ink/55">{config.tagline}</p>
         </div>
       </div>
 
@@ -463,7 +463,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <div>
       <label className="mb-1.5 block text-sm font-bold">{label}</label>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-ink/45">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-ink/55">{hint}</p>}
     </div>
   );
 }
@@ -544,7 +544,7 @@ function IdentiteTab({ touch }: { touch: () => void }) {
                   setConfig({ logo: undefined });
                   touch();
                 }}
-                className="text-xs font-semibold text-ink/45 hover:text-terra"
+                className="text-xs font-semibold text-ink/55 hover:text-terra"
               >
                 Retirer le logo
               </button>
@@ -648,7 +648,7 @@ function DesignTab({ touch }: { touch: () => void }) {
             return (
               <div key={tier}>
                 <div className="mb-2 flex items-center gap-2">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-ink/45">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-ink/55">
                     {tier}
                   </p>
                   {!unlocked && (
@@ -781,7 +781,7 @@ function AccueilTab({ touch }: { touch: () => void }) {
                 setConfig({ bannerImage: undefined });
                 touch();
               }}
-              className="text-xs font-semibold text-ink/45 hover:text-terra"
+              className="text-xs font-semibold text-ink/55 hover:text-terra"
             >
               Retirer l&apos;image
             </button>

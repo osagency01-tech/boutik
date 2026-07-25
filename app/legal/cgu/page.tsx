@@ -16,7 +16,7 @@ export default function CGU() {
       <h1 className="font-display text-3xl font-extrabold">
         Conditions générales d&apos;utilisation
       </h1>
-      <p className="mt-2 text-sm text-ink/45">Dernière mise à jour : juillet 2026</p>
+      <p className="mt-2 text-sm text-ink/55">Dernière mise à jour : juillet 2026</p>
 
       <Section n="1" t="Objet">
         <p>

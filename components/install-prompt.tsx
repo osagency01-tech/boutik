@@ -2,6 +2,8 @@
 
 import { Bell, BellRing, Check, Download, Share, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useStore } from "@/lib/store";
+import { subscribeToPush } from "@/lib/push";
 
 /* ------------------------------------------------------------------ *
  * Installation PWA
@@ -189,6 +191,7 @@ export default function InstallPrompt() {
  * ------------------------------------------------------------------ */
 
 export function NotificationCard() {
+  const { shopId, demoMode } = useStore();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
   const [busy, setBusy] = useState(false);
 
@@ -212,13 +215,7 @@ export function NotificationCard() {
           body: "Tu seras prévenu dès qu'une commande arrive.",
           icon: "/icon-192.png",
         });
-
-        /* L'abonnement push réel (VAPID + service worker) se branche
-           ici quand le serveur d'envoi sera prêt. La permission, elle,
-           est bien acquise dès maintenant. */
-        if ("serviceWorker" in navigator) {
-          await navigator.serviceWorker.ready.catch(() => {});
-        }
+        await subscribeToPush(shopId, demoMode);
       }
     } catch {
       /* Safari lève si l'appel n'est pas dans un geste utilisateur */

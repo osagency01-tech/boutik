@@ -25,7 +25,7 @@ export default function ShopHome() {
   const isOwnerPreview = basePath === "/boutique";
 
   if (!ready)
-    return <div className="pt-24 text-center text-sm text-ink/40">Chargement…</div>;
+    return <div className="pt-24 text-center text-sm text-ink/50">Chargement…</div>;
 
   if (products.length === 0)
     return (
@@ -92,38 +92,40 @@ function ClassiqueTemplate() {
 
   return (
     <div className="pt-8">
-      <Reveal>
-        <div
-          className="wax-pattern-dense relative overflow-hidden rounded-3xl px-6 py-14 text-white sm:px-10 md:py-20"
-          style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}B3)` }}
+      {/* Pas de Reveal : c'est la bannière, la première chose vue en
+          arrivant sur la boutique — un fondu retardé dessus pénalise
+          le LCP pour rien, elle n'a pas besoin d'un défilement pour
+          apparaître. */}
+      <div
+        className="wax-pattern-dense relative overflow-hidden rounded-3xl px-6 py-14 text-white sm:px-10 md:py-20"
+        style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}B3)` }}
+      >
+        <BannerBackground image={config.bannerImage} accent={palette.accent} />
+        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
+        <BannerLogoBadge
+          logo={config.logo}
+          icon={config.logoIcon}
+          name={config.name}
+          accent={palette.accent}
+          size={32}
+        />
+        <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+          {config.bannerBadge}
+        </p>
+        <h1 className="relative mt-3 max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+          {config.bannerTitle}
+        </h1>
+        <p className="relative mt-3 max-w-sm text-sm leading-relaxed text-white/85">
+          {config.bannerSubtitle}
+        </p>
+        <Link
+          href={`${basePath}/produits`}
+          className="btn relative mt-7 bg-white px-6 py-3 text-sm hover:bg-cream"
+          style={{ color: palette.accent }}
         >
-          <BannerBackground image={config.bannerImage} accent={palette.accent} />
-          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
-          <BannerLogoBadge
-            logo={config.logo}
-            icon={config.logoIcon}
-            name={config.name}
-            accent={palette.accent}
-            size={32}
-          />
-          <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-            {config.bannerBadge}
-          </p>
-          <h1 className="relative mt-3 max-w-md font-display text-3xl font-extrabold leading-tight sm:text-4xl">
-            {config.bannerTitle}
-          </h1>
-          <p className="relative mt-3 max-w-sm text-sm leading-relaxed text-white/85">
-            {config.bannerSubtitle}
-          </p>
-          <Link
-            href={`${basePath}/produits`}
-            className="btn relative mt-7 bg-white px-6 py-3 text-sm hover:bg-cream"
-            style={{ color: palette.accent }}
-          >
-            {config.ctaLabel} <ArrowRight size={16} />
-          </Link>
-        </div>
-      </Reveal>
+          {config.ctaLabel} <ArrowRight size={16} />
+        </Link>
+      </div>
 
       <Stagger className="mt-8 grid gap-3 sm:grid-cols-3">
         {config.perks.map((t, i) => {
@@ -211,33 +213,32 @@ function CatalogueTemplate() {
 
   return (
     <div className="pt-6">
-      <Reveal>
-        <div className="shop-card flex flex-wrap items-center justify-between gap-4 p-5">
-          <div>
-            <p
-              className="text-[11px] font-bold uppercase tracking-[0.18em]"
-              style={{ color: palette.accent }}
-            >
-              {config.bannerBadge}
+      {/* Pas de Reveal ici : premier contenu visible, cf. ClassiqueTemplate. */}
+      <div className="shop-card flex flex-wrap items-center justify-between gap-4 p-5">
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.18em]"
+            style={{ color: palette.accent }}
+          >
+            {config.bannerBadge}
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold">{config.bannerTitle}</h1>
+        </div>
+        <div className="flex gap-2 text-center">
+          <div className="rounded-xl bg-cream px-4 py-2">
+            <p className="font-display text-lg font-extrabold" style={{ color: palette.accent }}>
+              {products.length}
             </p>
-            <h1 className="mt-1 font-display text-2xl font-extrabold">{config.bannerTitle}</h1>
+            <p className="text-[10px] font-semibold text-ink/50">articles</p>
           </div>
-          <div className="flex gap-2 text-center">
-            <div className="rounded-xl bg-cream px-4 py-2">
-              <p className="font-display text-lg font-extrabold" style={{ color: palette.accent }}>
-                {products.length}
-              </p>
-              <p className="text-[10px] font-semibold text-ink/50">articles</p>
-            </div>
-            <div className="rounded-xl bg-cream px-4 py-2">
-              <p className="font-display text-lg font-extrabold" style={{ color: palette.accent }}>
-                {cats.length}
-              </p>
-              <p className="text-[10px] font-semibold text-ink/50">catégories</p>
-            </div>
+          <div className="rounded-xl bg-cream px-4 py-2">
+            <p className="font-display text-lg font-extrabold" style={{ color: palette.accent }}>
+              {cats.length}
+            </p>
+            <p className="text-[10px] font-semibold text-ink/50">catégories</p>
           </div>
         </div>
-      </Reveal>
+      </div>
 
       <div className="nice-scroll mt-4 flex gap-2 overflow-x-auto pb-2">
         {cats.map((c) => (
@@ -257,7 +258,7 @@ function CatalogueTemplate() {
             <div className="flex items-center gap-3">
               <h2 className="font-display text-lg font-extrabold">{cat}</h2>
               <span className="h-px flex-1 bg-ink/10" />
-              <span className="text-xs font-semibold text-ink/40">
+              <span className="text-xs font-semibold text-ink/50">
                 {products.filter((p) => p.category === cat).length}
               </span>
             </div>
@@ -302,45 +303,42 @@ function VitrineTemplate() {
 
   return (
     <div className="pt-6">
-      <Reveal>
-        <p
-          className="text-center text-[11px] font-bold uppercase tracking-[0.3em]"
-          style={{ color: palette.accent }}
-        >
-          {config.bannerBadge}
-        </p>
-        <h1 className="mx-auto mt-3 max-w-2xl text-center font-display text-4xl font-extrabold leading-[1.1] sm:text-5xl">
-          {config.bannerTitle}
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-center text-sm leading-relaxed shop-muted">
-          {config.bannerSubtitle}
-        </p>
-      </Reveal>
+      {/* Pas de Reveal ici : premier contenu visible, cf. ClassiqueTemplate. */}
+      <p
+        className="text-center text-[11px] font-bold uppercase tracking-[0.3em]"
+        style={{ color: palette.accent }}
+      >
+        {config.bannerBadge}
+      </p>
+      <h1 className="mx-auto mt-3 max-w-2xl text-center font-display text-4xl font-extrabold leading-[1.1] sm:text-5xl">
+        {config.bannerTitle}
+      </h1>
+      <p className="mx-auto mt-4 max-w-md text-center text-sm leading-relaxed shop-muted">
+        {config.bannerSubtitle}
+      </p>
 
       {hero && (
-        <Reveal delay={0.1}>
-          <Link href={`${basePath}/produits/${hero.id}`} className="group mt-10 block">
-            <ProductVisual
-              product={hero}
-              className="h-[380px] rounded-3xl sm:h-[460px]"
-              iconSize={90}
-              focusTop
-            />
-            <div className="mt-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/40">
-                  {hero.category}
-                </p>
-                <h2 className="mt-1 font-display text-2xl font-extrabold group-hover:underline">
-                  {hero.name}
-                </h2>
-              </div>
-              <p className="font-display text-2xl font-extrabold" style={{ color: palette.accent }}>
-                {fcfa(hero.price)}
+        <Link href={`${basePath}/produits/${hero.id}`} className="group mt-10 block">
+          <ProductVisual
+            product={hero}
+            className="h-[380px] rounded-3xl sm:h-[460px]"
+            iconSize={90}
+            focusTop
+          />
+          <div className="mt-4 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink/50">
+                {hero.category}
               </p>
+              <h2 className="mt-1 font-display text-2xl font-extrabold group-hover:underline">
+                {hero.name}
+              </h2>
             </div>
-          </Link>
-        </Reveal>
+            <p className="font-display text-2xl font-extrabold" style={{ color: palette.accent }}>
+              {fcfa(hero.price)}
+            </p>
+          </div>
+        </Link>
       )}
 
       <Reveal>
@@ -358,7 +356,7 @@ function VitrineTemplate() {
           <StaggerItem key={p.id}>
             <Link href={`${basePath}/produits/${p.id}`} className="group block">
               <ProductVisual product={p} className="h-64 rounded-2xl" />
-              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-ink/40">
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-ink/50">
                 {p.category}
               </p>
               <h3 className="mt-1 font-display text-lg font-bold group-hover:underline">{p.name}</h3>

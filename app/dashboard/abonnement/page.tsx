@@ -71,7 +71,7 @@ export default function SubscriptionPage() {
         <div className="card mt-5 p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-ink/45">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink/55">
                 Offre en cours
               </p>
               <p className="mt-1 font-display text-2xl font-extrabold">{config.plan}</p>
@@ -86,7 +86,7 @@ export default function SubscriptionPage() {
             </div>
             {config.plan !== "Gratuit" && (
               <div className="text-right">
-                <p className="text-xs text-ink/45">Prochaine échéance</p>
+                <p className="text-xs text-ink/55">Prochaine échéance</p>
                 <p className="mt-0.5 flex items-center gap-1.5 font-display font-extrabold">
                   <Clock size={14} className="text-ink/40" />
                   {expiry ? formatDate(expiry) : "—"}
@@ -159,7 +159,7 @@ export default function SubscriptionPage() {
                   {fcfa(p.price)}
                   <span
                     className={`text-sm font-semibold ${
-                      isCurrent ? "text-white/50" : "text-ink/40"
+                      isCurrent ? "text-white/50" : "text-ink/50"
                     }`}
                   >
                     {" "}
@@ -336,7 +336,7 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
             <span className="text-sm font-semibold">Offre {plan}</span>
             <span className="font-display text-xl font-extrabold text-primary">
               {fcfa(price)}
-              <span className="text-sm font-semibold text-ink/40"> / mois</span>
+              <span className="text-sm font-semibold text-ink/50"> / mois</span>
             </span>
           </div>
           <p className="mt-1 text-xs text-ink/50">Sans engagement, résiliable à tout moment.</p>

@@ -214,7 +214,7 @@ export default function PhotoEditor({
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 text-[11px] leading-snug text-ink/40">
+            <p className="mt-1.5 text-[11px] leading-snug text-ink/50">
               Le fond ne remplace pas la photo : il n&apos;apparaît qu&apos;autour, si tu
               zoomes ou tournes l&apos;image.
             </p>
@@ -283,7 +283,7 @@ function Slider({
         <span className="flex items-center gap-1.5 text-xs font-bold text-ink/60">
           {icon} {label}
         </span>
-        <span className="text-[11px] font-semibold text-ink/40">{value}%</span>
+        <span className="text-[11px] font-semibold text-ink/50">{value}%</span>
       </div>
       <input
         type="range"

@@ -127,7 +127,7 @@ export default function Contact() {
               maxLength={20}
               onChange={(e) => setPhone(e.target.value)}
             />
-            <p className="mt-1.5 text-xs text-ink/45">
+            <p className="mt-1.5 text-xs text-ink/55">
               Facultatif, mais permet une réponse plus rapide.
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function Contact() {
 
       {rows.length > 0 && (
         <Reveal delay={0.16}>
-          <p className="mb-2 mt-8 text-xs font-bold uppercase tracking-wider text-ink/40">
+          <p className="mb-2 mt-8 text-xs font-bold uppercase tracking-wider text-ink/50">
             Autres moyens
           </p>
           <div className="shop-card divide-y divide-ink/5">
@@ -177,7 +177,7 @@ export default function Contact() {
                   {r.icon}
                 </span>
                 <div>
-                  <p className="text-xs text-ink/45">{r.l}</p>
+                  <p className="text-xs text-ink/55">{r.l}</p>
                   <p className="text-sm font-bold">{r.v}</p>
                 </div>
               </div>

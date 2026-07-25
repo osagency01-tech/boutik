@@ -141,7 +141,7 @@ function ShopScreen() {
           </span>
           <div>
             <p className="font-display text-sm font-bold">Kadi Store</p>
-            <p className="text-[10px] text-ink/50">kadi.boutik-app.com</p>
+            <p className="text-[10px] text-ink/50">boutik-app.com/b/kadi-store</p>
           </div>
         </div>
         <div className="relative rounded-full bg-white p-1.5 shadow-card">

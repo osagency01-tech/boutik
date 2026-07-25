@@ -46,7 +46,7 @@ export function SalesChart({
     <div className="card mt-6 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-ink/45">Ventes par jour</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-ink/55">Ventes par jour</p>
           <p className="mt-1 font-display text-2xl font-extrabold">{fcfa(shown ? shown.sales : total)}</p>
           <p className="text-xs font-semibold text-ink/50">
             {shown

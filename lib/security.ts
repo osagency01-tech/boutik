@@ -52,9 +52,9 @@ export const isPhone = (v: string) => {
 export const normalizePhone = (v: string) => v.replace(/\D/g, "").slice(0, 15);
 
 /**
- * Un slug de boutique devient un sous-domaine : il ne doit jamais
- * pouvoir contenir de point (sous-domaine imbriqué) ni de caractère
- * d'échappement d'URL.
+ * Un slug de boutique devient un segment d'URL (boutik-app.com/b/<slug>) :
+ * il ne doit jamais pouvoir contenir de point, de slash ou de caractère
+ * d'échappement d'URL, qui casseraient ou détourneraient le chemin.
  */
 export function safeSlug(v: string): string {
   return v

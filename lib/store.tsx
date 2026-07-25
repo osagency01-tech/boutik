@@ -175,6 +175,9 @@ export function StoreProvider({
   demo,
   demoTemplate,
   basePath = "/boutique",
+  initialConfig,
+  initialProducts,
+  initialShopId,
 }: {
   children: React.ReactNode;
   /* Si fourni : on charge la boutique publique de ce slug (vitrine).
@@ -189,12 +192,30 @@ export function StoreProvider({
      attend que la page injecte tout elle-même (cas de /apercu). */
   demoTemplate?: TemplateId;
   basePath?: string;
+  /* Données déjà chargées par un Server Component (app/demo,
+     app/b/[slug]) : le premier rendu envoyé au navigateur contient
+     déjà la vraie boutique, au lieu d'un écran "chargement…" suivi
+     d'un second rendu une fois l'effet client exécuté — c'est ce qui
+     gonflait le LCP de ces pages. /boutique (aperçu du vendeur
+     connecté) ne les fournit jamais : elle a besoin de la session. */
+  initialConfig?: Partial<ShopConfig>;
+  initialProducts?: Product[];
+  initialShopId?: string;
 }) {
-  const [config, setConfigState] = useState<ShopConfig>(DEFAULT_CONFIG);
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
-  const [ready, setReady] = useState(false);
-  const [shopId, setShopId] = useState<string | null>(null);
-  const [hasShop, setHasShop] = useState(false);
+  const seeded = Boolean(initialConfig);
+  /* Le Server Component ne peut pas importer DEFAULT_CONFIG lui-même :
+     lib/store.tsx est "use client", et un import de valeur (pas un type)
+     depuis un module "use client" dans un Server Component ne donne pas
+     la vraie donnée. Le complètement avec DEFAULT_CONFIG se fait donc
+     ici — /demo (config partielle) comme /b/[slug] (config déjà
+     complète, ce merge est alors un no-op). */
+  const [config, setConfigState] = useState<ShopConfig>(() =>
+    initialConfig ? { ...DEFAULT_CONFIG, ...initialConfig } : DEFAULT_CONFIG
+  );
+  const [products, setProducts] = useState<Product[]>(() => initialProducts ?? PRODUCTS);
+  const [ready, setReady] = useState(seeded);
+  const [shopId, setShopId] = useState<string | null>(initialShopId ?? null);
+  const [hasShop, setHasShop] = useState(seeded);
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const demoMode = !isSupabaseConfigured;
@@ -204,6 +225,9 @@ export function StoreProvider({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = async () => {
+    /* --- Déjà seedé par le serveur : rien à recharger. --- */
+    if (seeded) return;
+
     /* --- Boutique de démo autonome (ex. /demo) : on injecte directement
        la config + les produits du modèle demandé, vraies photos incluses. */
     if (demo && demoTemplate) {
@@ -295,6 +319,11 @@ export function StoreProvider({
     try {
       /* Comme pour une photo produit : on n'écrit jamais un data: URI en
          base, on l'envoie au Storage et on ne garde que le chemin/URL. */
+      if (patch.logo?.startsWith("data:")) {
+        const { url } = await uploadDataUri("shop-logos", shopId, patch.logo, "logo.jpg");
+        patch.logo = url;
+        setConfigState((c) => ({ ...c, logo: url }));
+      }
       if (patch.bannerImage?.startsWith("data:")) {
         const { url } = await uploadDataUri("shop-logos", shopId, patch.bannerImage, "banner.jpg");
         patch.bannerImage = url;

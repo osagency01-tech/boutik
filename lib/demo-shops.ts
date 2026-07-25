@@ -22,14 +22,19 @@ export type DemoProduct = {
   desc: string;
 };
 
-/* Visuel d'un produit de démo (public/demo/). Pour "classique" (Kadi
-   Store, utilisée par /demo, la vraie boutique de démonstration) ce
-   sont de vraies photos — Pexels, licence Pexels : libres d'usage
-   commercial, sans attribution requise. Un carré de couleur généré ou
-   une boutique sans photos donne l'impression d'être vide — ce n'est
-   pas ce qu'on veut montrer à un vendeur qu'on essaie de convaincre. */
-export const demoImage = (template: string, index: number) =>
-  `/demo/${template}-${index % 6}.jpg`;
+/* Visuel d'un produit de démo (public/demo/). Vraies photos — Pexels,
+   licence Pexels : libres d'usage commercial, sans attribution requise,
+   réencodées en WebP. Un carré de couleur généré ou une boutique sans
+   photos donne l'impression d'être vide — ce n'est pas ce qu'on veut
+   montrer à un vendeur qu'on essaie de convaincre.
+   Modèles restants sans encore de vraies photos (vignettes générées
+   d'origine, en JPG) : fashion, beauty, food, luxury, modern, artisan. */
+const WEBP_TEMPLATES = new Set(["classique", "catalogue", "vitrine"]);
+
+export const demoImage = (template: string, index: number) => {
+  const ext = WEBP_TEMPLATES.has(template) ? "webp" : "jpg";
+  return `/demo/${template}-${index % 6}.${ext}`;
+};
 
 export type DemoShop = {
   template: TemplateId;

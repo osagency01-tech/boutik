@@ -121,7 +121,7 @@ export default function CartPage() {
           >
             Passer la commande <ArrowRight size={17} />
           </Link>
-          <p className="mt-3 text-center text-xs text-ink/45">
+          <p className="mt-3 text-center text-xs text-ink/55">
             Paiement à la livraison ou par Mobile Money, directement avec le vendeur.
           </p>
         </div>

@@ -317,7 +317,7 @@ export default function CheckoutPage() {
             {busy && <Loader2 size={16} className="animate-spin" />}
             {busy ? "Enregistrement…" : "Valider ma commande"}
           </button>
-          <p className="mt-3 text-center text-xs leading-relaxed text-ink/45">
+          <p className="mt-3 text-center text-xs leading-relaxed text-ink/55">
             En validant, tes coordonnées sont transmises uniquement au vendeur
             pour traiter ta commande.
           </p>
@@ -340,7 +340,7 @@ function Field({
     <div>
       <label className="mb-1.5 block text-sm font-bold">{label}</label>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-ink/45">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-ink/55">{hint}</p>}
     </div>
   );
 }

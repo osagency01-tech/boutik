@@ -109,7 +109,7 @@ export default function ProductsAdmin() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
           </div>
-          <p className="mt-2 text-xs text-ink/45">
+          <p className="mt-2 text-xs text-ink/55">
             {full
               ? "Quota atteint. Passe à l'offre supérieure pour ajouter plus de produits."
               : "Besoin de plus ? L'offre Premium débloque les produits illimités."}
@@ -356,7 +356,7 @@ function ProductModal({
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-sm font-bold">Photos du produit</label>
-              <span className="text-[11px] font-semibold text-ink/40">
+              <span className="text-[11px] font-semibold text-ink/50">
                 {allPhotos.length} / {photoQuota}
               </span>
             </div>
@@ -389,7 +389,7 @@ function ProductModal({
                 <button
                   onClick={() => fileRef.current?.click()}
                   disabled={busy}
-                  className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-ink/15 text-ink/40 transition-colors hover:border-ink/40 hover:text-ink"
+                  className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-ink/15 text-ink/50 transition-colors hover:border-ink/40 hover:text-ink"
                 >
                   <Upload size={16} />
                   <span className="text-[9px] font-bold">Ajouter</span>
@@ -406,13 +406,13 @@ function ProductModal({
             />
 
             {allPhotos.length >= photoQuota ? (
-              <p className="mt-2 text-[11px] leading-snug text-ink/45">
+              <p className="mt-2 text-[11px] leading-snug text-ink/55">
                 {photoQuota === 1
                   ? "L'offre " + config.plan + " permet 1 photo par produit. Business en autorise 3, Premium 5."
                   : `Limite de l'offre ${config.plan} atteinte (${photoQuota} photos).`}
               </p>
             ) : (
-              <p className="mt-2 text-[11px] leading-snug text-ink/45">
+              <p className="mt-2 text-[11px] leading-snug text-ink/55">
                 Une vraie photo vend beaucoup mieux qu'une icône. Elle est
                 automatiquement redimensionnée et compressée.
               </p>
@@ -540,7 +540,7 @@ function ProductModal({
             {/* Une photo par couleur multiplierait l'egress par autant.
                 Le client choisit sa couleur à la commande, elle part
                 dans le message WhatsApp. */}
-            <p className="mt-1.5 text-xs text-ink/45">
+            <p className="mt-1.5 text-xs text-ink/55">
               Le client choisit sa couleur à la commande. Laisse vide s&apos;il n&apos;y a pas
               de choix.
             </p>

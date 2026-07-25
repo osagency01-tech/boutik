@@ -133,7 +133,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           />
           <div className="min-w-0">
             <p className="truncate text-xs font-bold">{config.name || "Ma boutique"}</p>
-            <p className="flex items-center gap-1 text-[10px] text-ink/45">
+            <p className="flex items-center gap-1 text-[10px] text-ink/55">
               <span
                 className={`h-1.5 w-1.5 rounded-full ${config.published ? "bg-primary" : "bg-ink/25"}`}
               />
@@ -177,7 +177,7 @@ function Shell({ children }: { children: React.ReactNode }) {
               await signOut();
               router.replace("/connexion");
             }}
-            className="mt-3 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-ink/45 transition-colors hover:bg-cream hover:text-ink"
+            className="mt-3 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-ink/55 transition-colors hover:bg-cream hover:text-ink"
           >
             <LogOut size={13} /> Se déconnecter
           </button>
@@ -275,7 +275,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                 key={n.l}
                 href={n.h}
                 className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[10px] font-bold ${
-                  active ? "text-primary" : "text-ink/45"
+                  active ? "text-primary" : "text-ink/55"
                 }`}
               >
                 <n.icon size={19} /> {n.l}
@@ -287,7 +287,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setMoreOpen(true)}
             className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[10px] font-bold ${
-              moreItems.some((n) => n.h === path) ? "text-primary" : "text-ink/45"
+              moreItems.some((n) => n.h === path) ? "text-primary" : "text-ink/55"
             }`}
           >
             <MoreHorizontal size={19} /> Plus

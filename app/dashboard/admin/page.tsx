@@ -2,6 +2,7 @@
 
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { ErrorScreen, LoadingScreen, SkeletonList } from "@/components/states";
+import { shopDomain } from "@/lib/config";
 import { demoWave, fcfa } from "@/lib/data";
 import { TEMPLATE_INFO } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
@@ -439,7 +440,7 @@ export default function AdminPage() {
                         title={`${g.creees - g.payantes} gratuites`}
                       />
                     </div>
-                    <span className="text-[9px] font-semibold text-ink/40">
+                    <span className="text-[9px] font-semibold text-ink/50">
                       {g.mois.slice(5)}
                     </span>
                   </div>
@@ -472,13 +473,13 @@ export default function AdminPage() {
                   <p className="font-display text-base font-extrabold">
                     {ordersDaily.reduce((s, d) => s + d.commandes, 0)}
                   </p>
-                  <p className="text-ink/40">commandes</p>
+                  <p className="text-ink/50">commandes</p>
                 </div>
                 <div>
                   <p className="font-display text-base font-extrabold text-primary">
                     {fcfa(ordersDaily.reduce((s, d) => s + d.volume, 0))}
                   </p>
-                  <p className="text-ink/40">volume</p>
+                  <p className="text-ink/50">volume</p>
                 </div>
               </div>
             </div>
@@ -517,7 +518,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold">{info?.name ?? t.template}</span>
                       <span className="flex items-center gap-2">
-                        <span className="text-ink/40">{t.payantes} payantes</span>
+                        <span className="text-ink/50">{t.payantes} payantes</span>
                         <span className="font-bold">{t.utilisations}</span>
                       </span>
                     </div>
@@ -572,16 +573,16 @@ export default function AdminPage() {
                     <span className="chip bg-terra-soft text-terra">Aucune vente 30 j</span>
                   )}
                 </p>
-                <p className="truncate text-xs text-ink/45">{s.slug}.boutik-app.com</p>
+                <p className="truncate text-xs text-ink/55">{shopDomain(s.slug)}</p>
               </div>
               <div className="flex shrink-0 gap-5 text-right text-xs">
                 <div>
                   <p className="font-bold">{s.commandes}</p>
-                  <p className="text-ink/40">commandes</p>
+                  <p className="text-ink/50">commandes</p>
                 </div>
                 <div>
                   <p className="font-bold text-primary">{fcfa(s.volume)}</p>
-                  <p className="text-ink/40">volume</p>
+                  <p className="text-ink/50">volume</p>
                 </div>
               </div>
               <div className="flex shrink-0 gap-1.5">
@@ -628,7 +629,7 @@ function Metric({
     <StaggerItem>
       <div className="card p-5">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-wider text-ink/45">{label}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-ink/55">{label}</p>
           <Icon size={15} className="text-primary" />
         </div>
         <p className="mt-2 font-display text-2xl font-extrabold">{value}</p>
@@ -667,7 +668,7 @@ function Alert({
         </p>
       </div>
       <p className="mt-2 text-xs font-bold">{label}</p>
-      <p className="text-[11px] leading-snug text-ink/45">{hint}</p>
+      <p className="text-[11px] leading-snug text-ink/55">{hint}</p>
     </div>
   );
 }

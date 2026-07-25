@@ -13,47 +13,23 @@ import {
   type DbZone,
 } from "./supabase";
 import type { ShopConfig, Zone } from "./store";
+import { dbToProduct, shopToConfig } from "./shop-transform";
+
+export { shopToConfig, dbToProduct };
 
 /* ------------------------------------------------------------------ *
  * Conversions base <-> front
  * ------------------------------------------------------------------ */
-
-export function shopToConfig(s: DbShop, zones: DbZone[]): ShopConfig {
-  return {
-    name: s.name,
-    tagline: s.tagline ?? "",
-    logo: storageUrl("shop-logos", s.logo_path),
-    logoIcon: s.logo_icon,
-    bannerImage: storageUrl("shop-logos", s.banner_image_path),
-    palette: s.palette,
-    template: s.template as ShopConfig["template"],
-    bannerBadge: s.banner_badge ?? "",
-    bannerTitle: s.banner_title ?? "",
-    bannerSubtitle: s.banner_subtitle ?? "",
-    whatsapp: s.whatsapp ?? "",
-    phone: s.phone ?? "",
-    instagram: s.instagram ?? "",
-    hours: s.hours ?? "",
-    about: s.about ?? "",
-    zones: zones.map((z) => ({ zone: z.label, price: z.price, delay: z.delay ?? "" })),
-    ctaLabel: s.cta_label ?? "Découvrir la boutique",
-    featuredTitle: s.featured_title ?? "Nos produits",
-    featuredEyebrow: s.featured_eyebrow ?? "Sélection",
-    perks: s.perks ?? [],
-    deliveryNote: s.delivery_note ?? "",
-    plan: (s.plan.charAt(0).toUpperCase() + s.plan.slice(1)) as ShopConfig["plan"],
-    published: s.status === "active" || s.status === "grace",
-  };
-}
 
 export function configToShop(c: Partial<ShopConfig>): Partial<DbShop> {
   const out: Record<string, unknown> = {};
   if (c.name !== undefined) out.name = c.name;
   if (c.tagline !== undefined) out.tagline = c.tagline;
   if (c.logoIcon !== undefined) out.logo_icon = c.logoIcon;
-  /* `bannerImage` arrive ici déjà transformée : `flush()` (lib/store.tsx)
-     l'a envoyée au Storage avant d'appeler updateShop, donc c'est une
-     URL publique, jamais un data: URI. */
+  /* `logo`/`bannerImage` arrivent ici déjà transformés : `flush()`
+     (lib/store.tsx) les a envoyés au Storage avant d'appeler updateShop,
+     donc ce sont des URL publiques, jamais un data: URI. */
+  if (c.logo !== undefined) out.logo_path = c.logo || null;
   if (c.bannerImage !== undefined) out.banner_image_path = c.bannerImage || null;
   if (c.palette !== undefined) out.palette = c.palette;
   if (c.template !== undefined) out.template = c.template;
@@ -73,23 +49,6 @@ export function configToShop(c: Partial<ShopConfig>): Partial<DbShop> {
   /* plan et status volontairement absents : la base les refuse
      au vendeur (guard_shop_privileges). C'est le paiement qui décide. */
   return out as Partial<DbShop>;
-}
-
-export function dbToProduct(p: DbProduct, imagePath?: string | null): Product {
-  return {
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    oldPrice: p.old_price ?? undefined,
-    category: p.category ?? "Divers",
-    stock: p.stock ?? 0,
-    icon: p.icon,
-    image: storageUrl("product-images", imagePath),
-    description: p.description ?? "",
-    sizes: p.sizes?.length ? p.sizes : undefined,
-    featured: p.featured,
-    hidden: p.hidden,
-  };
 }
 
 /* ------------------------------------------------------------------ *
@@ -490,6 +449,28 @@ export async function createOrder(input: {
   if (itemsError) throw itemsError;
 
   return order as DbOrder;
+}
+
+/* ------------------------------------------------------------------ *
+ * Notifications push
+ * ------------------------------------------------------------------ */
+
+/* Enregistre l'abonnement Push du navigateur courant pour cette boutique.
+   `onConflict` sur (shop_id, endpoint) : un même appareil qui redemande
+   la permission ne crée pas de doublon, il met juste à jour les clés. */
+export async function savePushSubscription(shopId: string, sub: PushSubscriptionJSON) {
+  const sb = supabase();
+  if (!sb || !sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) return;
+  const { error } = await sb.from("push_subscriptions").upsert(
+    {
+      shop_id: shopId,
+      endpoint: sub.endpoint,
+      p256dh: sub.keys.p256dh,
+      auth: sub.keys.auth,
+    },
+    { onConflict: "shop_id,endpoint" }
+  );
+  if (error) throw error;
 }
 
 /* ------------------------------------------------------------------ *

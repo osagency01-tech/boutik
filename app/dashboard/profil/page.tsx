@@ -121,7 +121,7 @@ export default function ProfilPage() {
             <Mail size={19} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink/45">
+            <p className="text-xs font-bold uppercase tracking-wider text-ink/55">
               Email de connexion
             </p>
             <p className="mt-0.5 truncate text-sm font-bold">{user?.email ?? "—"}</p>
@@ -153,7 +153,7 @@ export default function ProfilPage() {
               placeholder="01 97 11 29 09"
               onChange={(e) => setPhone(e.target.value)}
             />
-            <p className="mt-1 text-xs text-ink/45">
+            <p className="mt-1 text-xs text-ink/55">
               Différent du numéro WhatsApp de ta boutique, qui se règle dans « Ma boutique ».
             </p>
           </div>

@@ -17,8 +17,57 @@ Ordre important : chaque étape dépend de la précédente. Compte 2-3 h la prem
 2. `supabase/migrations/002_rls.sql`
 3. `supabase/migrations/003_storage_lifecycle.sql`
 4. `supabase/migrations/004_messages_admin.sql`
+5. `supabase/migrations/005_admin_analytics.sql`
+6. `supabase/migrations/006_banner_image.sql`
+7. `supabase/migrations/007_push_subscriptions.sql`
 
 **Vérifier** : colle `supabase/tests/isolation_test.sql`. **19 assertions doivent passer.** Un seul échec = ne pas déployer.
+
+---
+
+## 1 bis. Notifications de commande (push)
+
+Sans cette étape, le site fonctionne normalement — un vendeur qui active « Recevoir mes notifications » obtient juste la permission navigateur, sans notification réelle à l'arrivée d'une commande.
+
+### a. Générer les clés VAPID (une seule fois, à vie)
+
+```bash
+npx web-push generate-vapid-keys --json
+```
+
+Donne deux clés. **Ne jamais les régénérer ensuite** : tous les abonnements existants deviendraient invalides.
+
+### b. Variables d'environnement
+
+- Vercel → `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = la clé publique
+- Supabase → **Edge Functions → notify-order → Secrets** :
+  - `VAPID_PUBLIC_KEY`
+  - `VAPID_PRIVATE_KEY`
+
+  (`SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` sont fournies automatiquement à chaque Edge Function, rien à faire pour celles-là.)
+
+### c. Déployer l'Edge Function
+
+```bash
+supabase login
+supabase link --project-ref <ta-ref>
+supabase functions deploy notify-order
+```
+
+### d. Brancher le trigger sur la fonction (Vault)
+
+Dans le SQL Editor, une fois la fonction déployée :
+
+```sql
+select vault.create_secret('https://<ta-ref>.supabase.co', 'project_url');
+select vault.create_secret('<clé service_role>', 'service_role_key');
+```
+
+Tant que ces deux secrets ne sont pas posés, `notify_new_order()` (migration 007) ne fait rien silencieusement — aucune commande n'est bloquée.
+
+### e. Vérifier
+
+Sur le site : Dashboard → active « Recevoir mes notifications » sur un vrai navigateur, puis passe une commande de test sur ta propre boutique publiée. La notification doit arriver même onglet fermé.
 
 ---
 
@@ -95,12 +144,13 @@ Crée un compte de test. Tu dois recevoir **6 chiffres bien lisibles**, pas un l
 ```
 A       @        <IP de ton hébergeur>
 CNAME   www      boutik-app.com
-CNAME   *        boutik-app.com     ← indispensable : <slug>.boutik-app.com
 ```
 
-Le **wildcard `*`** est ce qui fait marcher les boutiques. Sans lui, `kadi.boutik-app.com` ne répond pas.
+Pas de wildcard nécessaire : chaque boutique est un lien direct
+(`boutik-app.com/b/<slug>`), pas un sous-domaine — un enregistrement DNS
+en moins à maintenir, et pas de certificat SSL wildcard à gérer.
 
-**Cloudflare** est recommandé : SSL wildcard gratuit, CDN avec points de présence africains, protection DDoS.
+**Cloudflare** reste recommandé : CDN avec points de présence africains, protection DDoS.
 
 ---
 
@@ -114,7 +164,7 @@ NEXT_PUBLIC_SUPABASE_URL      = https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJ...
 NEXT_PUBLIC_SITE_URL          = https://boutik-app.com
 ```
-4. Settings → Domains → ajouter `boutik-app.com` **et** `*.boutik-app.com`
+4. Settings → Domains → ajouter `boutik-app.com`
 
 > ⚠️ **`SUPABASE_SERVICE_ROLE_KEY` ne doit JAMAIS être en `NEXT_PUBLIC_*`.** Cette clé contourne toute la sécurité RLS. Elle ne sert qu'aux webhooks côté serveur.
 
@@ -150,11 +200,12 @@ Sans ça, les messages s'accumulent et les boutiques impayées restent en ligne.
 
 - [ ] Créer un compte → le code arrive **en moins d'une minute**
 - [ ] Se connecter depuis un **autre téléphone** → un code est demandé
-- [ ] Créer une boutique → `<slug>.boutik-app.com` répond
+- [ ] Créer une boutique → `boutik-app.com/b/<slug>` répond
 - [ ] Ajouter un produit avec une **vraie photo** prise au téléphone
 - [ ] Passer une commande → WhatsApp s'ouvre avec le bon message
 - [ ] Télécharger un bon de commande PDF
 - [ ] Envoyer un message depuis Contact → il arrive dans Messages
+- [ ] Activer les notifications (Dashboard) puis passer une commande de test → la notification arrive, onglet fermé
 - [ ] Vérifier les en-têtes : [securityheaders.com](https://securityheaders.com) → viser A ou A+
 
 ---

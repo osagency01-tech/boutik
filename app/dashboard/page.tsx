@@ -270,7 +270,7 @@ export default function Overview() {
           <StaggerItem key={s.l}>
             <div className={`card p-5 ${!published ? "opacity-75" : ""}`}>
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-wider text-ink/45">{s.l}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-ink/55">{s.l}</p>
                 <s.icon size={16} style={{ color: palette.accent }} />
               </div>
               <p className="mt-2 font-display text-2xl font-extrabold">{s.v}</p>

@@ -172,7 +172,7 @@ export default function OrdersPage() {
                         {o.reference}{" "}
                         <span className="font-semibold text-ink/60">· {o.customer_name}</span>
                       </p>
-                      <p className="text-xs text-ink/45">
+                      <p className="text-xs text-ink/55">
                         {new Date(o.created_at).toLocaleString("fr-FR", {
                           day: "numeric",
                           month: "short",
@@ -212,7 +212,7 @@ export default function OrdersPage() {
                                 <div key={s} className="flex shrink-0 items-center gap-1">
                                   <span
                                     className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                      i <= stepIndex ? "text-white" : "bg-cream text-ink/40"
+                                      i <= stepIndex ? "text-white" : "bg-cream text-ink/50"
                                     }`}
                                     style={
                                       i <= stepIndex ? { backgroundColor: palette.accent } : undefined
@@ -230,7 +230,7 @@ export default function OrdersPage() {
 
                           <div className="grid gap-4 sm:grid-cols-2">
                             <div className="rounded-xl bg-cream p-4">
-                              <p className="text-xs font-bold uppercase tracking-wider text-ink/45">
+                              <p className="text-xs font-bold uppercase tracking-wider text-ink/55">
                                 Articles
                               </p>
                               <div className="mt-2 space-y-1.5 text-sm">
@@ -258,7 +258,7 @@ export default function OrdersPage() {
                               </div>
                             </div>
                             <div className="rounded-xl bg-cream p-4 text-sm">
-                              <p className="text-xs font-bold uppercase tracking-wider text-ink/45">
+                              <p className="text-xs font-bold uppercase tracking-wider text-ink/55">
                                 Client
                               </p>
                               <p className="mt-2 font-bold">{o.customer_name}</p>

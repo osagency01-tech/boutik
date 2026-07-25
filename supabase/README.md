@@ -7,7 +7,7 @@ Schéma complet, testé sur PostgreSQL 16. **L'isolation multi-tenant est intég
 ```bash
 supabase init
 supabase link --project-ref <ton-projet>
-supabase db push          # applique les 3 migrations dans l'ordre
+supabase db push          # applique les migrations dans l'ordre
 ```
 
 Ou, en collant dans le SQL Editor de Supabase, **dans cet ordre** :
@@ -17,6 +17,8 @@ Ou, en collant dans le SQL Editor de Supabase, **dans cet ordre** :
 3. `migrations/003_storage_lifecycle.sql` — buckets, cycle de vie, vue publique
 4. `migrations/004_messages_admin.sql` — messagerie interne, back-office
 5. `migrations/005_admin_analytics.sql` — MRR, entonnoir, santé, croissance
+6. `migrations/006_banner_image.sql` — image de fond de la bannière d'accueil
+7. `migrations/007_push_subscriptions.sql` — abonnements push + trigger de notification (voir `DEPLOIEMENT.md` § 1 bis pour le déploiement de l'Edge Function associée)
 
 ## Vérifier que l'isolation tient
 

@@ -52,7 +52,7 @@ export default function PalettePicker({
         return (
           <div key={fam}>
             <div className="mb-1.5 flex items-center gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/40">{fam}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/50">{fam}</p>
               <span className="h-px flex-1 bg-ink/8" />
             </div>
             <div className={`grid gap-2 ${compact ? "grid-cols-5" : "grid-cols-3 sm:grid-cols-5"}`}>
