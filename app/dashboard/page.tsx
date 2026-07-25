@@ -186,13 +186,22 @@ export default function Overview() {
     };
   }, [published, shopId, chartMonth]);
 
+  /* Le slug r\u00e9el (shops.slug) est la seule source fiable : il est
+     fig\u00e9 \u00e0 la cr\u00e9ation (suffixe anti-collision possible) et immuable
+     apr\u00e8s publication, donc ne correspond pas forc\u00e9ment \u00e0 une
+     retranslitt\u00e9ration du nom actuel. Le recalculer ici a longtemps
+     affich\u00e9 \u2014 et fait partager \u2014 un lien qui ne menait nulle part d\u00e8s
+     que le vendeur changeait le nom de sa boutique apr\u00e8s coup. Le
+     repli local ne sert qu'en mode d\u00e9mo, avant toute vraie boutique. */
   const slug =
+    config.slug ||
     config.name
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "") || "ma-boutique";
+      .replace(/(^-|-$)/g, "") ||
+    "ma-boutique";
   const url = shopDomain(slug);
 
   const copy = () => {

@@ -11,8 +11,14 @@
  *  l'app est mise en cache.
  * ------------------------------------------------------------------ */
 
-const VERSION = "boutik-v3";
-const SHELL = ["/", "/icon-192.png", "/logo-boutik.png", "/manifest.json"];
+const VERSION = "boutik-v4";
+/* La page d'accueil n'est PAS précachée ici : c'est un document qui
+   change à chaque build (nouveau bundle JS/CSS). La préprécacher a
+   déjà causé une page d'accueil obsolète servie derrière le splash
+   pendant les tests — mieux vaut la laisser toujours passer par le
+   réseau (stratégie network-first du gestionnaire fetch ci-dessous)
+   et ne précacher que les vrais fichiers statiques, stables. */
+const SHELL = ["/icon-192.png", "/logo-boutik.png", "/manifest.json"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(

@@ -20,6 +20,13 @@ export type Zone = { zone: string; price: number; delay: string };
 export type Plan = "Gratuit" | "Starter" | "Business" | "Premium";
 
 export type ShopConfig = {
+  /* Slug réel en base (shops.slug) : c'est le SEUL identifiant fiable
+     pour composer le lien public boutik-app.com/b/<slug>. Il ne
+     correspond pas forcément à une re-translittération du nom actuel
+     (immuable après publication, suffixe anti-collision possible à la
+     création) — ne jamais le recalculer côté client. Absent en mode
+     démo (localStorage), il n'existe pas encore de boutique réelle. */
+  slug?: string;
   name: string;
   tagline: string;
   logo?: string;

@@ -14,6 +14,7 @@ import type { ShopConfig } from "./store";
 
 export function shopToConfig(s: DbShop, zones: DbZone[]): ShopConfig {
   return {
+    slug: s.slug,
     name: s.name,
     tagline: s.tagline ?? "",
     logo: storageUrl("shop-logos", s.logo_path),

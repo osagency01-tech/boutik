@@ -1,9 +1,25 @@
 "use client";
 
 import { getShopIcon } from "@/components/icons";
-import { demoImage, getDemoShop } from "@/lib/demo-shops";
+import { demoThumb, getDemoShop } from "@/lib/demo-shops";
 import { getPalette } from "@/lib/palettes";
 import type { TemplateId } from "@/lib/templates";
+
+/* Miniature d'une photo de démo : ces aperçus font 11 à 42 px de haut.
+   `demoThumb` pointe vers un fichier déjà minuscule à la source (pas
+   la photo réelle en 1000 px) — un <img> simple suffit, pas besoin de
+   next/image ici : son redimensionnement à la volée côté serveur (et
+   son JS de chargement) coûtait plus cher que ce qu'il économisait sur
+   des vignettes déjà petites. `loading="lazy"` laisse le navigateur
+   déprioriser celles hors écran sans JS supplémentaire. */
+function Thumb({ src, className }: { src: string; className?: string }) {
+  return (
+    <div className={`overflow-hidden ${className ?? ""}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ *
  * Aperçu d'une boutique de démonstration
@@ -77,7 +93,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
             </div>
             <div className="mt-1.5 grid grid-cols-3 gap-1">
               {shop.products.slice(0, 3).map((pr, i) => (
-                <Tile key={pr.name} pr={pr} p={p} h={20} img={demoImage(template, i)} />
+                <Tile key={pr.name} pr={pr} p={p} h={20} img={demoThumb(template, i)} />
               ))}
             </div>
           </>
@@ -102,7 +118,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
             </div>
             <div className="mt-1 grid grid-cols-5 gap-0.5">
               {shop.products.slice(0, 10).map((pr, i) => (
-                <Tile key={pr.name} pr={pr} p={p} h={11} tiny img={demoImage(template, i)} />
+                <Tile key={pr.name} pr={pr} p={p} h={11} tiny img={demoThumb(template, i)} />
               ))}
             </div>
           </>
@@ -124,11 +140,11 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
               {shop.title}
             </p>
             <div className="mt-1.5">
-              <Tile pr={shop.products[0]} p={p} h={28} wide img={demoImage(template, 0)} />
+              <Tile pr={shop.products[0]} p={p} h={28} wide img={demoThumb(template, 0)} />
             </div>
             <div className="mt-1 grid grid-cols-3 gap-1">
               {shop.products.slice(1, 4).map((pr, i) => (
-                <Tile key={pr.name} pr={pr} p={p} h={14} img={demoImage(template, i + 1)} />
+                <Tile key={pr.name} pr={pr} p={p} h={14} img={demoThumb(template, i + 1)} />
               ))}
             </div>
           </>
@@ -137,12 +153,14 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
         {/* ---------- FASHION ---------- */}
         {template === "fashion" && (
           <>
-            <div className="relative overflow-hidden rounded">
+            <div className="relative h-[38px] overflow-hidden rounded">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={demoImage(template, 0)}
+                src={demoThumb(template, 0)}
                 alt=""
-                className="h-[38px] w-full object-cover"
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-1">
@@ -158,7 +176,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
             <div className="mt-1 flex gap-1 overflow-hidden">
               {shop.products.slice(1, 5).map((pr, i) => (
                 <div key={pr.name} className="w-[22px] shrink-0">
-                  <Tile pr={pr} p={p} h={18} img={demoImage(template, i + 1)} />
+                  <Tile pr={pr} p={p} h={18} img={demoThumb(template, i + 1)} />
                 </div>
               ))}
             </div>
@@ -182,12 +200,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
             <div className="mt-1.5 space-y-1">
               {shop.products.slice(0, 2).map((pr, i) => (
                 <div key={pr.name} className={`flex items-center gap-1.5 ${i % 2 ? "flex-row-reverse" : ""}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={demoImage(template, i)}
-                    alt=""
-                    className="h-5 w-5 shrink-0 rounded-lg object-cover"
-                  />
+                  <Thumb src={demoThumb(template, i)} className="h-5 w-5 shrink-0 rounded-lg" />
                   <div className={`min-w-0 flex-1 ${i % 2 ? "text-right" : ""}`}>
                     <p className="truncate text-[4.5px] font-bold" style={{ color: p.ink }}>
                       {pr.name}
@@ -221,12 +234,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
                   className="flex items-center gap-1 rounded px-1 py-0.5"
                   style={{ backgroundColor: p.surface }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={demoImage(template, i)}
-                    alt=""
-                    className="h-3 w-3 shrink-0 rounded-sm object-cover"
-                  />
+                  <Thumb src={demoThumb(template, i)} className="h-3 w-3 shrink-0 rounded-sm" />
                   <p className="min-w-0 flex-1 truncate text-[4px] font-semibold" style={{ color: p.ink }}>
                     {pr.name}
                   </p>
@@ -249,11 +257,9 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
               {shop.title}
             </p>
             <div className="mx-auto mt-1 h-px w-4" style={{ backgroundColor: p.accent }} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={demoImage(template, 0)}
-              alt=""
-              className="mx-auto mt-2 h-[30px] w-[42px] object-cover opacity-80"
+            <Thumb
+              src={demoThumb(template, 0)}
+              className="mx-auto mt-2 h-[30px] w-[42px] opacity-80"
             />
             <p className="text-[4px] font-light uppercase tracking-[0.2em] text-white/60">
               {shop.products[0].name}
@@ -279,12 +285,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
                   {shop.title}
                 </p>
               </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={demoImage(template, 0)}
-                alt=""
-                className="h-full w-full rounded object-cover"
-              />
+              <Thumb src={demoThumb(template, 0)} className="h-full w-full rounded" />
               <div className="flex flex-col items-center justify-center rounded" style={{ backgroundColor: p.ink }}>
                 <p className="text-[7px] font-black leading-none text-white">
                   {shop.products.length}
@@ -294,7 +295,7 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
             </div>
             <div className="mt-1 grid grid-cols-4 gap-0.5">
               {shop.products.slice(1, 5).map((pr, i) => (
-                <Tile key={pr.name} pr={pr} p={p} h={12} tiny img={demoImage(template, i + 1)} />
+                <Tile key={pr.name} pr={pr} p={p} h={12} tiny img={demoThumb(template, i + 1)} />
               ))}
             </div>
           </>
@@ -315,13 +316,8 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
             <div className="mt-2 space-y-1.5">
               {shop.products.slice(0, 2).map((pr, i) => (
                 <div key={pr.name} className={`flex items-center gap-1.5 ${i % 2 ? "flex-row-reverse" : ""}`}>
-                  <div className="relative shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={demoImage(template, i)}
-                      alt=""
-                      className="h-6 w-7 rounded-sm object-cover"
-                    />
+                  <div className="relative h-6 w-7 shrink-0">
+                    <Thumb src={demoThumb(template, i)} className="h-full w-full rounded-sm" />
                     <span
                       className="absolute -left-0.5 -top-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full text-[3px] font-extrabold text-white"
                       style={{ backgroundColor: p.accent }}
@@ -368,8 +364,10 @@ function Tile({
   return (
     <div className="overflow-hidden rounded-sm" style={{ backgroundColor: p.surface }}>
       {img ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={img} alt="" className="w-full object-cover" style={{ height: h }} />
+        <div className="w-full overflow-hidden" style={{ height: h }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        </div>
       ) : (
         <div
           className="flex items-center justify-center"

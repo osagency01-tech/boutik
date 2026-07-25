@@ -36,6 +36,20 @@ export const demoImage = (template: string, index: number) => {
   return `/demo/${template}-${index % 6}.${ext}`;
 };
 
+/* Miniature dédiée pour les aperçus de modèle (components/shop-preview.tsx) :
+   ces mockups affichent la photo à 11-42 px de haut. Servir la photo
+   réelle (jusqu'à 1000 px, ~130 Ko) pour un si petit rendu gonflait le
+   poids de la page d'accueil (9 modèles, jusqu'à 4 photos chacun) et
+   retardait le LCP. Un fichier déjà minuscule à la source coûte moins
+   cher qu'un composant d'optimisation d'image (son redimensionnement à
+   la volée a un coût serveur/JS qui dépasse l'économie ici). Les
+   modèles sans encore de vraies photos ont déjà des vignettes JPG
+   minuscules à l'origine : elles n'ont pas besoin d'un second fichier. */
+export const demoThumb = (template: string, index: number) =>
+  WEBP_TEMPLATES.has(template)
+    ? `/demo/thumbs/${template}-${index % 6}.webp`
+    : demoImage(template, index);
+
 export type DemoShop = {
   template: TemplateId;
   name: string;
