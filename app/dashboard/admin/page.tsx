@@ -12,8 +12,11 @@ import {
   Ban,
   CheckCircle2,
   ImageOff,
+  Loader2,
+  Megaphone,
   PackageX,
   Search,
+  Send,
   TrendingUp,
   Users,
   Wallet,
@@ -610,6 +613,90 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* ---------- Notification push aux vendeurs ---------- */}
+      <Reveal delay={0.26}>
+        <PromoBroadcast />
+      </Reveal>
+    </div>
+  );
+}
+
+/* Promotions/annonces envoyées à tous les vendeurs abonnés aux
+   notifications (push_subscriptions) — distinct des notifications de
+   commande, qui ciblent une seule boutique et partent d'un trigger DB. */
+function PromoBroadcast() {
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ sent: number; total: number } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const send = async () => {
+    if (!title.trim() || !message.trim() || busy) return;
+    setBusy(true);
+    setErr(null);
+    setResult(null);
+    try {
+      const sb = supabase();
+      const token = sb ? (await sb.auth.getSession()).data.session?.access_token : null;
+      if (!token) throw new Error("Session absente. Reconnecte-toi puis réessaie.");
+      const res = await fetch("/api/admin/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Envoi impossible");
+      setResult(data);
+      setTitle("");
+      setMessage("");
+    } catch (e: any) {
+      setErr(e?.message ?? "Envoi impossible");
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div className="card mt-8 p-5">
+      <p className="flex items-center gap-2 font-display font-extrabold">
+        <Megaphone size={16} className="text-primary" /> Notification aux vendeurs
+      </p>
+      <p className="mt-1 text-sm text-ink/55">
+        Envoyée à tous les vendeurs ayant activé les notifications sur leur téléphone
+        (promotions, annonces...).
+      </p>
+      <div className="mt-4 space-y-3">
+        <input
+          className="input"
+          placeholder="Titre — ex. « -20% sur l'offre Premium »"
+          value={title}
+          maxLength={80}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <textarea
+          className="input min-h-[80px] resize-none"
+          placeholder="Message — ex. « Jusqu'au 31, passe à Premium à prix réduit. »"
+          value={message}
+          maxLength={200}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+      </div>
+      {err && <p className="mt-3 text-sm font-semibold text-terra">{err}</p>}
+      {result && (
+        <p className="mt-3 text-sm font-semibold text-primary-dark">
+          Envoyée à {result.sent} sur {result.total} vendeur{result.total > 1 ? "s" : ""} abonné
+          {result.total > 1 ? "s" : ""}.
+        </p>
+      )}
+      <button
+        onClick={send}
+        disabled={busy || !title.trim() || !message.trim()}
+        className="btn-primary btn-md mt-4 disabled:opacity-40"
+      >
+        {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+        {busy ? "Envoi…" : "Envoyer à tous les vendeurs"}
+      </button>
     </div>
   );
 }

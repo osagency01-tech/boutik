@@ -148,24 +148,34 @@ export type DbOrderItem = {
   quantity: number;
 };
 
+/* Trois étapes visibles au lieu de sept : "paiement demandé" et
+   "préparation"/"expédiée" n'apportaient rien que le vendeur agissait
+   vraiment dessus. Les valeurs d'origine restent dans l'énum Postgres
+   (impossible à retirer proprement sans risquer des commandes déjà
+   enregistrées dans ces statuts) — seuls le libellé et la progression
+   affichés au vendeur sont simplifiés, voir simplifyStatus ci-dessous. */
 export const STATUS_LABEL: Record<DbOrderStatus, string> = {
-  nouvelle: "Nouvelle",
-  paiement_demande: "Paiement demandé",
-  payee: "Payée",
-  preparation: "Préparation",
-  expediee: "Expédiée",
-  livree: "Livrée",
+  nouvelle: "Commande en cours",
+  paiement_demande: "Commande en cours",
+  payee: "Commande validée",
+  preparation: "Commande validée",
+  expediee: "Commande validée",
+  livree: "Commande livrée",
   annulee: "Annulée",
 };
 
-export const STATUS_ORDER: DbOrderStatus[] = [
-  "nouvelle",
-  "paiement_demande",
-  "payee",
-  "preparation",
-  "expediee",
-  "livree",
-];
+export const STATUS_ORDER: DbOrderStatus[] = ["nouvelle", "payee", "livree"];
+
+/* Une commande déjà enregistrée avant cette simplification peut être
+   dans un statut retiré de la progression (paiement_demande,
+   preparation, expediee) : on la ramène à l'étape simplifiée la plus
+   proche pour l'affichage et le bouton "étape suivante", sans jamais
+   réécrire sa vraie valeur en base tant que le vendeur n'agit pas. */
+export const simplifyStatus = (s: DbOrderStatus): DbOrderStatus => {
+  if (s === "paiement_demande") return "nouvelle";
+  if (s === "preparation" || s === "expediee") return "payee";
+  return s;
+};
 
 export function slugify(name: string) {
   return name

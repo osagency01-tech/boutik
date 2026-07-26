@@ -140,31 +140,17 @@ export const CATEGORIES = [
   ...Array.from(new Set(PRODUCTS.map((p) => p.category))),
 ];
 
-export type OrderStatus =
-  | "Nouvelle"
-  | "Paiement demandé"
-  | "Payée"
-  | "Préparation"
-  | "Expédiée"
-  | "Livrée"
-  | "Annulée";
+/* Trois étapes au lieu de sept, en miroir de lib/supabase.ts
+   (STATUS_LABEL/STATUS_ORDER/simplifyStatus) pour que la démo (sans
+   Supabase) montre exactement le même parcours qu'une vraie boutique. */
+export type OrderStatus = "Commande en cours" | "Commande validée" | "Commande livrée" | "Annulée";
 
-export const STATUS_FLOW: OrderStatus[] = [
-  "Nouvelle",
-  "Paiement demandé",
-  "Payée",
-  "Préparation",
-  "Expédiée",
-  "Livrée",
-];
+export const STATUS_FLOW: OrderStatus[] = ["Commande en cours", "Commande validée", "Commande livrée"];
 
 export const STATUS_STYLE: Record<OrderStatus, string> = {
-  Nouvelle: "bg-mango-soft text-yellow-800",
-  "Paiement demandé": "bg-blue-50 text-blue-700",
-  Payée: "bg-primary-soft text-primary-dark",
-  Préparation: "bg-violet-50 text-violet-700",
-  Expédiée: "bg-cyan-50 text-cyan-700",
-  Livrée: "bg-primary text-white",
+  "Commande en cours": "bg-mango-soft text-yellow-800",
+  "Commande validée": "bg-primary-soft text-primary-dark",
+  "Commande livrée": "bg-primary text-white",
   Annulée: "bg-terra-soft text-terra",
 };
 
@@ -185,7 +171,7 @@ export const ORDERS: Order[] = [
     phone: "+225 07 09 11 22 33",
     city: "Cocody",
     items: [{ name: "Robe wax « Ama » (M)", qty: 1, price: 18500 }],
-    status: "Nouvelle",
+    status: "Commande en cours",
     date: "Aujourd'hui, 09:14",
   },
   {
@@ -197,7 +183,7 @@ export const ORDERS: Order[] = [
       { name: "Chemise homme wax (L)", qty: 2, price: 15000 },
       { name: "Sandales « Saly » (42)", qty: 1, price: 9000 },
     ],
-    status: "Paiement demandé",
+    status: "Commande en cours",
     date: "Aujourd'hui, 08:02",
   },
   {
@@ -206,7 +192,7 @@ export const ORDERS: Order[] = [
     phone: "+225 01 22 33 44 55",
     city: "Yopougon",
     items: [{ name: "Beurre de karité 250 g", qty: 3, price: 3500 }],
-    status: "Payée",
+    status: "Commande validée",
     date: "Hier, 18:37",
   },
   {
@@ -215,7 +201,7 @@ export const ORDERS: Order[] = [
     phone: "+225 07 88 99 00 11",
     city: "Plateau",
     items: [{ name: "Sac tissé Bogolan", qty: 1, price: 12000 }],
-    status: "Expédiée",
+    status: "Commande validée",
     date: "Hier, 11:20",
   },
   {
@@ -227,7 +213,7 @@ export const ORDERS: Order[] = [
       { name: "Huile de baobab 100 ml", qty: 2, price: 4500 },
       { name: "Panier tressé", qty: 1, price: 7500 },
     ],
-    status: "Livrée",
+    status: "Commande livrée",
     date: "12 juil., 15:03",
   },
 ];

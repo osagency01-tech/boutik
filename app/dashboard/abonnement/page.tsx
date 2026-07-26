@@ -14,6 +14,12 @@ import { useEffect, useState } from "react";
  * Abonnement
  * ------------------------------------------------------------------ */
 
+/* Rang de chaque offre : sert uniquement à empêcher de payer pour une
+   offre inférieure à celle déjà active (aucun sens à "revenir en
+   arrière" en payant — un vrai downgrade se ferait en laissant
+   l'abonnement actuel expirer, pas via ce bouton). */
+const PLAN_RANK: Record<Plan, number> = { Gratuit: 0, Starter: 1, Business: 2, Premium: 3 };
+
 /* Formate une date ISO en français : "15 août 2026" */
 function formatDate(iso: string): string {
   try {
@@ -136,6 +142,7 @@ export default function SubscriptionPage() {
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           {PLANS.map((p) => {
             const isCurrent = config.plan === p.name;
+            const isLower = PLAN_RANK[p.name as Plan] < PLAN_RANK[config.plan];
             return (
               <div
                 key={p.name}
@@ -179,14 +186,17 @@ export default function SubscriptionPage() {
                 </ul>
                 <button
                   onClick={() => setSelected(p.name as Plan)}
-                  disabled={isCurrent}
+                  disabled={isCurrent || isLower}
+                  title={isLower ? "Ton offre actuelle est déjà supérieure." : undefined}
                   className={`${
                     isCurrent
                       ? "btn bg-white/10 text-white/40"
-                      : "btn-primary"
+                      : isLower
+                        ? "btn bg-ink/5 text-ink/35"
+                        : "btn-primary"
                   } btn-sm mt-5 w-full disabled:cursor-default`}
                 >
-                  {isCurrent ? "Offre actuelle" : `Choisir ${p.name}`}
+                  {isCurrent ? "Offre actuelle" : isLower ? "Offre déjà dépassée" : `Choisir ${p.name}`}
                 </button>
               </div>
             );

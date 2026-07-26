@@ -40,7 +40,9 @@ Donne deux clés. **Ne jamais les régénérer ensuite** : tous les abonnements 
 
 ### b. Variables d'environnement
 
-- Vercel → `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = la clé publique
+Les **mêmes deux clés** servent à deux endroits (le site lui-même pour les annonces admin, § f, et l'Edge Function pour les notifications de commande) — copie-les partout, jamais de clés différentes pour chacun :
+
+- Vercel → `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = la clé publique, **et** `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` (sans préfixe `NEXT_PUBLIC_`, jamais exposées au navigateur)
 - Supabase → **Edge Functions → notify-order → Secrets** :
   - `VAPID_PUBLIC_KEY`
   - `VAPID_PRIVATE_KEY`
@@ -69,6 +71,10 @@ Tant que ces deux secrets ne sont pas posés, `notify_new_order()` (migration 00
 ### e. Vérifier
 
 Sur le site : Dashboard → active « Recevoir mes notifications » sur un vrai navigateur, puis passe une commande de test sur ta propre boutique publiée. La notification doit arriver même onglet fermé.
+
+### f. Annonces aux vendeurs (admin)
+
+Dashboard → Admin → « Notification aux vendeurs » : envoie un titre + un message à tous les vendeurs qui ont activé les notifications (promotions, annonces...). Ne dépend que des variables Vercel de l'étape b — rien de plus à déployer.
 
 ---
 

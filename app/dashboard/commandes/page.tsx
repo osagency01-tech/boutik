@@ -6,30 +6,26 @@ import { ErrorScreen, SkeletonList } from "@/components/states";
 import { fcfa, ORDERS as DEMO_ORDERS, STATUS_STYLE } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import * as api from "@/lib/api";
-import { STATUS_LABEL, STATUS_ORDER, type DbOrder, type DbOrderStatus } from "@/lib/supabase";
+import {
+  STATUS_LABEL,
+  STATUS_ORDER,
+  simplifyStatus,
+  type DbOrder,
+  type DbOrderStatus,
+} from "@/lib/supabase";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, FileText, MapPin } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-const FILTERS: ("Toutes" | DbOrderStatus)[] = [
-  "Toutes",
-  "nouvelle",
-  "paiement_demande",
-  "payee",
-  "expediee",
-  "livree",
-];
+const FILTERS: ("Toutes" | DbOrderStatus)[] = ["Toutes", "nouvelle", "payee", "livree", "annulee"];
 
 /* Les commandes de démo (lib/data.ts) sont converties au format base
    pour que l'écran soit identique avec ou sans Supabase. */
 function demoToDb(): DbOrder[] {
   const map: Record<string, DbOrderStatus> = {
-    Nouvelle: "nouvelle",
-    "Paiement demandé": "paiement_demande",
-    Payée: "payee",
-    Préparation: "preparation",
-    Expédiée: "expediee",
-    Livrée: "livree",
+    "Commande en cours": "nouvelle",
+    "Commande validée": "payee",
+    "Commande livrée": "livree",
     Annulée: "annulee",
   };
   return DEMO_ORDERS.map((o, i) => ({
@@ -93,7 +89,7 @@ export default function OrdersPage() {
   }, [load]);
 
   const advance = async (o: DbOrder) => {
-    const i = STATUS_ORDER.indexOf(o.status);
+    const i = STATUS_ORDER.indexOf(simplifyStatus(o.status));
     if (i < 0 || i >= STATUS_ORDER.length - 1) return;
     const next = STATUS_ORDER[i + 1];
     setOrders((os) => os.map((x) => (x.id === o.id ? { ...x, status: next } : x)));
@@ -147,7 +143,7 @@ export default function OrdersPage() {
           <AnimatePresence initial={false}>
             {shown.map((o) => {
               const open = openId === o.id;
-              const stepIndex = STATUS_ORDER.indexOf(o.status);
+              const stepIndex = STATUS_ORDER.indexOf(simplifyStatus(o.status));
               const next =
                 stepIndex >= 0 && stepIndex < STATUS_ORDER.length - 1
                   ? STATUS_ORDER[stepIndex + 1]

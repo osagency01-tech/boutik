@@ -17,14 +17,14 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function admin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
-  /* SebPay ne signe pas ses webhooks. A defaut de HMAC, on restreint
+/* SebPay ne signe pas ses webhooks. A defaut de HMAC, on restreint
    l'origine. Laisser SEBPAY_WEBHOOK_IPS vide desactive le filtre :
-   pratique en local, a renseigner imperativement en production. */
+   pratique en local, a renseigner imperativement en production.
+
+   Ce bloc etait auparavant imbrique a l'interieur de admin(), APRES
+   son "return" : du code mort qui ne s'executait jamais et ne filtrait
+   donc rien, malgre le commentaire l'annoncant. Deplace au niveau du
+   module et reellement applique dans POST() ci-dessous. */
 const SEBPAY_IPS = (process.env.SEBPAY_WEBHOOK_IPS ?? "")
   .split(",")
   .map((s) => s.trim())
@@ -33,10 +33,19 @@ const SEBPAY_IPS = (process.env.SEBPAY_WEBHOOK_IPS ?? "")
 function callerIp(req: Request): string {
   return (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
 }
+
+function admin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
 }
 
 export async function POST(req: Request) {
-  
+  if (SEBPAY_IPS.length > 0 && !SEBPAY_IPS.includes(callerIp(req))) {
+    return NextResponse.json({ error: "origine non autorisee" }, { status: 401 });
+  }
+
   const raw = await req.text();
   const headers: Record<string, string> = {};
   req.headers.forEach((v, k) => (headers[k] = v));
@@ -132,6 +141,18 @@ export async function POST(req: Request) {
 
   const periodEnd = new Date();
   periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+  /* Un nouvel abonnement remplace toujours le precedent, jamais ne
+     s'y ajoute : une boutique qui change d'offre en cours de periode
+     ne doit jamais se retrouver avec deux abonnements "active" en
+     meme temps (l'ancien ne comptait plus, il est mort). Sans ca,
+     fetchActiveSubscription() ne fonctionnait que par coincidence,
+     en triant par date de fin la plus lointaine. */
+  await sb
+    .from("subscriptions")
+    .update({ status: "annulee" })
+    .eq("shop_id", shopId)
+    .eq("status", "active");
 
   await sb.from("subscriptions").insert({
     shop_id: shopId,
