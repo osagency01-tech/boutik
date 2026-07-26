@@ -32,7 +32,7 @@ export type CheckoutInput = {
 
 export type CheckoutResult =
   | { kind: "redirect"; url: string; reference: string }
-  | { kind: "ussd_push"; reference: string; message: string }
+  | { kind: "ussd_push"; reference: string; providerTxId?: string | null; message: string }
   | { kind: "error"; message: string };
 
 export type WebhookEvent = {
@@ -49,6 +49,10 @@ export interface PaymentProvider {
   createCheckout(input: CheckoutInput): Promise<CheckoutResult>;
   verifyWebhook(rawBody: string, headers: Record<string, string>): boolean;
   parseWebhook(rawBody: string): WebhookEvent | null;
+  /* Interroge l'agregateur sur une transaction (external_reference).
+     Necessaire quand il n'y a pas de webhook fiable : c'est la
+     verification active qui credite la boutique. */
+  confirmPaid(externalReference: string): Promise<boolean>;
 }
 
 /* -------------------------------------------------------------------- *
@@ -69,6 +73,7 @@ class MockProvider implements PaymentProvider {
     return {
       kind: "ussd_push",
       reference: "MOCK-" + input.idempotencyKey.slice(0, 8),
+      providerTxId: null,
       message:
         "Mode demo : aucun paiement reel. Passe le plan a la main en base pour tester la suite.",
     };
@@ -80,6 +85,12 @@ class MockProvider implements PaymentProvider {
 
   parseWebhook(): WebhookEvent | null {
     return null;
+  }
+
+  /* En mode demo, on considere tout paiement comme valide pour
+     pouvoir derouler la suite du parcours sans agregateur. */
+  async confirmPaid(): Promise<boolean> {
+    return process.env.NODE_ENV !== "production";
   }
 }
 

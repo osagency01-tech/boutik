@@ -245,8 +245,10 @@ export default function SubscriptionPage() {
  * Tunnel de paiement
  * ------------------------------------------------------------------ */
 
+type PayPhase = "form" | "waiting" | "success";
+
 function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
-  const { config, shopId } = useStore();
+  const { config, shopId, setConfig } = useStore();
 
   const [countryIso, setCountryIso] = useState("BJ");
   const country = getCountry(countryIso) ?? COUNTRIES[0];
@@ -257,12 +259,57 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [phase, setPhase] = useState<PayPhase>("form");
 
   const changeCountry = (iso: string) => {
     setCountryIso(iso);
     const c = getCountry(iso);
     if (c) setOperator(c.operators[0].code);
     setErr(null);
+  };
+
+  /* Vérification active : SebPay n'envoie pas de webhook, donc on
+     interroge /api/paiement/verifier en boucle jusqu'à ce que le
+     paiement soit approuvé (ou qu'on abandonne au bout de ~2 min). */
+  const pollVerification = async (reference: string) => {
+    const sb = supabase();
+    if (!sb) return;
+
+    const MAX_TRIES = 30; // 30 × 4 s = 2 minutes
+    for (let i = 0; i < MAX_TRIES; i++) {
+      await new Promise((r) => setTimeout(r, 4000));
+
+      try {
+        const { data } = await sb.auth.getSession();
+        const res = await fetch("/api/paiement/verifier", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({ reference }),
+        });
+        const out = await res.json();
+
+        if (out.status === "success") {
+          setPhase("success");
+          if (out.plan) {
+            const label = out.plan.charAt(0).toUpperCase() + out.plan.slice(1);
+            setConfig({ plan: label as Plan });
+          }
+          return;
+        }
+        /* status "pending" : on continue la boucle. */
+      } catch {
+        /* Erreur réseau ponctuelle : on retente au tour suivant. */
+      }
+    }
+
+    setErr(
+      "Le paiement n'a pas encore été confirmé. S'il a bien été débité, ton offre sera activée sous peu — recharge la page dans quelques minutes."
+    );
+    setPhase("form");
+    setBusy(false);
   };
 
   const startCheckout = async () => {
@@ -307,15 +354,16 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
         return;
       }
       if (out.kind === "ussd_push") {
-        setErr(out.message);
-        setBusy(false);
+        setPhase("waiting");
+        void pollVerification(out.reference);
         return;
       }
       setErr(out.message ?? out.error ?? "Le paiement a échoué.");
+      setBusy(false);
     } catch {
       setErr("Connexion impossible. Vérifie ton réseau.");
+      setBusy(false);
     }
-    setBusy(false);
   };
 
   return (
@@ -323,7 +371,7 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onClose}
+      onClick={phase === "waiting" ? undefined : onClose}
       className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 backdrop-blur-sm sm:items-center sm:p-4"
     >
       <motion.div
@@ -334,105 +382,140 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
         className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-6 sm:rounded-3xl"
       >
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-extrabold">Passer à {plan}</h2>
-          <button onClick={onClose} className="rounded-full p-2 text-ink/40 hover:bg-cream">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="mt-5 rounded-xl bg-cream p-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm font-semibold">Offre {plan}</span>
-            <span className="font-display text-xl font-extrabold text-primary">
-              {fcfa(price)}
-              <span className="text-sm font-semibold text-ink/50"> / mois</span>
+        {phase === "success" ? (
+          <div className="py-6 text-center">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <Check size={28} />
             </span>
-          </div>
-          <p className="mt-1 text-xs text-ink/50">Sans engagement, résiliable à tout moment.</p>
-        </div>
-
-        {/* Pays */}
-        <label className="mb-1.5 mt-5 block text-sm font-bold">Pays</label>
-        <select
-          className="input"
-          value={countryIso}
-          onChange={(e) => changeCountry(e.target.value)}
-        >
-          {COUNTRIES.map((c) => (
-            <option key={c.iso} value={c.iso}>
-              {c.flag} {c.name} (+{c.dialCode})
-            </option>
-          ))}
-        </select>
-
-        {/* Opérateur */}
-        <label className="mb-2 mt-5 block text-sm font-bold">Opérateur Mobile Money</label>
-        <div className="grid grid-cols-2 gap-2">
-          {country.operators.map((o) => (
-            <button
-              key={o.code}
-              onClick={() => setOperator(o.code)}
-              className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
-                operator === o.code
-                  ? "border-primary bg-primary-soft text-primary-dark"
-                  : "border-ink/10 hover:border-ink/40"
-              }`}
-            >
-              {o.label}
+            <h2 className="mt-4 font-display text-xl font-extrabold">Paiement confirmé</h2>
+            <p className="mx-auto mt-2 max-w-xs text-sm text-ink/60">
+              Ton offre {plan} est maintenant active. Merci !
+            </p>
+            <button onClick={onClose} className="btn-primary btn-lg mt-6 w-full">
+              Terminé
             </button>
-          ))}
-        </div>
+          </div>
+        ) : phase === "waiting" ? (
+          <div className="py-8 text-center">
+            <div className="relative mx-auto h-16 w-16">
+              <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft text-primary">
+                <Loader2 size={28} className="animate-spin" />
+              </span>
+            </div>
+            <h2 className="mt-5 font-display text-xl font-extrabold">
+              En attente de validation
+            </h2>
+            <p className="mx-auto mt-2 max-w-xs text-sm text-ink/60">
+              Un message Mobile Money a été envoyé sur ton téléphone. Compose ton code secret
+              pour valider.
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink/40">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+              <span>Validation automatique en cours</span>
+            </div>
+            <p className="mt-4 text-xs text-ink/40">Ne ferme pas cette page.</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl font-extrabold">Passer à {plan}</h2>
+              <button onClick={onClose} className="rounded-full p-2 text-ink/40 hover:bg-cream">
+                <X size={18} />
+              </button>
+            </div>
 
-        {/* Numéro */}
-        <label className="mb-1.5 mt-5 block text-sm font-bold">
-          Numéro à débiter ({country.nsnLength} chiffres)
-        </label>
-        <div className="flex items-stretch gap-2">
-          <span className="flex items-center rounded-xl bg-cream px-3 text-sm font-semibold text-ink/60">
-            +{country.dialCode}
-          </span>
-          <input
-            className="input flex-1"
-            type="tel"
-            inputMode="tel"
-            value={phone}
-            placeholder="01 97 11 29 09"
-            onChange={(e) => {
-              setPhone(e.target.value);
-              setErr(null);
-            }}
-          />
-        </div>
+            <div className="mt-5 rounded-xl bg-cream p-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-semibold">Offre {plan}</span>
+                <span className="font-display text-xl font-extrabold text-primary">
+                  {fcfa(price)}
+                  <span className="text-sm font-semibold text-ink/50"> / mois</span>
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-ink/50">Sans engagement, résiliable à tout moment.</p>
+            </div>
 
-        <div className="mt-4 flex gap-2.5 rounded-xl bg-cream p-3">
-          <AlertCircle size={15} className="mt-px shrink-0 text-ink/40" />
-          <p className="text-[11px] leading-relaxed text-ink/60">
-            Un message Mobile Money sera envoyé sur ce numéro pour valider le paiement. Vérifie
-            que le numéro correspond bien à l&apos;opérateur choisi.
-          </p>
-        </div>
+            <label className="mb-1.5 mt-5 block text-sm font-bold">Pays</label>
+            <select
+              className="input"
+              value={countryIso}
+              onChange={(e) => changeCountry(e.target.value)}
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.iso} value={c.iso}>
+                  {c.flag} {c.name} (+{c.dialCode})
+                </option>
+              ))}
+            </select>
 
-        {err && (
-          <p className="mt-4 rounded-xl bg-mango-soft px-3 py-2.5 text-xs leading-relaxed text-yellow-900">
-            {err}
-          </p>
+            <label className="mb-2 mt-5 block text-sm font-bold">Opérateur Mobile Money</label>
+            <div className="grid grid-cols-2 gap-2">
+              {country.operators.map((o) => (
+                <button
+                  key={o.code}
+                  onClick={() => setOperator(o.code)}
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
+                    operator === o.code
+                      ? "border-primary bg-primary-soft text-primary-dark"
+                      : "border-ink/10 hover:border-ink/40"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+
+            <label className="mb-1.5 mt-5 block text-sm font-bold">
+              Numéro à débiter ({country.nsnLength} chiffres)
+            </label>
+            <div className="flex items-stretch gap-2">
+              <span className="flex items-center rounded-xl bg-cream px-3 text-sm font-semibold text-ink/60">
+                +{country.dialCode}
+              </span>
+              <input
+                className="input flex-1"
+                type="tel"
+                inputMode="tel"
+                value={phone}
+                placeholder="01 97 11 29 09"
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setErr(null);
+                }}
+              />
+            </div>
+
+            <div className="mt-4 flex gap-2.5 rounded-xl bg-cream p-3">
+              <AlertCircle size={15} className="mt-px shrink-0 text-ink/40" />
+              <p className="text-[11px] leading-relaxed text-ink/60">
+                Un message Mobile Money sera envoyé sur ce numéro pour valider le paiement. Vérifie
+                que le numéro correspond bien à l&apos;opérateur choisi.
+              </p>
+            </div>
+
+            {err && (
+              <p className="mt-4 rounded-xl bg-mango-soft px-3 py-2.5 text-xs leading-relaxed text-yellow-900">
+                {err}
+              </p>
+            )}
+
+            <button
+              onClick={startCheckout}
+              disabled={busy}
+              className="btn-primary btn-lg mt-5 w-full disabled:opacity-40"
+            >
+              {busy && <Loader2 size={16} className="animate-spin" />}
+              {busy ? "Traitement…" : `Payer ${fcfa(price)}`}
+            </button>
+            <button
+              onClick={onClose}
+              className="mt-3 w-full text-center text-sm font-semibold text-ink/50 hover:text-ink"
+            >
+              Annuler
+            </button>
+          </>
         )}
-
-        <button
-          onClick={startCheckout}
-          disabled={busy}
-          className="btn-primary btn-lg mt-5 w-full disabled:opacity-40"
-        >
-          {busy && <Loader2 size={16} className="animate-spin" />}
-          {busy ? "Traitement…" : `Payer ${fcfa(price)}`}
-        </button>
-        <button
-          onClick={onClose}
-          className="mt-3 w-full text-center text-sm font-semibold text-ink/50 hover:text-ink"
-        >
-          Annuler
-        </button>
       </motion.div>
     </motion.div>
   );
