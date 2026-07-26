@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 
 /* Vérification active d'un paiement.
    SebPay n'ayant pas de webhook fiable, c'est le front qui appelle
-   cette route en boucle après le push USSD. Elle interroge SebPay ;
-   si la transaction est approuvée ET que le montant correspond, elle
-   crédite la boutique — en lisant le plan EN BASE, jamais du client. */
+   cette route en boucle après le push USSD. Elle interroge SebPay et
+   renvoie l'état réel : success / rejected / pending. Le front peut
+   ainsi s'arrêter net sur un refus au lieu d'attendre la fin. */
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,8 +44,6 @@ export async function POST(req: Request) {
 
   const admin = createClient(url, service, { auth: { persistSession: false } });
 
-  /* On retrouve l'intention. RLS n'est pas utilisée ici (service_role),
-     donc on verifie explicitement que la boutique appartient au vendeur. */
   const { data: intent } = await admin
     .from("payments")
     .select("id, shop_id, plan, amount, status")
@@ -56,9 +54,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "paiement inconnu" }, { status: 404 });
   }
 
-  /* Déjà crédité : on renvoie OK sans réinterroger SebPay. */
-  if (intent.status === "success") {
-    return NextResponse.json({ status: "success" });
+  /* Déjà crédité : on renvoie OK sans réinterroger SebPay. "paid", pas
+     "success" : même vocabulaire que le webhook (app/api/webhooks/
+     paiement/route.ts), pour que l'historique de facturation
+     (lib/api.ts, fetchPaymentHistory) retrouve ce paiement quel que
+     soit le chemin (push USSD ici, ou redirection via le webhook). */
+  if (intent.status === "paid") {
+    return NextResponse.json({ status: "success", plan: intent.plan });
   }
 
   /* La boutique visée appartient-elle bien à l'appelant ? */
@@ -71,29 +73,70 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "accès refusé" }, { status: 403 });
   }
 
-  /* Interrogation SebPay. */
+  /* Interrogation SebPay : statut détaillé. */
   const provider = getProvider();
-  const paid = await provider.confirmPaid(reference);
+  const etat = await provider.checkStatus(reference);
 
-  if (!paid) {
+  /* Refusé : on marque le paiement échoué et on le dit tout de suite. */
+  if (etat === "rejected") {
+    await admin.from("payments").update({ status: "failed" }).eq("id", intent.id);
+    return NextResponse.json({ status: "rejected" });
+  }
+
+  /* Toujours en attente : le front continue son décompte. */
+  if (etat !== "paid") {
     return NextResponse.json({ status: "pending" });
   }
 
-  /* Vérification du montant : le plan vient de la base, mais on
-     revérifie que le tarif attendu correspond bien. */
+  /* Payé : vérification du montant (forcée en nombre) puis crédit. */
   const plan = intent.plan as PlanId;
-  if (!plan || !(plan in PLAN_PRICES) || intent.amount !== PLAN_PRICES[plan]) {
+  if (!plan || !(plan in PLAN_PRICES) || Number(intent.amount) !== PLAN_PRICES[plan]) {
     return NextResponse.json({ error: "montant incohérent" }, { status: 400 });
   }
 
-  /* Crédit : la boutique passe au plan payé. */
   await admin.from("payments")
-    .update({ status: "success", paid_at: new Date().toISOString() })
+    .update({ status: "paid", paid_at: new Date().toISOString() })
     .eq("id", intent.id);
 
+  const periodEnd = new Date();
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+  /* Même règle que le webhook : un nouvel abonnement remplace toujours
+     le précédent, jamais ne s'y ajoute (sinon plusieurs abonnements
+     "active" pour la même boutique, et fetchActiveSubscription() ne
+     retrouve le bon que par coïncidence). */
+  await admin
+    .from("subscriptions")
+    .update({ status: "annulee" })
+    .eq("shop_id", intent.shop_id)
+    .eq("status", "active");
+
+  await admin.from("subscriptions").insert({
+    shop_id: intent.shop_id,
+    plan,
+    status: "active",
+    amount: intent.amount,
+    current_period_end: periodEnd.toISOString(),
+    provider: provider.name,
+    provider_ref: reference,
+  });
+
   await admin.from("shops")
-    .update({ plan, status: "active" })
+    .update({
+      plan,
+      status: "active",
+      published_at: new Date().toISOString(),
+      grace_until: null,
+      purge_after: null,
+    })
     .eq("id", intent.shop_id);
+
+  await admin.from("audit_log").insert({
+    shop_id: intent.shop_id,
+    action: "payment_received",
+    target: plan,
+    metadata: { amount: intent.amount, reference },
+  });
 
   return NextResponse.json({ status: "success", plan });
 }

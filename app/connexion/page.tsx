@@ -198,7 +198,7 @@ function AuthScreen() {
         <BoutikLogo className="h-7" />
       </header>
 
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 pb-20">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 pb-20">
         {demoMode && (
           <div className="mb-5 rounded-xl border border-mango/40 bg-mango-soft px-4 py-3 text-xs leading-relaxed text-yellow-900">
             <strong>Mode démo</strong> — Supabase n&apos;est pas configuré. La connexion est
@@ -219,7 +219,7 @@ function AuthScreen() {
               exit={{ opacity: 0, y: -12 }}
             >
               <h1 className="font-display text-3xl font-extrabold">Connexion</h1>
-              <p className="mt-2 text-sm leading-relaxed text-ink/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink/65">
                 Entre ton email et ton mot de passe.
               </p>
 
@@ -241,7 +241,7 @@ function AuthScreen() {
               {suggestion && (
                 <button
                   onClick={() => setEmail(suggestion)}
-                  className="mt-2 text-xs font-semibold text-primary hover:underline"
+                  className="mt-2 text-xs font-semibold text-primary-dark hover:underline"
                 >
                   Tu voulais dire <span className="font-bold">{suggestion}</span> ?
                 </button>
@@ -268,7 +268,7 @@ function AuthScreen() {
                   />
                   <span className="text-sm">
                     <span className="font-semibold">Rester connecté</span>
-                    <span className="block text-xs text-ink/55">
+                    <span className="block text-xs text-ink/65">
                       Décoche si c&apos;est un téléphone partagé.
                     </span>
                   </span>
@@ -278,7 +278,7 @@ function AuthScreen() {
                     setStep("forgot");
                     reset();
                   }}
-                  className="shrink-0 pt-0.5 text-xs font-semibold text-ink/50 hover:text-ink"
+                  className="shrink-0 pt-0.5 text-xs font-semibold text-ink/65 hover:text-ink"
                 >
                   Oublié ?
                 </button>
@@ -295,7 +295,7 @@ function AuthScreen() {
                 Me connecter
               </button>
 
-              <p className="mt-6 text-center text-sm text-ink/55">
+              <p className="mt-6 text-center text-sm text-ink/65">
                 Pas encore de compte ?{" "}
                 <button
                   onClick={() => {
@@ -303,7 +303,7 @@ function AuthScreen() {
                     reset();
                     setPassword(""); setPassword2("");
                   }}
-                  className="font-bold text-primary hover:underline"
+                  className="font-bold text-primary-dark hover:underline"
                 >
                   Créer un compte
                 </button>
@@ -325,13 +325,13 @@ function AuthScreen() {
                   reset();
                   setPassword(""); setPassword2("");
                 }}
-                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/55 hover:text-ink"
+                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/65 hover:text-ink"
               >
                 <ArrowLeft size={15} /> J&apos;ai déjà un compte
               </button>
 
               <h1 className="font-display text-3xl font-extrabold">Créer mon compte</h1>
-              <p className="mt-2 text-sm leading-relaxed text-ink/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink/65">
                 Un code de confirmation te sera envoyé par email.
               </p>
 
@@ -353,7 +353,7 @@ function AuthScreen() {
               {suggestion && (
                 <button
                   onClick={() => setEmail(suggestion)}
-                  className="mt-2 text-xs font-semibold text-primary hover:underline"
+                  className="mt-2 text-xs font-semibold text-primary-dark hover:underline"
                 >
                   Tu voulais dire <span className="font-bold">{suggestion}</span> ?
                 </button>
@@ -414,7 +414,7 @@ function AuthScreen() {
                   setCode("");
                   reset();
                 }}
-                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/55 hover:text-ink"
+                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/65 hover:text-ink"
               >
                 <ArrowLeft size={15} /> Retour
               </button>
@@ -423,7 +423,7 @@ function AuthScreen() {
                 className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
                   step === "device-otp"
                     ? "bg-mango-soft text-yellow-700"
-                    : "bg-primary-soft text-primary"
+                    : "bg-primary-soft text-primary-dark"
                 }`}
               >
                 {step === "device-otp" ? <ShieldCheck size={22} /> : <Mail size={22} />}
@@ -432,13 +432,13 @@ function AuthScreen() {
               <h1 className="mt-5 font-display text-3xl font-extrabold">
                 {step === "device-otp" ? "Nouvel appareil" : "Confirme ton email"}
               </h1>
-              <p className="mt-2 text-sm leading-relaxed text-ink/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink/65">
                 {step === "device-otp"
                   ? "On ne reconnaît pas cet appareil. Pour ta sécurité, entre le code envoyé à "
                   : "Entre le code à 6 chiffres envoyé à "}
                 <span className="font-bold text-ink">{email}</span>.
               </p>
-              <p className="mt-2 text-xs text-ink/55">
+              <p className="mt-2 text-xs text-ink/65">
                 Rien reçu ? Regarde dans les spams ou l&apos;onglet Promotions.
               </p>
 
@@ -452,7 +452,7 @@ function AuthScreen() {
                 <p className="mt-3 text-center text-sm font-semibold text-terra">{error}</p>
               )}
               {info && (
-                <p className="mt-3 text-center text-sm font-semibold text-primary">{info}</p>
+                <p className="mt-3 text-center text-sm font-semibold text-primary-dark">{info}</p>
               )}
 
               <button
@@ -467,13 +467,13 @@ function AuthScreen() {
               <button
                 onClick={resend}
                 disabled={cooldown > 0 || busy}
-                className="mt-4 w-full text-center text-sm font-semibold text-ink/50 hover:text-ink disabled:opacity-40"
+                className="mt-4 w-full text-center text-sm font-semibold text-ink/65 hover:text-ink disabled:opacity-40"
               >
                 {cooldown > 0 ? `Renvoyer le code dans ${cooldown} s` : "Renvoyer le code"}
               </button>
 
               {step === "device-otp" && (
-                <p className="mt-5 rounded-xl bg-cream px-4 py-3 text-center text-xs leading-relaxed text-ink/50">
+                <p className="mt-5 rounded-xl bg-cream px-4 py-3 text-center text-xs leading-relaxed text-ink/65">
                   Une fois validé, cet appareil sera reconnu : plus besoin de code la prochaine
                   fois.
                 </p>
@@ -494,13 +494,13 @@ function AuthScreen() {
                   setStep("login");
                   reset();
                 }}
-                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/55 hover:text-ink"
+                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/65 hover:text-ink"
               >
                 <ArrowLeft size={15} /> Retour à la connexion
               </button>
 
               <h1 className="font-display text-3xl font-extrabold">Mot de passe oublié</h1>
-              <p className="mt-2 text-sm leading-relaxed text-ink/60">
+              <p className="mt-2 text-sm leading-relaxed text-ink/65">
                 Entre ton email : on t&apos;envoie un lien pour en choisir un nouveau.
               </p>
 
@@ -518,7 +518,7 @@ function AuthScreen() {
               />
 
               {error && <p className="mt-3 text-sm font-semibold text-terra">{error}</p>}
-              {info && <p className="mt-3 text-sm font-semibold text-primary">{info}</p>}
+              {info && <p className="mt-3 text-sm font-semibold text-primary-dark">{info}</p>}
 
               <button
                 onClick={doForgot}
@@ -531,7 +531,7 @@ function AuthScreen() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </main>
     </div>
   );
 }
@@ -564,7 +564,7 @@ function Divider() {
   return (
     <div className="my-5 flex items-center gap-3">
       <span className="h-px flex-1 bg-ink/10" />
-      <span className="text-xs font-semibold text-ink/40">ou</span>
+      <span className="text-xs font-semibold text-ink/65">ou</span>
       <span className="h-px flex-1 bg-ink/10" />
     </div>
   );
@@ -602,7 +602,7 @@ function PasswordField({
       <button
         type="button"
         onClick={toggle}
-        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-ink/40 transition-colors hover:text-ink"
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-ink/65 transition-colors hover:text-ink"
         aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
         tabIndex={-1}
       >
@@ -630,7 +630,7 @@ function StrengthMeter({ password }: { password: string }) {
           />
         ))}
       </div>
-      <p className={`mt-1.5 text-xs ${issue ? "text-ink/55" : "font-semibold text-ink/60"}`}>
+      <p className={`mt-1.5 text-xs ${issue ? "text-ink/65" : "font-semibold text-ink/65"}`}>
         {issue ?? labels[s]}
       </p>
     </div>

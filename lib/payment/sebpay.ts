@@ -5,8 +5,9 @@
  *  Auth      : en-tetes X-Public-Key + X-Secret-Key
  *  Modele    : "collection" — un push USSD est envoye sur le telephone
  *              du client. SebPay N'ENVOIE PAS de webhook fiable : la
- *              confirmation se fait en interrogeant l'API (confirmPaid)
- *              via l'external_reference. Statut "approved" = paye.
+ *              confirmation se fait en interrogeant l'API via
+ *              l'external_reference. "approved" = paye, "rejected" =
+ *              refuse. checkStatus renvoie le detail des trois etats.
  * ==================================================================== */
 
 import {
@@ -34,8 +35,9 @@ const SEBPAY_TO_OPERATOR: Record<string, Operator> = {
   MOOV: "moov",
 };
 
-/* Statuts que SebPay considere comme un paiement abouti. */
+/* Statuts que SebPay considere comme un paiement abouti / refuse. */
 const PAID_STATUSES = ["approved", "success", "successful", "paid", "completed"];
+const REJECTED_STATUSES = ["rejected", "failed", "cancelled", "declined", "expired"];
 
 type SebpayConfig = {
   publicKey: string;
@@ -90,9 +92,6 @@ export class SebpayProvider implements PaymentProvider {
         };
       }
 
-      /* SebPay renvoie l'identifiant technique dans data.data.transaction_id.
-         On garde l'external_reference comme cle de suivi : c'est elle qui
-         permet d'interroger le statut ensuite (confirmPaid). */
       const providerTxId = data?.data?.transaction_id ?? null;
 
       return {
@@ -128,14 +127,13 @@ export class SebpayProvider implements PaymentProvider {
       return null;
     }
 
-    /* Le corps webhook peut etre plat ou imbrique dans data. */
     const body = p?.data ?? p;
     const rawStatus = (body.status || "").toLowerCase();
 
     const status: WebhookEvent["status"] =
       PAID_STATUSES.includes(rawStatus)
         ? "paid"
-        : rawStatus === "failed" || rawStatus === "cancelled" || rawStatus === "declined"
+        : REJECTED_STATUSES.includes(rawStatus)
           ? "failed"
           : "pending";
 
@@ -151,23 +149,29 @@ export class SebpayProvider implements PaymentProvider {
     };
   }
 
-  /* Interroge SebPay sur une transaction. La cle passee est
-     l'external_reference (celle du checkout), que l'API accepte
-     directement sur GET /collections/{ref}. */
+  /* Booleen simple : paye ou non. Conserve pour le balayage. */
   async confirmPaid(externalReference: string): Promise<boolean> {
+    return (await this.checkStatus(externalReference)) === "paid";
+  }
+
+  /* Statut detaille : permet au polling de s'arreter net sur un rejet
+     au lieu d'attendre la fin du decompte. */
+  async checkStatus(
+    externalReference: string
+  ): Promise<"paid" | "rejected" | "pending"> {
     try {
       const res = await fetch(`${BASE_URL}/collections/${externalReference}`, {
         method: "GET",
         headers: this.headers(),
       });
+      if (!res.ok) return "pending";
       const data = await res.json().catch(() => ({}));
-      console.log("[confirmPaid]", res.status, "→", JSON.stringify(data));
-      if (!res.ok) return false;
       const s = (data?.data?.status || "").toLowerCase();
-      return PAID_STATUSES.includes(s);
-    } catch (e) {
-      console.log("[confirmPaid] EXCEPTION", String(e));
-      return false;
+      if (PAID_STATUSES.includes(s)) return "paid";
+      if (REJECTED_STATUSES.includes(s)) return "rejected";
+      return "pending";
+    } catch {
+      return "pending";
     }
   }
-  }
+}

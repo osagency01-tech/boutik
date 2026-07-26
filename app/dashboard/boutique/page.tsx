@@ -492,7 +492,12 @@ function IdentiteTab({ touch }: { touch: () => void }) {
 
   return (
     <>
-      <Field label="Nom de la boutique" hint="Il apparaît en haut de chaque page.">
+      <p className="text-sm text-ink/60">
+        C&apos;est la carte d&apos;identité de ta boutique : ce que tes clients voient en
+        premier. Les champs marqués <span className="font-bold text-terra">*</span> sont
+        obligatoires, le reste peut être complété plus tard.
+      </p>
+      <Field label="Nom de la boutique *" hint="Il apparaît en haut de chaque page.">
         <input
           className="input"
           value={config.name}
@@ -604,6 +609,11 @@ function DesignTab({ touch }: { touch: () => void }) {
 
   return (
     <>
+      <p className="text-sm text-ink/60">
+        Choisis d&apos;abord un modèle (l&apos;organisation de ta page d&apos;accueil), puis
+        une palette de couleurs. Tout est réversible à tout moment, tes produits ne bougent
+        pas.
+      </p>
       <Field
         label="Mon offre"
         hint={
@@ -647,6 +657,15 @@ function DesignTab({ touch }: { touch: () => void }) {
           </div>
         )}
       </Field>
+
+      {step === "template" && (
+        <button
+          onClick={() => setStep("palette")}
+          className="btn-primary btn-md w-full sm:w-auto"
+        >
+          Choisir mes couleurs <ArrowRight size={15} />
+        </button>
+      )}
 
       {step === "template" ? (
         <Field
@@ -714,12 +733,6 @@ function DesignTab({ touch }: { touch: () => void }) {
               );
             })}
           </div>
-          <button
-            onClick={() => setStep("palette")}
-            className="btn-primary btn-md mt-5 w-full sm:w-auto"
-          >
-            Suivant <ArrowRight size={15} />
-          </button>
         </Field>
       ) : (
         <Field
@@ -784,6 +797,18 @@ function AccueilTab({ touch }: { touch: () => void }) {
   if (step === "banniere")
     return (
       <>
+        <p className="text-sm text-ink/60">
+          C&apos;est ta vitrine : la grande bannière et les arguments affichés en haut de ta
+          page d&apos;accueil publique. Tout est facultatif — des textes par défaut sont déjà
+          en place.
+        </p>
+        <button
+          onClick={() => setStep("contenu")}
+          className="btn-primary btn-md w-full sm:w-auto"
+        >
+          Suivant <ArrowRight size={15} />
+        </button>
+
         <Field
           label="Image de fond de la bannière"
           hint="Visible sur les modèles Classique, Food et Modern — une photo derrière le dégradé de couleur. Optionnel."
@@ -876,10 +901,6 @@ function AccueilTab({ touch }: { touch: () => void }) {
             }}
           />
         </Field>
-
-        <button onClick={() => setStep("contenu")} className="btn-primary btn-md mt-1 w-full sm:w-auto">
-          Suivant <ArrowRight size={15} />
-        </button>
       </>
     );
 
@@ -962,22 +983,17 @@ function ContactTab({ touch }: { touch: () => void }) {
   const { config, setConfig } = useStore();
   return (
     <>
-      <Field label="Numéro WhatsApp" hint="C'est là qu'arrivent tes commandes.">
+      <p className="text-sm text-ink/60">
+        Le numéro WhatsApp <span className="font-bold text-terra">*</span> est obligatoire :
+        sans lui, tes clients ne peuvent pas te passer commande. Le reste aide juste à te
+        joindre autrement.
+      </p>
+      <Field label="Numéro WhatsApp *" hint="C'est là qu'arrivent tes commandes.">
         <WhatsAppInput
           requireConfirm
           value={config.whatsapp}
           onChange={(digits) => {
             setConfig({ whatsapp: digits });
-            touch();
-          }}
-        />
-      </Field>
-      <Field label="Téléphone affiché">
-        <input
-          className="input"
-          value={config.phone}
-          onChange={(e) => {
-            setConfig({ phone: e.target.value });
             touch();
           }}
         />

@@ -279,7 +279,7 @@ export default function OrdersPage() {
                               href={`https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
                                 `Bonjour ${o.customer_name.split(" ")[0]} 👋🏾 Votre commande ${o.reference} (${fcfa(
                                   o.total
-                                )}) chez ${config.name} est bien reçue. Vous pouvez régler par Mobile Money au ${config.phone}.`
+                                )}) chez ${config.name} est bien reçue. Vous pouvez régler par Mobile Money au ${config.phone || "+" + config.whatsapp}.`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"

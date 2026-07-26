@@ -1,5 +1,6 @@
 "use client";
 
+import { FlagIcon } from "@/components/flag-icon";
 import {
   ECOWAS_COUNTRIES,
   findEcowasCountryByDigits,
@@ -69,9 +70,13 @@ export function WhatsAppInput({
             132px sur l'élément lui-même se ferait battre par cette
             règle (même spécificité). On fixe la largeur sur un wrapper
             à la place, pour ne pas dépendre de l'ordre des classes. */}
-        <div className="w-[132px] shrink-0">
+        <div className="relative w-[132px] shrink-0">
+          <FlagIcon
+            iso={countryIso}
+            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-5 -translate-y-1/2"
+          />
           <select
-            className="input"
+            className="input pl-9"
             value={countryIso}
             onChange={(e) => {
               setCountryIso(e.target.value);
@@ -81,7 +86,7 @@ export function WhatsAppInput({
           >
             {ECOWAS_COUNTRIES.map((c) => (
               <option key={c.iso} value={c.iso}>
-                {c.flag} +{c.dialCode}
+                +{c.dialCode}
               </option>
             ))}
           </select>

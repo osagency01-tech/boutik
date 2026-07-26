@@ -1,5 +1,6 @@
 "use client";
 
+import { FlagIcon } from "@/components/flag-icon";
 import { CATEGORIES } from "@/lib/categories";
 import { citiesFor } from "@/lib/cities";
 import { ECOWAS_COUNTRIES, getEcowasCountry } from "@/lib/ecowas";
@@ -92,23 +93,29 @@ export function ShopNicheFields({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1.5 block text-sm font-bold">Pays</label>
-          <select
-            className="input"
-            value={countryIso}
-            onChange={(e) => {
-              const iso = e.target.value;
-              const firstCity = citiesFor(iso)[0] ?? "";
-              setCountryIso(iso);
-              setCity(firstCity);
-              onChange(composeTagline(categoryValue, firstCity));
-            }}
-          >
-            {ECOWAS_COUNTRIES.map((c) => (
-              <option key={c.iso} value={c.iso}>
-                {c.flag} {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <FlagIcon
+              iso={countryIso}
+              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-5 -translate-y-1/2"
+            />
+            <select
+              className="input pl-9"
+              value={countryIso}
+              onChange={(e) => {
+                const iso = e.target.value;
+                const firstCity = citiesFor(iso)[0] ?? "";
+                setCountryIso(iso);
+                setCity(firstCity);
+                onChange(composeTagline(categoryValue, firstCity));
+              }}
+            >
+              {ECOWAS_COUNTRIES.map((c) => (
+                <option key={c.iso} value={c.iso}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-bold">Ville</label>

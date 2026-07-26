@@ -49,10 +49,10 @@ export interface PaymentProvider {
   createCheckout(input: CheckoutInput): Promise<CheckoutResult>;
   verifyWebhook(rawBody: string, headers: Record<string, string>): boolean;
   parseWebhook(rawBody: string): WebhookEvent | null;
-  /* Interroge l'agregateur sur une transaction (external_reference).
-     Necessaire quand il n'y a pas de webhook fiable : c'est la
-     verification active qui credite la boutique. */
+  /* Interroge l'agregateur sur une transaction (external_reference). */
   confirmPaid(externalReference: string): Promise<boolean>;
+  /* Statut detaille : paye / refuse / en attente. */
+  checkStatus(externalReference: string): Promise<"paid" | "rejected" | "pending">;
 }
 
 /* -------------------------------------------------------------------- *
@@ -87,10 +87,12 @@ class MockProvider implements PaymentProvider {
     return null;
   }
 
-  /* En mode demo, on considere tout paiement comme valide pour
-     pouvoir derouler la suite du parcours sans agregateur. */
   async confirmPaid(): Promise<boolean> {
     return process.env.NODE_ENV !== "production";
+  }
+
+  async checkStatus(): Promise<"paid" | "rejected" | "pending"> {
+    return process.env.NODE_ENV !== "production" ? "paid" : "pending";
   }
 }
 
@@ -128,10 +130,7 @@ export function getProvider(): PaymentProvider {
 
 export function normalizeMsisdn(phone: string, countryCode = "229"): string {
   const d = phone.replace(/\D/g, "");
-  /* Déjà au format international (commence par l'indicatif). */
   if (d.startsWith(countryCode)) return d.slice(0, 15);
-  /* Bénin : les numéros à 10 chiffres commencent par 01 — ce 0 fait
-     partie du numéro, on ne le retire PAS. On préfixe juste l'indicatif. */
   return (countryCode + d).slice(0, 15);
 }
 

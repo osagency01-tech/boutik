@@ -34,7 +34,7 @@ import { useEffect, useState } from "react";
 const DISMISS_KEY = "boutik-guide-fini";
 
 export default function OnboardingGuide() {
-  const { config, products, palette, ready, shopId, demoMode } = useStore();
+  const { config, products, ready, shopId, demoMode } = useStore();
   const [hidden, setHidden] = useState(true);
   const [notifGranted, setNotifGranted] = useState(false);
 
@@ -142,10 +142,7 @@ export default function OnboardingGuide() {
         {/* Terminé : on félicite et on s'efface */}
         {allDone ? (
           <div className="flex items-start gap-4">
-            <span
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white"
-              style={{ backgroundColor: palette.accent }}
-            >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white">
               <PartyPopper size={20} />
             </span>
             <div className="min-w-0 flex-1">
@@ -176,10 +173,7 @@ export default function OnboardingGuide() {
             </button>
 
             <div className="flex items-center gap-3">
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                style={{ backgroundColor: palette.accent + "1A", color: palette.accent }}
-              >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
                 <Rocket size={17} />
               </span>
               <div className="min-w-0 flex-1">
@@ -192,8 +186,8 @@ export default function OnboardingGuide() {
 
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-cream">
               <div
-                className="h-full rounded-full transition-[width] duration-700 ease-out"
-                style={{ backgroundColor: palette.accent, width: `${pct}%` }}
+                className="h-full rounded-full bg-primary transition-[width] duration-700 ease-out"
+                style={{ width: `${pct}%` }}
               />
             </div>
 
@@ -209,10 +203,7 @@ export default function OnboardingGuide() {
                   >
                     <span className="shrink-0">
                       {s.done ? (
-                        <span
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-white"
-                          style={{ backgroundColor: palette.accent }}
-                        >
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white">
                           <Check size={12} strokeWidth={3.5} />
                         </span>
                       ) : (
@@ -242,20 +233,12 @@ export default function OnboardingGuide() {
                     </div>
 
                     {isNext && s.href && (
-                      <Link
-                        href={s.href}
-                        className="btn btn-sm shrink-0 text-white"
-                        style={{ backgroundColor: palette.accent }}
-                      >
+                      <Link href={s.href} className="btn btn-sm shrink-0 bg-primary text-white">
                         {s.cta} <ArrowRight size={13} />
                       </Link>
                     )}
                     {isNext && !s.href && s.action && (
-                      <button
-                        onClick={s.action}
-                        className="btn btn-sm shrink-0 text-white"
-                        style={{ backgroundColor: palette.accent }}
-                      >
+                      <button onClick={s.action} className="btn btn-sm shrink-0 bg-primary text-white">
                         <Bell size={13} /> {s.cta}
                       </button>
                     )}
@@ -272,13 +255,9 @@ export default function OnboardingGuide() {
 /* Encart affiché sur la page Produits quand la boutique est vide.
    Le vendeur y arrive sans savoir par quoi commencer. */
 export function EmptyProductsGuide({ onAdd }: { onAdd: () => void }) {
-  const { palette } = useStore();
   return (
     <div className="card mt-5 p-8 text-center sm:p-12">
-      <span
-        className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
-        style={{ backgroundColor: palette.accent + "1A", color: palette.accent }}
-      >
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
         <Package size={26} />
       </span>
       <p className="mt-5 font-display text-lg font-extrabold">Ajoute ton premier produit</p>

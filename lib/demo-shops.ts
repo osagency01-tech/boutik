@@ -23,12 +23,14 @@ export type DemoProduct = {
 };
 
 /* Visuel d'un produit de démo (public/demo/). Vraies photos — Pexels,
-   licence Pexels : libres d'usage commercial, sans attribution requise,
-   réencodées en WebP. Un carré de couleur généré ou une boutique sans
-   photos donne l'impression d'être vide — ce n'est pas ce qu'on veut
-   montrer à un vendeur qu'on essaie de convaincre.
-   Modèles restants sans encore de vraies photos (vignettes générées
-   d'origine, en JPG) : fashion, beauty, food, luxury, modern, artisan. */
+   licence Pexels : libres d'usage commercial, sans attribution requise.
+   Un carré de couleur généré ou une boutique sans photos donne
+   l'impression d'être vide — ce n'est pas ce qu'on veut montrer à un
+   vendeur qu'on essaie de convaincre.
+   classique/catalogue/vitrine : réencodées en WebP (voir WEBP_TEMPLATES).
+   fashion/beauty/food/luxury/modern/artisan : vraies photos Pexels en
+   JPG (pas de conversion WebP nécessaire, demoImage() sert déjà du .jpg
+   pour ces modèles). */
 const WEBP_TEMPLATES = new Set(["classique", "catalogue", "vitrine"]);
 
 export const demoImage = (template: string, index: number) => {

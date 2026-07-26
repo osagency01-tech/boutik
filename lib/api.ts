@@ -206,6 +206,41 @@ export async function fetchActiveSubscription(shopId: string) {
   } | null;
 }
 
+/* Historique des paiements réussis d'une boutique, du plus récent au
+   plus ancien. Le plan n'est pas une colonne de `payments` (il n'existe
+   que sur `subscriptions`) : il est extrait de idempotency_key, au
+   format "shopId:plan" (voir app/api/webhooks/paiement/route.ts). Idem
+   pour l'échéance, jamais stockée par paiement : le webhook fixe
+   toujours current_period_end à paid_at + 1 mois, donc recalculée ici
+   plutôt que d'exiger une jointure sur subscriptions. */
+export async function fetchPaymentHistory(shopId: string) {
+  const sb = supabase();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from("payments")
+    .select("id, amount, paid_at, created_at, idempotency_key")
+    .eq("shop_id", shopId)
+    .eq("status", "paid")
+    .order("paid_at", { ascending: false })
+    .limit(24);
+  if (error) return [];
+
+  return (data ?? []).map((p: any) => {
+    const paidAt = p.paid_at ?? p.created_at;
+    const dueAt = new Date(paidAt);
+    dueAt.setMonth(dueAt.getMonth() + 1);
+    const plan = (p.idempotency_key ?? "").split(":")[1] ?? "";
+    return {
+      id: p.id as string,
+      plan: plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "—",
+      amount: p.amount as number,
+      paidAt,
+      dueAt: dueAt.toISOString(),
+    };
+  });
+}
+
 /* ------------------------------------------------------------------ *
  * Zones de livraison
  * ------------------------------------------------------------------ */

@@ -1,5 +1,6 @@
 "use client";
 
+import { FlagIcon } from "@/components/flag-icon";
 import { Reveal } from "@/components/motion";
 import { PLANS, fcfa } from "@/lib/data";
 import { PLAN_QUOTA, useStore, type Plan } from "@/lib/store";
@@ -9,10 +10,6 @@ import { COUNTRIES, getCountry, normalizePhone, validatePhone } from "@/lib/coun
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Check, Clock, CreditCard, Loader2, Receipt, X } from "lucide-react";
 import { useEffect, useState } from "react";
-
-/* ------------------------------------------------------------------ *
- * Abonnement
- * ------------------------------------------------------------------ */
 
 const PLAN_RANK: Record<Plan, number> = { Gratuit: 0, Starter: 1, Business: 2, Premium: 3 };
 
@@ -28,11 +25,12 @@ function formatDate(iso: string): string {
   }
 }
 
-/* Vérifie un paiement auprès du serveur. Réutilisé par le polling
-   ET par le filet de retour. Renvoie le plan crédité, ou null. */
-async function verifyPayment(reference: string): Promise<string | null> {
+/* Vérifie un paiement. Renvoie le statut détaillé + le plan si payé. */
+async function verifyPayment(
+  reference: string
+): Promise<{ status: string; plan?: string }> {
   const sb = supabase();
-  if (!sb) return null;
+  if (!sb) return { status: "pending" };
   try {
     const { data } = await sb.auth.getSession();
     const res = await fetch("/api/paiement/verifier", {
@@ -43,18 +41,20 @@ async function verifyPayment(reference: string): Promise<string | null> {
       },
       body: JSON.stringify({ reference }),
     });
-    const out = await res.json();
-    return out.status === "success" ? (out.plan ?? null) : null;
+    return await res.json();
   } catch {
-    return null;
+    return { status: "pending" };
   }
 }
+
+type PaymentHistoryRow = Awaited<ReturnType<typeof api.fetchPaymentHistory>>[number];
 
 export default function SubscriptionPage() {
   const { config, products, shopId, setConfig } = useStore();
   const [selected, setSelected] = useState<Plan | null>(null);
   const [expiry, setExpiry] = useState<string | null>(null);
   const [recovering, setRecovering] = useState(false);
+  const [history, setHistory] = useState<PaymentHistoryRow[]>([]);
 
   const quota = PLAN_QUOTA[config.plan];
   const used = products.length;
@@ -73,11 +73,25 @@ export default function SubscriptionPage() {
     };
   }, [shopId, config.plan]);
 
-  /* ---- Filet de retour ----
-     Au chargement de la page, on regarde s'il reste un paiement en
-     attente pour cette boutique. Si le vendeur a payé puis quitté,
-     SebPay a eu le temps d'approuver : on revérifie une fois, et la
-     boutique se crédite automatiquement à son retour. */
+  /* Historique de facturation : rechargé après le filet de retour
+     (recovering) et à chaque fermeture du tunnel de paiement (selected
+     revient à null, y compris juste après un paiement réussi), pas
+     seulement au montage — pour que le tableau se mette à jour sans
+     recharger la page. */
+  useEffect(() => {
+    if (!shopId) return;
+    let alive = true;
+    api.fetchPaymentHistory(shopId).then((rows) => {
+      if (alive) setHistory(rows);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [shopId, recovering, selected]);
+
+  /* Filet de retour : au chargement, revérifie les paiements en attente.
+     Parcourt plusieurs paiements car le plus récent peut être un essai
+     rejeté alors qu'un plus ancien est bien payé. */
   useEffect(() => {
     if (!shopId) return;
     let alive = true;
@@ -86,22 +100,25 @@ export default function SubscriptionPage() {
       const sb = supabase();
       if (!sb) return;
 
-      const { data: pending } = await sb
+      const { data: pendings } = await sb
         .from("payments")
         .select("idempotency_key")
         .eq("shop_id", shopId)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(5);
 
-      if (!alive || !pending?.idempotency_key) return;
+      if (!alive || !pendings || pendings.length === 0) return;
 
       setRecovering(true);
-      const plan = await verifyPayment(pending.idempotency_key);
-      if (alive && plan) {
-        const label = plan.charAt(0).toUpperCase() + plan.slice(1);
-        setConfig({ plan: label as Plan });
+      for (const p of pendings) {
+        if (!alive || !p.idempotency_key) break;
+        const out = await verifyPayment(p.idempotency_key);
+        if (out.status === "success" && out.plan) {
+          const label = out.plan.charAt(0).toUpperCase() + out.plan.slice(1);
+          setConfig({ plan: label as Plan });
+          break;
+        }
       }
       if (alive) setRecovering(false);
     })();
@@ -124,7 +141,6 @@ export default function SubscriptionPage() {
         </p>
       </Reveal>
 
-      {/* Bandeau discret pendant la revérification au retour */}
       {recovering && (
         <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-primary-soft px-4 py-3">
           <Loader2 size={16} className="animate-spin text-primary" />
@@ -134,7 +150,6 @@ export default function SubscriptionPage() {
         </div>
       )}
 
-      {/* --- Offre en cours --- */}
       <Reveal delay={0.06}>
         <div className="card mt-5 p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -193,7 +208,6 @@ export default function SubscriptionPage() {
         </div>
       </Reveal>
 
-      {/* --- Changer d'offre --- */}
       <Reveal delay={0.12}>
         <h2 className="mt-8 font-display text-lg font-extrabold">Changer d&apos;offre</h2>
         <p className="mt-1 text-sm text-ink/55">
@@ -264,7 +278,6 @@ export default function SubscriptionPage() {
         </div>
       </Reveal>
 
-      {/* --- Moyen de paiement --- */}
       <Reveal delay={0.18}>
         <h2 className="mt-8 font-display text-lg font-extrabold">Moyen de paiement</h2>
         <div className="card mt-3 flex flex-wrap items-center gap-4 p-5">
@@ -280,18 +293,33 @@ export default function SubscriptionPage() {
         </div>
       </Reveal>
 
-      {/* --- Historique --- */}
       <Reveal delay={0.22}>
         <h2 className="mt-8 font-display text-lg font-extrabold">Historique des paiements</h2>
-        <div className="card mt-3 p-10 text-center">
-          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-cream text-ink/35">
-            <Receipt size={19} />
-          </span>
-          <p className="mt-3 text-sm font-semibold">Aucun paiement pour l&apos;instant</p>
-          <p className="mx-auto mt-1 max-w-xs text-xs text-ink/50">
-            Tes factures apparaîtront ici, téléchargeables en PDF.
-          </p>
-        </div>
+        {history.length === 0 ? (
+          <div className="card mt-3 p-10 text-center">
+            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-cream text-ink/35">
+              <Receipt size={19} />
+            </span>
+            <p className="mt-3 text-sm font-semibold">Aucun paiement pour l&apos;instant</p>
+            <p className="mx-auto mt-1 max-w-xs text-xs text-ink/50">
+              Tes paiements confirmés apparaîtront ici.
+            </p>
+          </div>
+        ) : (
+          <div className="card mt-3 divide-y divide-ink/5 overflow-hidden">
+            {history.map((h) => (
+              <div key={h.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 p-4">
+                <div>
+                  <p className="text-sm font-bold">Offre {h.plan}</p>
+                  <p className="text-xs text-ink/50">
+                    Payé le {formatDate(h.paidAt)} · échéance le {formatDate(h.dueAt)}
+                  </p>
+                </div>
+                <p className="font-display text-sm font-extrabold text-primary">{fcfa(h.amount)}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Reveal>
 
       <AnimatePresence>
@@ -300,7 +328,6 @@ export default function SubscriptionPage() {
     </div>
   );
 }
-
 /* ------------------------------------------------------------------ *
  * Tunnel de paiement
  * ------------------------------------------------------------------ */
@@ -330,29 +357,39 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
 
   /* Vérification active en direct.
      SebPay confirme parfois très tard (jusqu'à ~10 min). On borne sur
-     le TEMPS écoulé, pas sur un compteur : si le navigateur suspend
-     les timers (écran verrouillé, appli en arrière-plan), on ne compte
-     pas les tics perdus. Chaque paiement a SA boucle : deux vendeurs
-     simultanés sont indépendants, l'arrêt de l'un n'affecte pas l'autre.
-     Le filet de retour (au chargement de la page) rattrape le cas où
-     le vendeur ferme avant la confirmation. */
+     le TEMPS écoulé, pas sur un compteur : si le navigateur suspend les
+     timers (écran verrouillé, appli en arrière-plan), on ne compte pas
+     les tics perdus. Chaque paiement a SA boucle : deux vendeurs
+     simultanés sont indépendants. Un rejet arrête tout immédiatement. */
   const pollVerification = async (reference: string) => {
     const DEADLINE = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     while (Date.now() < DEADLINE) {
       await new Promise((r) => setTimeout(r, 4000));
 
-      const plan = await verifyPayment(reference);
-      if (plan) {
+      const out = await verifyPayment(reference);
+
+      if (out.status === "success") {
         setPhase("success");
-        const label = plan.charAt(0).toUpperCase() + plan.slice(1);
-        setConfig({ plan: label as Plan });
-        return; // arrêt net à la confirmation
+        if (out.plan) {
+          const label = out.plan.charAt(0).toUpperCase() + out.plan.slice(1);
+          setConfig({ plan: label as Plan });
+        }
+        return;
       }
+
+      /* Refusé ou annulé : on arrête net, sans attendre les 10 min. */
+      if (out.status === "rejected") {
+        setErr("Le paiement a été refusé ou annulé. Vérifie ton solde et réessaie.");
+        setPhase("form");
+        setBusy(false);
+        return;
+      }
+      /* pending : on continue la boucle. */
     }
 
     setErr(
-      "Ton paiement est encore en cours de validation chez l'opérateur. Si tu as bien confirmé sur ton téléphone, ta boutique sera activée dès réception — reviens sur cette page dans quelques minutes."
+      "Ton paiement est encore en cours de validation. Si tu as bien confirmé, ta boutique sera activée dès réception — reviens sur cette page dans quelques minutes."
     );
     setPhase("form");
     setBusy(false);
@@ -482,17 +519,23 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
             </div>
 
             <label className="mb-1.5 mt-5 block text-sm font-bold">Pays</label>
-            <select
-              className="input"
-              value={countryIso}
-              onChange={(e) => changeCountry(e.target.value)}
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c.iso} value={c.iso}>
-                  {c.flag} {c.name} (+{c.dialCode})
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <FlagIcon
+                iso={countryIso}
+                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-5 -translate-y-1/2"
+              />
+              <select
+                className="input pl-9"
+                value={countryIso}
+                onChange={(e) => changeCountry(e.target.value)}
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.iso} value={c.iso}>
+                    {c.name} (+{c.dialCode})
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <label className="mb-2 mt-5 block text-sm font-bold">Opérateur Mobile Money</label>
             <div className="grid grid-cols-2 gap-2">
