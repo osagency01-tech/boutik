@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-type Form = { name: string; phone: string; address: string; zone: string; note: string };
+type Form = { name: string; phone: string; phoneConfirm: string; address: string; zone: string; note: string };
 
 export default function CheckoutPage() {
   const { detailed, total, clear } = useCart();
@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState<Form>({
     name: "",
     phone: "",
+    phoneConfirm: "",
     address: "",
     zone: "",
     note: "",
@@ -34,7 +35,11 @@ export default function CheckoutPage() {
 
   const zone = config.zones.find((z) => z.zone === form.zone) ?? config.zones[0];
   const grand = total + zone.price;
-  const valid = form.name.trim().length > 1 && form.phone.trim().length >= 8 && form.address.trim().length > 3;
+  const valid =
+    form.name.trim().length > 1 &&
+    form.phone.trim().length >= 8 &&
+    form.phone.trim() === form.phoneConfirm.trim() &&
+    form.address.trim().length > 3;
 
   const waMessage = useMemo(() => {
     const lines = detailed.map(
@@ -227,6 +232,20 @@ export default function CheckoutPage() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
+          </Field>
+          <Field label="Confirme ton numéro *">
+            <input
+              className="input"
+              type="tel"
+              placeholder="+225 07 00 00 00 00"
+              value={form.phoneConfirm}
+              onChange={(e) => setForm({ ...form, phoneConfirm: e.target.value })}
+            />
+            {form.phoneConfirm && form.phone.trim() !== form.phoneConfirm.trim() && (
+              <p className="mt-1.5 text-xs font-semibold text-terra">
+                Les numéros ne correspondent pas.
+              </p>
+            )}
           </Field>
           <Field label="Zone de livraison *">
             <div className="space-y-2">

@@ -20,6 +20,7 @@ Ordre important : chaque étape dépend de la précédente. Compte 2-3 h la prem
 5. `supabase/migrations/005_admin_analytics.sql`
 6. `supabase/migrations/006_banner_image.sql`
 7. `supabase/migrations/007_push_subscriptions.sql`
+8. `supabase/migrations/008_template_tier_guard.sql`
 
 **Vérifier** : colle `supabase/tests/isolation_test.sql`. **19 assertions doivent passer.** Un seul échec = ne pas déployer.
 

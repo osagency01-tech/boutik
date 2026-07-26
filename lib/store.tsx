@@ -369,6 +369,10 @@ export function StoreProvider({
     const shop = await api.createShop(config, data.session.user.id);
     setShopId(shop.id);
     setHasShop(true);
+    /* Le lien réel peut différer du nom si un autre vendeur avait déjà
+       ce nom (voir createShop) : on le reflète ici pour que l'écran de
+       fin du wizard puisse afficher le vrai lien, pas une supposition. */
+    setConfigState((c) => ({ ...c, slug: shop.slug }));
     if (config.zones.length) await api.replaceZones(shop.id, config.zones);
   };
 

@@ -14,27 +14,40 @@ const DEFAULT_ISO = "CI"; // marché principal de l'app
 /* Sélecteur de pays (CEDEAO) + numéro local, avec validation du nombre
    de chiffres par pays. Produit exactement le même format de chaîne
    qu'avant ("indicatif+numéro", ex. "2250700000000") : aucun changement
-   ailleurs (wa.me, configToShop, etc.) n'est nécessaire. */
+   ailleurs (wa.me, configToShop, etc.) n'est nécessaire.
+
+   `requireConfirm` ajoute un second champ "confirme ton numéro". Il
+   démarre à la MÊME valeur que le numéro principal (pas vide) : sans
+   ça, rouvrir les réglages d'une boutique déjà configurée afficherait
+   une erreur de correspondance permanente alors que rien n'a changé.
+   L'erreur n'apparaît que si le vendeur modifie l'un sans l'autre —
+   exactement le cas qu'on veut attraper (faute de frappe). */
 export function WhatsAppInput({
   value,
   onChange,
   autoFocus,
+  requireConfirm,
 }: {
   value: string;
   onChange: (digits: string) => void;
   autoFocus?: boolean;
+  requireConfirm?: boolean;
 }) {
   const initial = useState<EcowasCountry>(
     () => findEcowasCountryByDigits(value) ?? getEcowasCountry(DEFAULT_ISO)!
   )[0];
+  const initialLocal = () =>
+    value.startsWith(initial.dialCode) ? value.slice(initial.dialCode.length) : value;
+
   const [countryIso, setCountryIso] = useState(initial.iso);
-  const [local, setLocal] = useState(() =>
-    value.startsWith(initial.dialCode) ? value.slice(initial.dialCode.length) : value
-  );
+  const [local, setLocal] = useState(initialLocal);
+  const [confirmLocal, setConfirmLocal] = useState(initialLocal);
   const country = getEcowasCountry(countryIso) ?? initial;
   const error = local ? validateEcowasPhone(local, country) : null;
+  const mismatch = requireConfirm && confirmLocal.length > 0 && confirmLocal !== local;
 
-  const commit = (iso: string, loc: string) => {
+  const commit = (iso: string, loc: string, confirmLoc: string) => {
+    if (requireConfirm && loc !== confirmLoc) return; // pas confirmé : on ne propage pas encore
     const c = getEcowasCountry(iso) ?? initial;
     onChange(c.dialCode + loc);
   };
@@ -52,7 +65,7 @@ export function WhatsAppInput({
             value={countryIso}
             onChange={(e) => {
               setCountryIso(e.target.value);
-              commit(e.target.value, local);
+              commit(e.target.value, local, confirmLocal);
             }}
           >
             {ECOWAS_COUNTRIES.map((c) => (
@@ -72,11 +85,34 @@ export function WhatsAppInput({
           onChange={(e) => {
             const digits = e.target.value.replace(/\D/g, "");
             setLocal(digits);
-            commit(countryIso, digits);
+            commit(countryIso, digits, confirmLocal);
           }}
         />
       </div>
       {error && <p className="mt-1.5 text-xs font-semibold text-terra">{error}</p>}
+
+      {requireConfirm && (
+        <div className="mt-3">
+          <label className="mb-1.5 block text-sm font-bold">Confirme ton numéro WhatsApp</label>
+          <input
+            className="input"
+            type="tel"
+            inputMode="numeric"
+            value={confirmLocal}
+            placeholder="07 00 00 00 00"
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "");
+              setConfirmLocal(digits);
+              commit(countryIso, local, digits);
+            }}
+          />
+          {mismatch && (
+            <p className="mt-1.5 text-xs font-semibold text-terra">
+              Les numéros ne correspondent pas.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

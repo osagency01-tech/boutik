@@ -19,6 +19,7 @@ Ou, en collant dans le SQL Editor de Supabase, **dans cet ordre** :
 5. `migrations/005_admin_analytics.sql` — MRR, entonnoir, santé, croissance
 6. `migrations/006_banner_image.sql` — image de fond de la bannière d'accueil
 7. `migrations/007_push_subscriptions.sql` — abonnements push + trigger de notification (voir `DEPLOIEMENT.md` § 1 bis pour le déploiement de l'Edge Function associée)
+8. `migrations/008_template_tier_guard.sql` — bloque côté base un modèle Business/Premium enregistré sans l'offre correspondante
 
 ## Vérifier que l'isolation tient
 

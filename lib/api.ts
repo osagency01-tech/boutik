@@ -119,10 +119,13 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
     throw new Error("Session absente. Reconnecte-toi puis réessaie.");
   }
 
+  /* Le nom affiché reste celui saisi tel quel — seul le lien doit être
+     unique. En cas de conflit, on ajoute un suffixe lisible et
+     prévisible (-2, -3…) plutôt qu'un suffixe aléatoire illisible. */
   const base = slugify(config.name ?? "ma-boutique") || "ma-boutique";
-  let slug = base;
 
   for (let i = 0; i < 5; i++) {
+    const slug = i === 0 ? base : `${base}-${i + 1}`;
     const res = await fetch(`${url}/rest/v1/rpc/create_my_shop`, {
       method: "POST",
       headers: {
@@ -138,9 +141,8 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
     }
 
     const errText = await res.text();
-    // slug déjà pris : on réessaie avec un suffixe
+    // slug déjà pris : on réessaie avec le suffixe suivant
     if (errText.includes("duplicate") || errText.includes("unique") || errText.includes("23505")) {
-      slug = `${base}-${Math.random().toString(36).slice(2, 5)}`;
       continue;
     }
     throw new Error(errText || "Création impossible");

@@ -8,6 +8,7 @@ import { LoadingScreen } from "@/components/states";
 import TemplateSketch from "@/components/template-sketch";
 import { ShopNicheFields } from "@/components/shop-niche-fields";
 import { WhatsAppInput } from "@/components/whatsapp-input";
+import { shopDomain } from "@/lib/config";
 import {
   StoreProvider,
   TEMPLATE_INFO,
@@ -139,6 +140,11 @@ function Wizard() {
             Ta boutique existe. Prochaine étape : ajoute tes produits, puis partage ton lien sur
             WhatsApp.
           </p>
+          {config.slug && (
+            <p className="mt-4 rounded-xl bg-white px-4 py-3 font-mono text-sm font-semibold text-ink">
+              {shopDomain(config.slug)}
+            </p>
+          )}
           <div className="mt-8 flex flex-col gap-3">
             <Link href="/dashboard/produits" className="btn-primary btn-lg">
               Ajouter mes produits <ArrowRight size={17} />
@@ -433,6 +439,7 @@ function Step3() {
           <label className="mb-1.5 block text-sm font-bold">Numéro WhatsApp</label>
           <WhatsAppInput
             autoFocus
+            requireConfirm
             value={config.whatsapp}
             onChange={(digits) => setConfig({ whatsapp: digits })}
           />

@@ -15,13 +15,14 @@ import {
   canUseTemplate,
   fileToDataUrl,
   useStore,
-  type Plan,
   type TemplateId,
   type Tier,
   type Zone,
 } from "@/lib/store";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowLeft,
+  ArrowRight,
   Check,
   ExternalLink,
   Eye,
@@ -596,110 +597,118 @@ function IdentiteTab({ touch }: { touch: () => void }) {
 
 function DesignTab({ touch }: { touch: () => void }) {
   const { config, setConfig, palette } = useStore();
+  /* Modèle d'abord, palette ensuite — deux étapes distinctes plutôt que
+     tout empilé sur un seul écran. */
+  const [step, setStep] = useState<"template" | "palette">("template");
+
   return (
     <>
-      <Field
-        label="Mon offre"
-        hint="Démo : change d'offre pour voir les modèles se débloquer. En production, ceci suit l'abonnement payé."
-      >
-        <div className="flex flex-wrap gap-2">
-          {(["Gratuit", "Starter", "Business", "Premium"] as Plan[]).map((pl) => (
-            <button
-              key={pl}
-              onClick={() => {
-                setConfig({ plan: pl });
-                touch();
-              }}
-              className={`chip border transition-all ${
-                config.plan === pl
-                  ? "border-ink bg-ink text-white"
-                  : "border-ink/15 bg-white text-ink/70 hover:border-ink/40"
-              }`}
-            >
-              {pl}
-            </button>
-          ))}
+      <Field label="Mon offre" hint="Le changement d'offre se fait par paiement, depuis « Mon abonnement ».">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-cream px-4 py-3">
+          <span className="chip border border-ink bg-ink text-white">{config.plan}</span>
+          <Link
+            href="/dashboard/abonnement"
+            className="text-xs font-bold text-primary hover:underline"
+          >
+            Changer d&apos;offre →
+          </Link>
         </div>
       </Field>
 
-      <Field
-        label="Palette de couleurs"
-        hint="Un clic habille toute la boutique : bannière, boutons, prix, fonds. Les couleurs sont accordées entre elles."
-      >
-        <PalettePicker
-          value={config.palette}
-          onChange={(id) => {
-            setConfig({ palette: id });
-            touch();
-          }}
-        />
-      </Field>
-
-      <Field
-        label="Modèle de boutique"
-        hint="Change l'organisation de ta page d'accueil. Tes produits sont conservés."
-      >
-        <div className="space-y-5">
-          {(["Starter", "Business", "Premium"] as Tier[]).map((tier) => {
-            const unlocked = TIER_ACCESS[config.plan].includes(tier);
-            return (
-              <div key={tier}>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-ink/55">
-                    {tier}
-                  </p>
-                  {!unlocked && (
-                    <span className="chip bg-ink/5 px-2 py-0 text-[9px] text-ink/50">
-                      <Lock size={9} /> Offre {tier}
-                    </span>
-                  )}
-                  <span className="h-px flex-1 bg-ink/8" />
+      {step === "template" ? (
+        <Field
+          label="Modèle de boutique"
+          hint="Change l'organisation de ta page d'accueil. Tes produits sont conservés."
+        >
+          <div className="space-y-5">
+            {(["Starter", "Business", "Premium"] as Tier[]).map((tier) => {
+              const unlocked = TIER_ACCESS[config.plan].includes(tier);
+              return (
+                <div key={tier}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-ink/55">
+                      {tier}
+                    </p>
+                    {!unlocked && (
+                      <span className="chip bg-ink/5 px-2 py-0 text-[9px] text-ink/50">
+                        <Lock size={9} /> Offre {tier}
+                      </span>
+                    )}
+                    <span className="h-px flex-1 bg-ink/8" />
+                  </div>
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    {TEMPLATE_INFO.filter((t) => t.tier === tier).map((t) => {
+                      const can = canUseTemplate(config.plan, t.id);
+                      const active = config.template === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => {
+                            if (!can) {
+                              alert(
+                                `Le modèle « ${t.name} » fait partie de l'offre ${t.tier}. Passe à cette offre pour l'utiliser.`
+                              );
+                              return;
+                            }
+                            setConfig({ template: t.id as TemplateId });
+                            touch();
+                          }}
+                          className={`relative rounded-xl border p-2.5 text-left transition-all ${
+                            active ? "bg-cream" : "border-ink/10 bg-white hover:border-ink/30"
+                          } ${!can ? "opacity-55" : ""}`}
+                          style={active ? { borderColor: palette.accent } : undefined}
+                        >
+                          <TemplateSketch
+                            id={t.id}
+                            accent={palette.accent}
+                            logo={config.logo}
+                            logoIcon={config.logoIcon}
+                          />
+                          <p className="mt-2 flex items-center gap-1 font-display text-xs font-bold">
+                            {t.name}
+                            {active && (
+                              <Check size={12} style={{ color: palette.accent }} strokeWidth={3} />
+                            )}
+                            {!can && <Lock size={10} className="text-ink/35" />}
+                          </p>
+                          <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-ink/50">
+                            {t.desc}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="grid gap-2.5 sm:grid-cols-3">
-                  {TEMPLATE_INFO.filter((t) => t.tier === tier).map((t) => {
-                    const can = canUseTemplate(config.plan, t.id);
-                    const active = config.template === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => {
-                          if (!can) {
-                            alert(
-                              `Le modèle « ${t.name} » fait partie de l'offre ${t.tier}. Passe à cette offre pour l'utiliser.`
-                            );
-                            return;
-                          }
-                          setConfig({ template: t.id as TemplateId });
-                          touch();
-                        }}
-                        className={`relative rounded-xl border p-2.5 text-left transition-all ${
-                          active ? "bg-cream" : "border-ink/10 bg-white hover:border-ink/30"
-                        } ${!can ? "opacity-55" : ""}`}
-                        style={active ? { borderColor: palette.accent } : undefined}
-                      >
-                        <TemplateSketch
-                          id={t.id}
-                          accent={palette.accent}
-                          logo={config.logo}
-                          logoIcon={config.logoIcon}
-                        />
-                        <p className="mt-2 flex items-center gap-1 font-display text-xs font-bold">
-                          {t.name}
-                          {active && <Check size={12} style={{ color: palette.accent }} strokeWidth={3} />}
-                          {!can && <Lock size={10} className="text-ink/35" />}
-                        </p>
-                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-ink/50">
-                          {t.desc}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Field>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setStep("palette")}
+            className="btn-primary btn-md mt-5 w-full sm:w-auto"
+          >
+            Suivant <ArrowRight size={15} />
+          </button>
+        </Field>
+      ) : (
+        <Field
+          label="Palette de couleurs"
+          hint="Un clic habille toute la boutique : bannière, boutons, prix, fonds. Les couleurs sont accordées entre elles."
+        >
+          <button
+            onClick={() => setStep("template")}
+            className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-ink/55 hover:text-ink"
+          >
+            <ArrowLeft size={13} /> Revoir le modèle
+          </button>
+          <PalettePicker
+            value={config.palette}
+            onChange={(id) => {
+              setConfig({ palette: id });
+              touch();
+            }}
+          />
+        </Field>
+      )}
     </>
   );
 }
@@ -906,6 +915,7 @@ function ContactTab({ touch }: { touch: () => void }) {
     <>
       <Field label="Numéro WhatsApp" hint="C'est là qu'arrivent tes commandes.">
         <WhatsAppInput
+          requireConfirm
           value={config.whatsapp}
           onChange={(digits) => {
             setConfig({ whatsapp: digits });
