@@ -208,11 +208,8 @@ export default function OrdersPage() {
                                 <div key={s} className="flex shrink-0 items-center gap-1">
                                   <span
                                     className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                      i <= stepIndex ? "text-white" : "bg-cream text-ink/50"
+                                      i <= stepIndex ? "bg-primary text-white" : "bg-cream text-ink/50"
                                     }`}
-                                    style={
-                                      i <= stepIndex ? { backgroundColor: palette.accent } : undefined
-                                    }
                                   >
                                     {STATUS_LABEL[s]}
                                   </span>
@@ -249,7 +246,7 @@ export default function OrdersPage() {
                                 )}
                                 <div className="flex justify-between border-t border-ink/10 pt-1.5 font-extrabold">
                                   <span>Total</span>
-                                  <span style={{ color: palette.accent }}>{fcfa(o.total)}</span>
+                                  <span className="text-primary">{fcfa(o.total)}</span>
                                 </div>
                               </div>
                             </div>

@@ -473,7 +473,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 function IdentiteTab({ touch }: { touch: () => void }) {
-  const { config, setConfig, palette } = useStore();
+  const { config, setConfig } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
@@ -519,7 +519,7 @@ function IdentiteTab({ touch }: { touch: () => void }) {
             logo={config.logo}
             icon={config.logoIcon}
             name={config.name}
-            accent={palette.accent}
+            accent="#0D8450"
             size={72}
           />
           <div className="flex-1 space-y-2">
@@ -573,7 +573,7 @@ function IdentiteTab({ touch }: { touch: () => void }) {
                 <Icon
                   size={18}
                   strokeWidth={2}
-                  style={{ color: config.logoIcon === id ? palette.accent : undefined }}
+                  className={config.logoIcon === id ? "text-primary" : undefined}
                 />
               </button>
             ))}
@@ -597,7 +597,7 @@ function IdentiteTab({ touch }: { touch: () => void }) {
 }
 
 function DesignTab({ touch }: { touch: () => void }) {
-  const { config, setConfig, palette, demoMode } = useStore();
+  const { config, setConfig, demoMode } = useStore();
   /* Modèle d'abord, palette ensuite — deux étapes distinctes plutôt que
      tout empilé sur un seul écran. */
   const [step, setStep] = useState<"template" | "palette">("template");
@@ -687,20 +687,19 @@ function DesignTab({ touch }: { touch: () => void }) {
                             touch();
                           }}
                           className={`relative rounded-xl border p-2.5 text-left transition-all ${
-                            active ? "bg-cream" : "border-ink/10 bg-white hover:border-ink/30"
+                            active ? "border-primary bg-cream" : "border-ink/10 bg-white hover:border-ink/30"
                           } ${!can ? "opacity-55" : ""}`}
-                          style={active ? { borderColor: palette.accent } : undefined}
                         >
                           <TemplateSketch
                             id={t.id}
-                            accent={palette.accent}
+                            accent="#0D8450"
                             logo={config.logo}
                             logoIcon={config.logoIcon}
                           />
                           <p className="mt-2 flex items-center gap-1 font-display text-xs font-bold">
                             {t.name}
                             {active && (
-                              <Check size={12} style={{ color: palette.accent }} strokeWidth={3} />
+                              <Check size={12} className="text-primary" strokeWidth={3} />
                             )}
                             {!can && <Lock size={10} className="text-ink/35" />}
                           </p>
@@ -747,7 +746,7 @@ function DesignTab({ touch }: { touch: () => void }) {
 }
 
 function AccueilTab({ touch }: { touch: () => void }) {
-  const { config, setConfig, palette } = useStore();
+  const { config, setConfig } = useStore();
   const bannerFileRef = useRef<HTMLInputElement>(null);
   const [bannerBusy, setBannerBusy] = useState(false);
   /* Bannière d'abord, contenu ensuite — sept champs empilés sur un seul
@@ -798,10 +797,7 @@ function AccueilTab({ touch }: { touch: () => void }) {
                   alt=""
                   className="h-28 w-full object-cover"
                 />
-                <div
-                  className="absolute inset-0"
-                  style={{ background: `linear-gradient(135deg, ${palette.accent}B3, ${palette.accent}A6)` }}
-                />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/70 to-primary/65" />
               </div>
             )}
             <input
@@ -963,7 +959,7 @@ function AccueilTab({ touch }: { touch: () => void }) {
 }
 
 function ContactTab({ touch }: { touch: () => void }) {
-  const { config, setConfig, palette } = useStore();
+  const { config, setConfig } = useStore();
   return (
     <>
       <Field label="Numéro WhatsApp" hint="C'est là qu'arrivent tes commandes.">
@@ -1013,7 +1009,7 @@ function ContactTab({ touch }: { touch: () => void }) {
 }
 
 function LivraisonTab({ touch }: { touch: () => void }) {
-  const { config, setConfig, palette } = useStore();
+  const { config, setConfig } = useStore();
 
   const update = (i: number, patch: Partial<Zone>) => {
     const zones = config.zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z));

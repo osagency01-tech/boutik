@@ -64,7 +64,6 @@ export default function ProductsAdmin() {
     duplicateProduct,
     moveProduct,
     quota,
-    palette,
   } = useStore();
   const [editing, setEditing] = useState<Product | "new" | null>(null);
 
@@ -102,8 +101,7 @@ export default function ProductsAdmin() {
           </div>
           <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-cream">
             <motion.div
-              className="h-full rounded-full"
-              style={{ background: `linear-gradient(90deg, ${palette.accent}, ${palette.accent}99)` }}
+              className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 0.7, ease: "easeOut" }}
@@ -130,12 +128,12 @@ export default function ProductsAdmin() {
                   {p.name}
                 </p>
                 <p className="text-xs text-ink/50">{p.category}</p>
-                <p className="mt-0.5 text-sm font-extrabold sm:hidden" style={{ color: palette.accent }}>
+                <p className="mt-0.5 text-sm font-extrabold text-primary sm:hidden">
                   {fcfa(p.price)}
                 </p>
               </div>
               <div className="hidden text-right sm:block">
-                <p className="text-sm font-extrabold" style={{ color: palette.accent }}>
+                <p className="text-sm font-extrabold text-primary">
                   {fcfa(p.price)}
                 </p>
                 <p className={`text-xs font-semibold ${p.stock === 0 ? "text-terra" : "text-ink/50"}`}>
@@ -264,7 +262,7 @@ function ProductModal({
   onClose: () => void;
   onSave: (d: Draft) => void;
 }) {
-  const { products, config, palette, photoQuota } = useStore();
+  const { products, config, photoQuota } = useStore();
   const [d, setD] = useState<Draft>(
     product
       ? {
@@ -438,7 +436,7 @@ function ProductModal({
                     <Icon
                       size={15}
                       strokeWidth={2}
-                      style={{ color: d.icon === id ? palette.accent : undefined }}
+                      className={d.icon === id ? "text-primary" : undefined}
                     />
                   </button>
                 ))}

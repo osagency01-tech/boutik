@@ -47,7 +47,7 @@ const timeAgo = (iso: string) => {
 };
 
 export default function MessagesPage() {
-  const { shopId, demoMode, palette } = useStore();
+  const { shopId, demoMode } = useStore();
   const [messages, setMessages] = useState<DbMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -109,10 +109,7 @@ export default function MessagesPage() {
             </p>
           </div>
           {unread > 0 && (
-            <span
-              className="chip text-white"
-              style={{ backgroundColor: palette.accent }}
-            >
+            <span className="chip bg-primary text-white">
               {unread} non lu{unread > 1 ? "s" : ""}
             </span>
           )}
@@ -157,19 +154,16 @@ export default function MessagesPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.97 }}
-                  className={`card overflow-hidden ${isUnread ? "ring-1" : ""}`}
-                  style={isUnread ? { boxShadow: `0 0 0 1px ${palette.accent}33` } : undefined}
+                  className={`card overflow-hidden ${isUnread ? "ring-1 ring-primary/20" : ""}`}
                 >
                   <button
                     onClick={() => open(m)}
                     className="flex w-full items-center gap-3 px-5 py-4 text-left"
                   >
                     <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                      style={{
-                        backgroundColor: isUnread ? palette.accent : "#14231B0D",
-                        color: isUnread ? "#fff" : "#14231B66",
-                      }}
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                        isUnread ? "bg-primary text-white" : "bg-ink/5 text-ink/40"
+                      }`}
                     >
                       {isUnread ? <Mail size={15} /> : <MailOpen size={15} />}
                     </span>

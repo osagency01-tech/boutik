@@ -2,7 +2,6 @@
 
 import { Reveal } from "@/components/motion";
 import { useAuth } from "@/lib/auth";
-import { useStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import {
   AlertTriangle,
@@ -26,7 +25,6 @@ import { useEffect, useState } from "react";
 
 export default function ProfilPage() {
   const { user, signOut, demoMode } = useAuth();
-  const { palette } = useStore();
   const router = useRouter();
 
   const [fullName, setFullName] = useState("");
@@ -114,10 +112,7 @@ export default function ProfilPage() {
       {/* --- Email de connexion --- */}
       <Reveal delay={0.06}>
         <div className="card mt-5 flex items-center gap-4 p-5">
-          <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: palette.accent + "1A", color: palette.accent }}
-          >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <Mail size={19} />
           </span>
           <div className="min-w-0 flex-1">
@@ -184,10 +179,7 @@ export default function ProfilPage() {
       <Reveal delay={0.14}>
         <h2 className="mt-8 font-display text-lg font-extrabold">Sécurité</h2>
         <div className="card mt-3 flex flex-wrap items-center gap-4 p-5">
-          <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: palette.accent + "1A", color: palette.accent }}
-          >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <KeyRound size={19} />
           </span>
           <div className="min-w-0 flex-1">

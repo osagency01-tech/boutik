@@ -108,7 +108,7 @@ function demoDaily(monthDate: Date): DayPoint[] {
 }
 
 export default function Overview() {
-  const { config, products, palette, shopId } = useStore();
+  const { config, products, shopId } = useStore();
   const { user, demoMode } = useAuth();
   const [copied, setCopied] = useState(false);
   const [realOrders, setRealOrders] = useState<Order[]>([]);
@@ -280,7 +280,7 @@ export default function Overview() {
             <div className={`card p-5 ${!published ? "opacity-75" : ""}`}>
               <div className="flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-wider text-ink/55">{s.l}</p>
-                <s.icon size={16} style={{ color: palette.accent }} />
+                <s.icon size={16} className="text-primary" />
               </div>
               <p className="mt-2 font-display text-2xl font-extrabold">{s.v}</p>
               <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary-dark">
@@ -296,7 +296,7 @@ export default function Overview() {
           days={days}
           monthDate={chartMonth}
           loading={daysLoading}
-          accent={palette.accent}
+          accent="#0D8450"
           onPrevMonth={() => setChartMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
           onNextMonth={() => setChartMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
           canGoNext={chartMonth.getTime() < startOfMonth(new Date()).getTime()}
@@ -309,10 +309,7 @@ export default function Overview() {
             href="/dashboard/produits"
             className="flex items-center gap-3 rounded-xl bg-cream p-4 transition-colors hover:bg-ink/5"
           >
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-              style={{ backgroundColor: palette.accent + "1A", color: palette.accent }}
-            >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
               <Package size={18} />
             </span>
             <span>
@@ -324,10 +321,7 @@ export default function Overview() {
             href="/dashboard/boutique"
             className="flex items-center gap-3 rounded-xl bg-cream p-4 transition-colors hover:bg-ink/5"
           >
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-              style={{ backgroundColor: palette.accent + "1A", color: palette.accent }}
-            >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
               <Palette size={18} />
             </span>
             <span>
@@ -344,8 +338,7 @@ export default function Overview() {
             <h2 className="font-display text-lg font-extrabold">Dernières commandes</h2>
             <Link
               href="/dashboard/commandes"
-              className="flex items-center gap-1 text-sm font-bold hover:underline"
-              style={{ color: palette.accent }}
+              className="flex items-center gap-1 text-sm font-bold text-primary hover:underline"
             >
               Tout voir <ArrowRight size={14} />
             </Link>
@@ -392,8 +385,7 @@ export default function Overview() {
 
       <Reveal delay={0.22}>
         <div
-          className="wax-pattern-dense mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white"
-          style={{ background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent}CC)` }}
+          className="wax-pattern-dense mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-br from-primary to-primary-dark px-6 py-5 text-white"
         >
           <div className="min-w-0">
             <p className="flex items-center gap-2 font-display font-extrabold">
@@ -411,8 +403,7 @@ export default function Overview() {
           </div>
           {published ? (
             <button
-              className="btn shrink-0 bg-white px-5 py-2.5 text-sm hover:bg-cream"
-              style={{ color: palette.accent }}
+              className="btn shrink-0 bg-white px-5 py-2.5 text-sm text-primary hover:bg-cream"
               onClick={copy}
             >
               {copied ? (
@@ -428,8 +419,7 @@ export default function Overview() {
           ) : (
             <Link
               href="/dashboard/abonnement"
-              className="btn shrink-0 bg-white px-5 py-2.5 text-sm hover:bg-cream"
-              style={{ color: palette.accent }}
+              className="btn shrink-0 bg-white px-5 py-2.5 text-sm text-primary hover:bg-cream"
             >
               S&apos;abonner
             </Link>

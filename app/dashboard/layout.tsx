@@ -73,7 +73,7 @@ function Guard({ children }: { children: React.ReactNode }) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { config, palette, ready, hasShop } = useStore();
+  const { config, ready, hasShop } = useStore();
   const { signOut, demoMode, user } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -130,7 +130,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             logo={config.logo}
             icon={config.logoIcon}
             name={config.name}
-            accent={palette.accent}
+            accent="#0D8450"
             size={32}
           />
           <div className="min-w-0">

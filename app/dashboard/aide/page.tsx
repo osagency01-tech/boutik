@@ -102,7 +102,7 @@ const FAQ = [
 
 export default function SupportPage() {
   const [tour, setTour] = useState(false);
-  const { config, palette } = useStore();
+  const { config } = useStore();
   const [sujet, setSujet] = useState("boutique");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -202,10 +202,7 @@ export default function SupportPage() {
             className="card mt-4 p-6"
           >
             <div className="flex items-start gap-4">
-              <span
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white"
-                style={{ backgroundColor: palette.accent }}
-              >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                 <Check size={20} strokeWidth={3} />
               </span>
               <div className="min-w-0 flex-1">
@@ -255,14 +252,12 @@ export default function SupportPage() {
                     key={s.id}
                     onClick={() => setSujet(s.id)}
                     className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition-all ${
-                      sujet === s.id ? "bg-cream" : "border-ink/10 hover:border-ink/30"
+                      sujet === s.id ? "border-primary bg-cream" : "border-ink/10 hover:border-ink/30"
                     }`}
-                    style={sujet === s.id ? { borderColor: palette.accent } : undefined}
                   >
                     <s.icon
                       size={15}
-                      className="shrink-0"
-                      style={{ color: sujet === s.id ? palette.accent : undefined }}
+                      className={`shrink-0 ${sujet === s.id ? "text-primary" : ""}`}
                     />
                     {s.label}
                   </button>

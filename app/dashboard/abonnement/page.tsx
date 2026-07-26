@@ -7,20 +7,15 @@ import { supabase } from "@/lib/supabase";
 import * as api from "@/lib/api";
 import { COUNTRIES, getCountry, normalizePhone, validatePhone } from "@/lib/countries";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Check, Clock, CreditCard, Info, Loader2, Receipt, X } from "lucide-react";
+import { AlertCircle, Check, Clock, CreditCard, Loader2, Receipt, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 /* ------------------------------------------------------------------ *
  * Abonnement
  * ------------------------------------------------------------------ */
 
-/* Rang de chaque offre : sert uniquement à empêcher de payer pour une
-   offre inférieure à celle déjà active (aucun sens à "revenir en
-   arrière" en payant — un vrai downgrade se ferait en laissant
-   l'abonnement actuel expirer, pas via ce bouton). */
 const PLAN_RANK: Record<Plan, number> = { Gratuit: 0, Starter: 1, Business: 2, Premium: 3 };
 
-/* Formate une date ISO en français : "15 août 2026" */
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString("fr-FR", {
@@ -33,17 +28,37 @@ function formatDate(iso: string): string {
   }
 }
 
+/* Vérifie un paiement auprès du serveur. Réutilisé par le polling
+   ET par le filet de retour. Renvoie le plan crédité, ou null. */
+async function verifyPayment(reference: string): Promise<string | null> {
+  const sb = supabase();
+  if (!sb) return null;
+  try {
+    const { data } = await sb.auth.getSession();
+    const res = await fetch("/api/paiement/verifier", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({ reference }),
+    });
+    const out = await res.json();
+    return out.status === "success" ? (out.plan ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function SubscriptionPage() {
-  const { config, products, palette, shopId } = useStore();
+  const { config, products, shopId, setConfig } = useStore();
   const [selected, setSelected] = useState<Plan | null>(null);
   const [expiry, setExpiry] = useState<string | null>(null);
+  const [recovering, setRecovering] = useState(false);
 
   const quota = PLAN_QUOTA[config.plan];
   const used = products.length;
 
-  /* On charge l'abonnement actif pour afficher la vraie date d'échéance
-     (au lieu d'une date fixe). Rien à afficher tant qu'il n'y a pas
-     d'abonnement payant. */
   useEffect(() => {
     if (!shopId || config.plan === "Gratuit") {
       setExpiry(null);
@@ -58,7 +73,44 @@ export default function SubscriptionPage() {
     };
   }, [shopId, config.plan]);
 
-  /* Nombre de jours avant l'échéance (pour un éventuel avertissement). */
+  /* ---- Filet de retour ----
+     Au chargement de la page, on regarde s'il reste un paiement en
+     attente pour cette boutique. Si le vendeur a payé puis quitté,
+     SebPay a eu le temps d'approuver : on revérifie une fois, et la
+     boutique se crédite automatiquement à son retour. */
+  useEffect(() => {
+    if (!shopId) return;
+    let alive = true;
+
+    (async () => {
+      const sb = supabase();
+      if (!sb) return;
+
+      const { data: pending } = await sb
+        .from("payments")
+        .select("idempotency_key")
+        .eq("shop_id", shopId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!alive || !pending?.idempotency_key) return;
+
+      setRecovering(true);
+      const plan = await verifyPayment(pending.idempotency_key);
+      if (alive && plan) {
+        const label = plan.charAt(0).toUpperCase() + plan.slice(1);
+        setConfig({ plan: label as Plan });
+      }
+      if (alive) setRecovering(false);
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [shopId, setConfig]);
+
   const daysLeft = expiry
     ? Math.ceil((new Date(expiry).getTime() - Date.now()) / 86400000)
     : null;
@@ -71,6 +123,16 @@ export default function SubscriptionPage() {
           Ton offre, ta facturation et tes paiements.
         </p>
       </Reveal>
+
+      {/* Bandeau discret pendant la revérification au retour */}
+      {recovering && (
+        <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-primary-soft px-4 py-3">
+          <Loader2 size={16} className="animate-spin text-primary" />
+          <p className="text-sm font-medium text-primary-dark">
+            Vérification de ton dernier paiement…
+          </p>
+        </div>
+      )}
 
       {/* --- Offre en cours --- */}
       <Reveal delay={0.06}>
@@ -101,7 +163,6 @@ export default function SubscriptionPage() {
             )}
           </div>
 
-          {/* Avertissement si l'abonnement expire bientôt */}
           {config.plan !== "Gratuit" && daysLeft !== null && daysLeft <= 7 && (
             <div className="mt-4 flex gap-2.5 rounded-xl bg-mango-soft px-3 py-2.5">
               <AlertCircle size={15} className="mt-px shrink-0 text-yellow-700" />
@@ -122,10 +183,9 @@ export default function SubscriptionPage() {
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-cream">
               <div
-                className="h-full rounded-full transition-all duration-700"
+                className="h-full rounded-full bg-primary transition-all duration-700"
                 style={{
                   width: `${quota === Infinity ? 8 : Math.min(100, (used / quota) * 100)}%`,
-                  backgroundColor: palette.accent,
                 }}
               />
             </div>
@@ -268,45 +328,31 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
     setErr(null);
   };
 
-  /* Vérification active : SebPay n'envoie pas de webhook, donc on
-     interroge /api/paiement/verifier en boucle jusqu'à ce que le
-     paiement soit approuvé (ou qu'on abandonne au bout de ~2 min). */
+  /* Vérification active en direct.
+     SebPay confirme parfois très tard (jusqu'à ~10 min). On borne sur
+     le TEMPS écoulé, pas sur un compteur : si le navigateur suspend
+     les timers (écran verrouillé, appli en arrière-plan), on ne compte
+     pas les tics perdus. Chaque paiement a SA boucle : deux vendeurs
+     simultanés sont indépendants, l'arrêt de l'un n'affecte pas l'autre.
+     Le filet de retour (au chargement de la page) rattrape le cas où
+     le vendeur ferme avant la confirmation. */
   const pollVerification = async (reference: string) => {
-    const sb = supabase();
-    if (!sb) return;
+    const DEADLINE = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    const MAX_TRIES = 30; // 30 × 4 s = 2 minutes
-    for (let i = 0; i < MAX_TRIES; i++) {
+    while (Date.now() < DEADLINE) {
       await new Promise((r) => setTimeout(r, 4000));
 
-      try {
-        const { data } = await sb.auth.getSession();
-        const res = await fetch("/api/paiement/verifier", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-          },
-          body: JSON.stringify({ reference }),
-        });
-        const out = await res.json();
-
-        if (out.status === "success") {
-          setPhase("success");
-          if (out.plan) {
-            const label = out.plan.charAt(0).toUpperCase() + out.plan.slice(1);
-            setConfig({ plan: label as Plan });
-          }
-          return;
-        }
-        /* status "pending" : on continue la boucle. */
-      } catch {
-        /* Erreur réseau ponctuelle : on retente au tour suivant. */
+      const plan = await verifyPayment(reference);
+      if (plan) {
+        setPhase("success");
+        const label = plan.charAt(0).toUpperCase() + plan.slice(1);
+        setConfig({ plan: label as Plan });
+        return; // arrêt net à la confirmation
       }
     }
 
     setErr(
-      "Le paiement n'a pas encore été confirmé. S'il a bien été débité, ton offre sera activée sous peu — recharge la page dans quelques minutes."
+      "Ton paiement est encore en cours de validation chez l'opérateur. Si tu as bien confirmé sur ton téléphone, ta boutique sera activée dès réception — reviens sur cette page dans quelques minutes."
     );
     setPhase("form");
     setBusy(false);
@@ -404,17 +450,16 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
               </span>
             </div>
             <h2 className="mt-5 font-display text-xl font-extrabold">
-              En attente de validation
+              Paiement en cours de validation
             </h2>
-            <p className="mx-auto mt-2 max-w-xs text-sm text-ink/60">
-              Un message Mobile Money a été envoyé sur ton téléphone. Compose ton code secret
-              pour valider.
+            <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-ink/60">
+              <strong>Ne quitte pas cette page.</strong> Si ton paiement est effectif, ta
+              boutique est en cours de configuration. Cela peut prendre jusqu&apos;à 5 minutes.
             </p>
             <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink/40">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              <span>Validation automatique en cours</span>
+              <span>Vérification automatique en cours</span>
             </div>
-            <p className="mt-4 text-xs text-ink/40">Ne ferme pas cette page.</p>
           </div>
         ) : (
           <>
