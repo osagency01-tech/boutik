@@ -120,12 +120,23 @@ export async function createShop(config: Partial<ShopConfig>, ownerId: string) {
   }
 
   /* Le nom affiché reste celui saisi tel quel — seul le lien doit être
-     unique. En cas de conflit, on ajoute un suffixe lisible et
-     prévisible (-2, -3…) plutôt qu'un suffixe aléatoire illisible. */
+     unique. En cas de conflit, un suffixe lisible et prévisible
+     (-2, -3…) plutôt qu'un suffixe aléatoire illisible — mais un nom
+     générique ("Ma Boutique") est partagé par beaucoup de monde : ce
+     petit espace de suffixes numérotés peut s'épuiser entre vendeurs
+     qui n'ont aucun lien entre eux. Au-delà des premiers essais
+     lisibles, on bascule sur un suffixe aléatoire pour ne jamais
+     bloquer une création pour ça. */
   const base = slugify(config.name ?? "ma-boutique") || "ma-boutique";
+  const READABLE_ATTEMPTS = 5;
 
-  for (let i = 0; i < 5; i++) {
-    const slug = i === 0 ? base : `${base}-${i + 1}`;
+  for (let i = 0; i < 8; i++) {
+    const slug =
+      i === 0
+        ? base
+        : i < READABLE_ATTEMPTS
+          ? `${base}-${i + 1}`
+          : `${base}-${Math.random().toString(36).slice(2, 6)}`;
     const res = await fetch(`${url}/rest/v1/rpc/create_my_shop`, {
       method: "POST",
       headers: {

@@ -43,6 +43,10 @@ function Wizard() {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  /* Remonté par Step3 : tant que le numéro WhatsApp n'est pas confirmé
+     (ou est invalide), on ne doit pas pouvoir créer la boutique avec
+     une valeur différente de ce qui est affiché à l'écran. */
+  const [whatsappValid, setWhatsappValid] = useState(true);
 
   /* Créer une boutique demande d'être connecté (sauf en démo) */
   useEffect(() => {
@@ -58,7 +62,7 @@ function Wizard() {
     step === 0
       ? config.name.trim().length > 1 && config.tagline.trim().length > 1
       : step === 2
-      ? config.whatsapp.replace(/\D/g, "").length >= 8
+      ? config.whatsapp.replace(/\D/g, "").length >= 8 && whatsappValid
       : true;
 
   const finish = async () => {
@@ -198,7 +202,7 @@ function Wizard() {
           >
             {step === 0 && <Step1 />}
             {step === 1 && <Step2 />}
-            {step === 2 && <Step3 />}
+            {step === 2 && <Step3 onWhatsappValidChange={setWhatsappValid} />}
           </motion.div>
         </AnimatePresence>
 
@@ -426,7 +430,7 @@ function Step2() {
   );
 }
 
-function Step3() {
+function Step3({ onWhatsappValidChange }: { onWhatsappValidChange: (valid: boolean) => void }) {
   const { config, setConfig, palette } = useStore();
   return (
     <>
@@ -442,6 +446,7 @@ function Step3() {
             requireConfirm
             value={config.whatsapp}
             onChange={(digits) => setConfig({ whatsapp: digits })}
+            onValidChange={onWhatsappValidChange}
           />
         </div>
         <div className="rounded-xl bg-cream p-4">

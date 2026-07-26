@@ -35,10 +35,15 @@ export default function CheckoutPage() {
 
   const zone = config.zones.find((z) => z.zone === form.zone) ?? config.zones[0];
   const grand = total + zone.price;
+  /* Comparaison chiffres uniquement : "+225 07 00 00 00 00" et
+     "2250700000000" sont le même numéro, juste formatés différemment —
+     un simple .trim() les aurait déclarés différents à tort. */
+  const phoneDigits = form.phone.replace(/\D/g, "");
+  const phoneConfirmDigits = form.phoneConfirm.replace(/\D/g, "");
   const valid =
     form.name.trim().length > 1 &&
-    form.phone.trim().length >= 8 &&
-    form.phone.trim() === form.phoneConfirm.trim() &&
+    phoneDigits.length >= 8 &&
+    phoneDigits === phoneConfirmDigits &&
     form.address.trim().length > 3;
 
   const waMessage = useMemo(() => {
@@ -241,7 +246,7 @@ export default function CheckoutPage() {
               value={form.phoneConfirm}
               onChange={(e) => setForm({ ...form, phoneConfirm: e.target.value })}
             />
-            {form.phoneConfirm && form.phone.trim() !== form.phoneConfirm.trim() && (
+            {form.phoneConfirm && phoneDigits !== phoneConfirmDigits && (
               <p className="mt-1.5 text-xs font-semibold text-terra">
                 Les numéros ne correspondent pas.
               </p>

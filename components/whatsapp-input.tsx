@@ -7,7 +7,7 @@ import {
   validateEcowasPhone,
   type EcowasCountry,
 } from "@/lib/ecowas";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const DEFAULT_ISO = "CI"; // marché principal de l'app
 
@@ -16,22 +16,32 @@ const DEFAULT_ISO = "CI"; // marché principal de l'app
    qu'avant ("indicatif+numéro", ex. "2250700000000") : aucun changement
    ailleurs (wa.me, configToShop, etc.) n'est nécessaire.
 
-   `requireConfirm` ajoute un second champ "confirme ton numéro". Il
-   démarre à la MÊME valeur que le numéro principal (pas vide) : sans
-   ça, rouvrir les réglages d'une boutique déjà configurée afficherait
-   une erreur de correspondance permanente alors que rien n'a changé.
-   L'erreur n'apparaît que si le vendeur modifie l'un sans l'autre —
-   exactement le cas qu'on veut attraper (faute de frappe). */
+   `onChange` reflète TOUJOURS le champ principal tel qu'affiché à
+   l'écran, même en attente de confirmation — la version précédente
+   retenait silencieusement la valeur tant que la confirmation ne
+   correspondait pas, ce qui permettait de créer une boutique avec un
+   numéro différent de celui affiché si le vendeur corrigeait le champ
+   principal sans retoucher la confirmation. La validité (confirmé ET
+   sans erreur) est communiquée séparément via `onValidChange`, à
+   l'appelant de décider s'il bloque la suite tant qu'elle est fausse.
+
+   `requireConfirm` ajoute un second champ qui démarre à la MÊME valeur
+   que le numéro principal (pas vide) : sans ça, rouvrir les réglages
+   d'une boutique déjà configurée afficherait une erreur de
+   correspondance permanente alors que rien n'a changé. L'erreur
+   n'apparaît que si le vendeur modifie l'un sans l'autre. */
 export function WhatsAppInput({
   value,
   onChange,
   autoFocus,
   requireConfirm,
+  onValidChange,
 }: {
   value: string;
   onChange: (digits: string) => void;
   autoFocus?: boolean;
   requireConfirm?: boolean;
+  onValidChange?: (valid: boolean) => void;
 }) {
   const initial = useState<EcowasCountry>(
     () => findEcowasCountryByDigits(value) ?? getEcowasCountry(DEFAULT_ISO)!
@@ -44,13 +54,13 @@ export function WhatsAppInput({
   const [confirmLocal, setConfirmLocal] = useState(initialLocal);
   const country = getEcowasCountry(countryIso) ?? initial;
   const error = local ? validateEcowasPhone(local, country) : null;
+  const confirmed = !requireConfirm || (confirmLocal.length > 0 && confirmLocal === local);
   const mismatch = requireConfirm && confirmLocal.length > 0 && confirmLocal !== local;
 
-  const commit = (iso: string, loc: string, confirmLoc: string) => {
-    if (requireConfirm && loc !== confirmLoc) return; // pas confirmé : on ne propage pas encore
-    const c = getEcowasCountry(iso) ?? initial;
-    onChange(c.dialCode + loc);
-  };
+  useEffect(() => {
+    onValidChange?.(!error && confirmed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error, confirmed]);
 
   return (
     <div>
@@ -65,7 +75,8 @@ export function WhatsAppInput({
             value={countryIso}
             onChange={(e) => {
               setCountryIso(e.target.value);
-              commit(e.target.value, local, confirmLocal);
+              const c = getEcowasCountry(e.target.value) ?? initial;
+              onChange(c.dialCode + local);
             }}
           >
             {ECOWAS_COUNTRIES.map((c) => (
@@ -85,7 +96,7 @@ export function WhatsAppInput({
           onChange={(e) => {
             const digits = e.target.value.replace(/\D/g, "");
             setLocal(digits);
-            commit(countryIso, digits, confirmLocal);
+            onChange(country.dialCode + digits);
           }}
         />
       </div>
@@ -100,11 +111,7 @@ export function WhatsAppInput({
             inputMode="numeric"
             value={confirmLocal}
             placeholder="07 00 00 00 00"
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, "");
-              setConfirmLocal(digits);
-              commit(countryIso, local, digits);
-            }}
+            onChange={(e) => setConfirmLocal(e.target.value.replace(/\D/g, ""))}
           />
           {mismatch && (
             <p className="mt-1.5 text-xs font-semibold text-terra">

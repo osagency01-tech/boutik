@@ -15,6 +15,7 @@ import {
   canUseTemplate,
   fileToDataUrl,
   useStore,
+  type Plan,
   type TemplateId,
   type Tier,
   type Zone,
@@ -596,23 +597,55 @@ function IdentiteTab({ touch }: { touch: () => void }) {
 }
 
 function DesignTab({ touch }: { touch: () => void }) {
-  const { config, setConfig, palette } = useStore();
+  const { config, setConfig, palette, demoMode } = useStore();
   /* Modèle d'abord, palette ensuite — deux étapes distinctes plutôt que
      tout empilé sur un seul écran. */
   const [step, setStep] = useState<"template" | "palette">("template");
 
   return (
     <>
-      <Field label="Mon offre" hint="Le changement d'offre se fait par paiement, depuis « Mon abonnement ».">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-cream px-4 py-3">
-          <span className="chip border border-ink bg-ink text-white">{config.plan}</span>
-          <Link
-            href="/dashboard/abonnement"
-            className="text-xs font-bold text-primary hover:underline"
-          >
-            Changer d&apos;offre →
-          </Link>
-        </div>
+      <Field
+        label="Mon offre"
+        hint={
+          demoMode
+            ? "Mode démo : change d'offre pour voir les modèles se débloquer. En production, ceci suit l'abonnement payé."
+            : "Le changement d'offre se fait par paiement, depuis « Mon abonnement »."
+        }
+      >
+        {demoMode ? (
+          /* Sans backend, il n'y a pas de vrai paiement à montrer : ce
+             sélecteur reste le seul moyen de prévisualiser le déblocage
+             des modèles par offre. En production (plus bas), le plan
+             suit l'abonnement réellement payé — jamais un simple clic. */
+          <div className="flex flex-wrap gap-2">
+            {(["Gratuit", "Starter", "Business", "Premium"] as Plan[]).map((pl) => (
+              <button
+                key={pl}
+                onClick={() => {
+                  setConfig({ plan: pl });
+                  touch();
+                }}
+                className={`chip border transition-all ${
+                  config.plan === pl
+                    ? "border-ink bg-ink text-white"
+                    : "border-ink/15 bg-white text-ink/70 hover:border-ink/40"
+                }`}
+              >
+                {pl}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-cream px-4 py-3">
+            <span className="chip border border-ink bg-ink text-white">{config.plan}</span>
+            <Link
+              href="/dashboard/abonnement"
+              className="text-xs font-bold text-primary hover:underline"
+            >
+              Changer d&apos;offre →
+            </Link>
+          </div>
+        )}
       </Field>
 
       {step === "template" ? (
