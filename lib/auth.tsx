@@ -179,11 +179,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     const sb = supabase();
     if (!sb) return {};
-    const { error } = await sb.auth.signUp({
+    const { data, error } = await sb.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
     });
     if (error) return { error: humanError(error.message) };
+    /* Anti-énumération : pour un email déjà inscrit ET confirmé,
+       Supabase ne renvoie PAS d'erreur "already registered" — juste un
+       faux succès avec un user dont `identities` est vide. Sans ce
+       contrôle (le signal documenté par Supabase pour ce cas), l'écran
+       suivant affichait "code envoyé par email" à quelqu'un qui a déjà
+       un compte : aucun code n'arrive jamais, et la suite du parcours
+       (confirmSignUp) échoue de façon confuse. */
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      return { error: "Un compte existe déjà avec cet email. Connecte-toi." };
+    }
     return {};
   };
 

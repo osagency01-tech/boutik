@@ -354,78 +354,87 @@ function Step1() {
 
 function Step2() {
   const { config, setConfig, palette } = useStore();
+  /* Modèle d'abord, palette ensuite — même principe que l'onglet Design
+     du dashboard, plutôt que les deux empilés sur un seul écran. */
+  const [sub, setSub] = useState<"template" | "palette">("template");
+
+  if (sub === "template")
+    return (
+      <>
+        <h1 className="font-display text-2xl font-extrabold">Choisis ton modèle</h1>
+        <p className="mt-1.5 text-sm text-ink/55">
+          Les modèles Business et Premium se débloquent avec l&apos;offre correspondante.
+        </p>
+        <div className="mt-6 space-y-4">
+          {(["Starter", "Business", "Premium"] as const).map((tier) => (
+            <div key={tier}>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/55">
+                  {tier}
+                </p>
+                <span className="h-px flex-1 bg-ink/8" />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {TEMPLATE_INFO.filter((t) => t.tier === tier).map((t) => {
+                  const can = canUseTemplate(config.plan, t.id);
+                  const active = config.template === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        if (!can) {
+                          alert(
+                            `Le modèle « ${t.name} » fait partie de l'offre ${t.tier}. Tu pourras le choisir en passant à cette offre.`
+                          );
+                          return;
+                        }
+                        setConfig({ template: t.id });
+                      }}
+                      className={`rounded-xl border p-2.5 text-left transition-all ${
+                        active ? "bg-cream" : "border-ink/10 bg-white hover:border-ink/30"
+                      } ${!can ? "opacity-55" : ""}`}
+                      style={active ? { borderColor: palette.accent } : undefined}
+                    >
+                      <TemplateSketch
+                        id={t.id}
+                        accent={palette.accent}
+                        logo={config.logo}
+                        logoIcon={config.logoIcon}
+                      />
+                      <p className="mt-1.5 flex items-center gap-1 font-display text-xs font-bold">
+                        {t.name}
+                        {active && <Check size={11} style={{ color: palette.accent }} strokeWidth={3} />}
+                        {!can && <Lock size={9} className="text-ink/35" />}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setSub("palette")} className="btn-primary btn-md mt-5 w-full sm:w-auto">
+          Suivant <ArrowRight size={15} />
+        </button>
+      </>
+    );
+
   return (
     <>
-      <h1 className="font-display text-2xl font-extrabold">Choisis ton style</h1>
+      <h1 className="font-display text-2xl font-extrabold">Choisis ta palette</h1>
       <p className="mt-1.5 text-sm text-ink/55">
-        Une couleur et un modèle. Tu peux en changer quand tu veux.
+        Choisis une ambiance : les couleurs sont déjà accordées entre elles.
       </p>
-      <div className="mt-6 space-y-6">
-        <div>
-          <label className="mb-2 block text-sm font-bold">Palette de couleurs</label>
-          <p className="mb-3 text-xs text-ink/55">
-            Choisis une ambiance : les couleurs sont déjà accordées entre elles.
-          </p>
-          <PalettePicker
-            value={config.palette}
-            onChange={(id) => setConfig({ palette: id })}
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-sm font-bold">Modèle de boutique</label>
-          <p className="mb-3 text-xs text-ink/55">
-            Les modèles Business et Premium se débloquent avec l&apos;offre correspondante.
-          </p>
-          <div className="space-y-4">
-            {(["Starter", "Business", "Premium"] as const).map((tier) => (
-              <div key={tier}>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/55">
-                    {tier}
-                  </p>
-                  <span className="h-px flex-1 bg-ink/8" />
-                </div>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {TEMPLATE_INFO.filter((t) => t.tier === tier).map((t) => {
-                    const can = canUseTemplate(config.plan, t.id);
-                    const active = config.template === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => {
-                          if (!can) {
-                            alert(
-                              `Le modèle « ${t.name} » fait partie de l'offre ${t.tier}. Tu pourras le choisir en passant à cette offre.`
-                            );
-                            return;
-                          }
-                          setConfig({ template: t.id });
-                        }}
-                        className={`rounded-xl border p-2.5 text-left transition-all ${
-                          active ? "bg-cream" : "border-ink/10 bg-white hover:border-ink/30"
-                        } ${!can ? "opacity-55" : ""}`}
-                        style={active ? { borderColor: palette.accent } : undefined}
-                      >
-                        <TemplateSketch
-                          id={t.id}
-                          accent={palette.accent}
-                          logo={config.logo}
-                          logoIcon={config.logoIcon}
-                        />
-                        <p className="mt-1.5 flex items-center gap-1 font-display text-xs font-bold">
-                          {t.name}
-                          {active && <Check size={11} style={{ color: palette.accent }} strokeWidth={3} />}
-                          {!can && <Lock size={9} className="text-ink/35" />}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <button
+        onClick={() => setSub("template")}
+        className="mb-4 mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-ink/55 hover:text-ink"
+      >
+        <ArrowLeft size={13} /> Revoir le modèle
+      </button>
+      <PalettePicker
+        value={config.palette}
+        onChange={(id) => setConfig({ palette: id })}
+      />
     </>
   );
 }

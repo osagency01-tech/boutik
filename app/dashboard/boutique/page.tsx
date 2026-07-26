@@ -750,6 +750,10 @@ function AccueilTab({ touch }: { touch: () => void }) {
   const { config, setConfig, palette } = useStore();
   const bannerFileRef = useRef<HTMLInputElement>(null);
   const [bannerBusy, setBannerBusy] = useState(false);
+  /* Bannière d'abord, contenu ensuite — sept champs empilés sur un seul
+     écran, c'était le plus chargé des onglets. Même principe que
+     DesignTab (modèle puis palette). */
+  const [step, setStep] = useState<"banniere" | "contenu">("banniere");
 
   const pickBanner = async (f?: File) => {
     if (!f) return;
@@ -778,103 +782,119 @@ function AccueilTab({ touch }: { touch: () => void }) {
     touch();
   };
 
+  if (step === "banniere")
+    return (
+      <>
+        <Field
+          label="Image de fond de la bannière"
+          hint="Visible sur les modèles Classique, Food et Modern — une photo derrière le dégradé de couleur. Optionnel."
+        >
+          <div className="space-y-2">
+            {config.bannerImage && (
+              <div className="relative overflow-hidden rounded-xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={config.bannerImage}
+                  alt=""
+                  className="h-28 w-full object-cover"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: `linear-gradient(135deg, ${palette.accent}B3, ${palette.accent}A6)` }}
+                />
+              </div>
+            )}
+            <input
+              ref={bannerFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => pickBanner(e.target.files?.[0])}
+            />
+            <button
+              onClick={() => bannerFileRef.current?.click()}
+              disabled={bannerBusy}
+              className="btn-ghost btn-sm w-full"
+            >
+              <Upload size={14} />{" "}
+              {bannerBusy ? "Chargement…" : config.bannerImage ? "Changer l'image" : "Importer une image"}
+            </button>
+            {config.bannerImage && (
+              <button
+                onClick={() => {
+                  setConfig({ bannerImage: undefined });
+                  touch();
+                }}
+                className="text-xs font-semibold text-ink/55 hover:text-terra"
+              >
+                Retirer l&apos;image
+              </button>
+            )}
+          </div>
+        </Field>
+
+        <Field label="Petit texte au-dessus du titre" hint="Ex. « Nouvelle collection », « Promo du mois ».">
+          <input
+            className="input"
+            value={config.bannerBadge}
+            maxLength={30}
+            onChange={(e) => {
+              setConfig({ bannerBadge: e.target.value });
+              touch();
+            }}
+          />
+        </Field>
+
+        <Field label="Titre de la bannière" hint="La première phrase que voit ton client. Sois direct.">
+          <input
+            className="input"
+            value={config.bannerTitle}
+            maxLength={70}
+            onChange={(e) => {
+              setConfig({ bannerTitle: e.target.value });
+              touch();
+            }}
+          />
+        </Field>
+
+        <Field label="Texte de la bannière">
+          <textarea
+            className="input min-h-[80px] resize-none"
+            value={config.bannerSubtitle}
+            maxLength={200}
+            onChange={(e) => {
+              setConfig({ bannerSubtitle: e.target.value });
+              touch();
+            }}
+          />
+        </Field>
+
+        <Field label="Texte du bouton" hint="Ex. « Découvrir la boutique », « Voir le menu ».">
+          <input
+            className="input"
+            value={config.ctaLabel}
+            maxLength={30}
+            onChange={(e) => {
+              setConfig({ ctaLabel: e.target.value });
+              touch();
+            }}
+          />
+        </Field>
+
+        <button onClick={() => setStep("contenu")} className="btn-primary btn-md mt-1 w-full sm:w-auto">
+          Suivant <ArrowRight size={15} />
+        </button>
+      </>
+    );
+
   return (
     <>
-      <Field
-        label="Image de fond de la bannière"
-        hint="Visible sur les modèles Classique, Food et Modern — une photo derrière le dégradé de couleur. Optionnel."
+      <button
+        onClick={() => setStep("banniere")}
+        className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-ink/55 hover:text-ink"
       >
-        <div className="space-y-2">
-          {config.bannerImage && (
-            <div className="relative overflow-hidden rounded-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={config.bannerImage}
-                alt=""
-                className="h-28 w-full object-cover"
-              />
-              <div
-                className="absolute inset-0"
-                style={{ background: `linear-gradient(135deg, ${palette.accent}B3, ${palette.accent}A6)` }}
-              />
-            </div>
-          )}
-          <input
-            ref={bannerFileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => pickBanner(e.target.files?.[0])}
-          />
-          <button
-            onClick={() => bannerFileRef.current?.click()}
-            disabled={bannerBusy}
-            className="btn-ghost btn-sm w-full"
-          >
-            <Upload size={14} />{" "}
-            {bannerBusy ? "Chargement…" : config.bannerImage ? "Changer l'image" : "Importer une image"}
-          </button>
-          {config.bannerImage && (
-            <button
-              onClick={() => {
-                setConfig({ bannerImage: undefined });
-                touch();
-              }}
-              className="text-xs font-semibold text-ink/55 hover:text-terra"
-            >
-              Retirer l&apos;image
-            </button>
-          )}
-        </div>
-      </Field>
-
-      <Field label="Petit texte au-dessus du titre" hint="Ex. « Nouvelle collection », « Promo du mois ».">
-        <input
-          className="input"
-          value={config.bannerBadge}
-          maxLength={30}
-          onChange={(e) => {
-            setConfig({ bannerBadge: e.target.value });
-            touch();
-          }}
-        />
-      </Field>
-
-      <Field label="Titre de la bannière" hint="La première phrase que voit ton client. Sois direct.">
-        <input
-          className="input"
-          value={config.bannerTitle}
-          maxLength={70}
-          onChange={(e) => {
-            setConfig({ bannerTitle: e.target.value });
-            touch();
-          }}
-        />
-      </Field>
-
-      <Field label="Texte de la bannière">
-        <textarea
-          className="input min-h-[80px] resize-none"
-          value={config.bannerSubtitle}
-          maxLength={200}
-          onChange={(e) => {
-            setConfig({ bannerSubtitle: e.target.value });
-            touch();
-          }}
-        />
-      </Field>
-
-      <Field label="Texte du bouton" hint="Ex. « Découvrir la boutique », « Voir le menu ».">
-        <input
-          className="input"
-          value={config.ctaLabel}
-          maxLength={30}
-          onChange={(e) => {
-            setConfig({ ctaLabel: e.target.value });
-            touch();
-          }}
-        />
-      </Field>
+        <ArrowLeft size={13} /> Revoir la bannière
+      </button>
 
       <Field label="Tes arguments" hint="Affichés sous la bannière. Ce qui rassure : délai, qualité, réactivité.">
         <div className="space-y-2">

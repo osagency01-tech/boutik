@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { StoreProvider, useStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import {
+  BookOpen,
   CreditCard,
   LayoutDashboard,
   LifeBuoy,
@@ -32,15 +33,16 @@ const NAV = [
   { l: "Produits", h: "/dashboard/produits", icon: Package },
   { l: "Ma boutique", h: "/dashboard/boutique", icon: Palette },
   { l: "Abonnement", h: "/dashboard/abonnement", icon: CreditCard },
+  { l: "Comment créer ma boutique", h: "/dashboard/guide", icon: BookOpen },
   { l: "Aide", h: "/dashboard/aide", icon: LifeBuoy },
   { l: "Mon profil", h: "/dashboard/profil", icon: User },
 ];
 
 /* Barre du bas mobile : 4 onglets du quotidien + un bouton "Plus"
-   qui ouvre le reste (Ma boutique, Abonnement, Aide, Admin).
+   qui ouvre le reste (Ma boutique, Abonnement, Guide, Aide, Admin).
    Le profil, lui, est accessible par l'icône en haut à droite. */
 const NAV_MOBILE = [NAV[0], NAV[1], NAV[2], NAV[3]];
-const NAV_MORE = [NAV[4], NAV[5], NAV[6]];
+const NAV_MORE = [NAV[4], NAV[5], NAV[6], NAV[7]];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { WhatsAppIcon } from "@/components/phone-icon";
+import { WhatsAppInput } from "@/components/whatsapp-input";
 import { useCart } from "@/lib/cart";
 import { fcfa } from "@/lib/data";
 import { useStore } from "@/lib/store";
@@ -13,7 +14,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-type Form = { name: string; phone: string; phoneConfirm: string; address: string; zone: string; note: string };
+type Form = { name: string; phone: string; address: string; zone: string; note: string };
 
 export default function CheckoutPage() {
   const { detailed, total, clear } = useCart();
@@ -21,11 +22,13 @@ export default function CheckoutPage() {
   const [form, setForm] = useState<Form>({
     name: "",
     phone: "",
-    phoneConfirm: "",
     address: "",
     zone: "",
     note: "",
   });
+  /* Remonté par WhatsAppInput : numéro confirmé (deux fois) et de la
+     bonne longueur pour le pays choisi. */
+  const [phoneValid, setPhoneValid] = useState(false);
   const [placed, setPlaced] = useState<null | {
     id: string;
     waUrl: string;
@@ -35,16 +38,7 @@ export default function CheckoutPage() {
 
   const zone = config.zones.find((z) => z.zone === form.zone) ?? config.zones[0];
   const grand = total + zone.price;
-  /* Comparaison chiffres uniquement : "+225 07 00 00 00 00" et
-     "2250700000000" sont le même numéro, juste formatés différemment —
-     un simple .trim() les aurait déclarés différents à tort. */
-  const phoneDigits = form.phone.replace(/\D/g, "");
-  const phoneConfirmDigits = form.phoneConfirm.replace(/\D/g, "");
-  const valid =
-    form.name.trim().length > 1 &&
-    phoneDigits.length >= 8 &&
-    phoneDigits === phoneConfirmDigits &&
-    form.address.trim().length > 3;
+  const valid = form.name.trim().length > 1 && phoneValid && form.address.trim().length > 3;
 
   const waMessage = useMemo(() => {
     const lines = detailed.map(
@@ -63,7 +57,7 @@ export default function CheckoutPage() {
       `*Total : ${fcfa(grand)}*`,
       "",
       `👤 ${form.name}`,
-      `📱 ${form.phone}`,
+      `📱 +${form.phone}`,
       `📍 ${form.address} — ${zone.zone}`,
       form.note ? `📝 ${form.note}` : "",
     ]
@@ -120,7 +114,7 @@ export default function CheckoutPage() {
       reference: id,
       date: new Date(),
       customerName: form.name,
-      customerPhone: form.phone,
+      customerPhone: `+${form.phone}`,
       customerAddress: form.address,
       customerNote: form.note || undefined,
       zoneLabel: zone.zone,
@@ -230,27 +224,12 @@ export default function CheckoutPage() {
             />
           </Field>
           <Field label="Numéro WhatsApp *" hint="Le vendeur te contactera sur ce numéro.">
-            <input
-              className="input"
-              type="tel"
-              placeholder="+225 07 00 00 00 00"
+            <WhatsAppInput
+              requireConfirm
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(digits) => setForm({ ...form, phone: digits })}
+              onValidChange={setPhoneValid}
             />
-          </Field>
-          <Field label="Confirme ton numéro *">
-            <input
-              className="input"
-              type="tel"
-              placeholder="+225 07 00 00 00 00"
-              value={form.phoneConfirm}
-              onChange={(e) => setForm({ ...form, phoneConfirm: e.target.value })}
-            />
-            {form.phoneConfirm && phoneDigits !== phoneConfirmDigits && (
-              <p className="mt-1.5 text-xs font-semibold text-terra">
-                Les numéros ne correspondent pas.
-              </p>
-            )}
           </Field>
           <Field label="Zone de livraison *">
             <div className="space-y-2">
