@@ -4,11 +4,9 @@
  *  Endpoint  : https://newapi.sebpay.bj/api/v1
  *  Auth      : en-tetes X-Public-Key + X-Secret-Key
  *  Modele    : "collection" — un push USSD est envoye sur le telephone
- *              du client ; la confirmation arrive ensuite par webhook.
- *
- *  SebPay ne fournit pas de secret HMAC pour ses webhooks. On ne fait
- *  donc pas confiance au contenu brut : verifyWebhook filtre, et le
- *  webhook rappelle SebPay (confirmPaid) pour confirmer le paiement.
+ *              du client. SebPay N'ENVOIE PAS de webhook fiable : la
+ *              confirmation se fait en interrogeant l'API (confirmPaid)
+ *              via l'external_reference. Statut "approved" = paye.
  * ==================================================================== */
 
 import {
@@ -36,6 +34,9 @@ const SEBPAY_TO_OPERATOR: Record<string, Operator> = {
   MOOV: "moov",
 };
 
+/* Statuts que SebPay considere comme un paiement abouti. */
+const PAID_STATUSES = ["approved", "success", "successful", "paid", "completed"];
+
 type SebpayConfig = {
   publicKey: string;
   secretKey: string;
@@ -57,7 +58,6 @@ export class SebpayProvider implements PaymentProvider {
   async createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
     const amount = PLAN_PRICES[input.plan];
 
-    /* Sorti dans une variable pour pouvoir le journaliser tel quel. */
     const payload = {
       amount,
       currency: "XOF",
@@ -69,9 +69,6 @@ export class SebpayProvider implements PaymentProvider {
       callback_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.boutik-app.com"}/api/webhooks/paiement`,
     };
 
-    /* --- DIAGNOSTIC TEMPORAIRE — retirer une fois le push retabli --- */
-    console.log("[sebpay] ENVOYE:", JSON.stringify(payload));
-
     try {
       const res = await fetch(`${BASE_URL}/collections`, {
         method: "POST",
@@ -80,9 +77,6 @@ export class SebpayProvider implements PaymentProvider {
       });
 
       const data = await res.json().catch(() => ({}));
-
-      /* --- DIAGNOSTIC TEMPORAIRE --- */
-      console.log("[sebpay] RECU:", res.status, JSON.stringify(data));
 
       if (!res.ok) {
         const detail =
@@ -96,18 +90,19 @@ export class SebpayProvider implements PaymentProvider {
         };
       }
 
-      const reference = data.transaction_id || data.reference || input.idempotencyKey;
+      /* SebPay renvoie l'identifiant technique dans data.data.transaction_id.
+         On garde l'external_reference comme cle de suivi : c'est elle qui
+         permet d'interroger le statut ensuite (confirmPaid). */
+      const providerTxId = data?.data?.transaction_id ?? null;
 
       return {
         kind: "ussd_push",
-        reference,
+        reference: input.idempotencyKey,
+        providerTxId,
         message:
           "Un message vient d'etre envoye sur ton telephone. Compose ton code Mobile Money pour valider le paiement.",
       };
-    } catch (err) {
-      /* --- DIAGNOSTIC TEMPORAIRE --- */
-      console.log("[sebpay] EXCEPTION:", String(err));
-
+    } catch {
       return {
         kind: "error",
         message: "Connexion au service de paiement impossible. Reessaie.",
@@ -133,41 +128,46 @@ export class SebpayProvider implements PaymentProvider {
       return null;
     }
 
+    /* Le corps webhook peut etre plat ou imbrique dans data. */
+    const body = p?.data ?? p;
+    const rawStatus = (body.status || "").toLowerCase();
+
     const status: WebhookEvent["status"] =
-      p.status === "success" || p.status === "successful" || p.status === "paid"
+      PAID_STATUSES.includes(rawStatus)
         ? "paid"
-        : p.status === "failed" || p.status === "cancelled"
+        : rawStatus === "failed" || rawStatus === "cancelled" || rawStatus === "declined"
           ? "failed"
           : "pending";
 
-    const operatorRaw = (p.customer_network || p.provider || "").toUpperCase();
+    const operatorRaw = (body.customer_network || body.provider || "").toUpperCase();
 
     return {
-      reference: p.transaction_id || p.external_reference || p.reference || "",
-      idempotencyKey: p.external_reference ?? p.reference ?? null,
+      reference: body.transaction_id || body.external_reference || body.reference || "",
+      idempotencyKey: body.external_reference ?? body.reference ?? null,
       status,
-      amount: Number(p.amount) || 0,
+      amount: Number(body.amount) || 0,
       operator: SEBPAY_TO_OPERATOR[operatorRaw] ?? null,
       raw: p,
     };
   }
 
-  async confirmPaid(transactionId: string): Promise<boolean> {
+  /* Interroge SebPay sur une transaction. La cle passee est
+     l'external_reference (celle du checkout), que l'API accepte
+     directement sur GET /collections/{ref}. */
+  async confirmPaid(externalReference: string): Promise<boolean> {
     try {
-      const res = await fetch(`${BASE_URL}/collections/${transactionId}`, {
+      const res = await fetch(`${BASE_URL}/collections/${externalReference}`, {
         method: "GET",
         headers: this.headers(),
       });
-      if (!res.ok) return false;
       const data = await res.json().catch(() => ({}));
-
-      /* --- DIAGNOSTIC TEMPORAIRE --- */
-      console.log("[sebpay] STATUT:", transactionId, JSON.stringify(data));
-
-      const s = (data.status || "").toLowerCase();
-      return s === "success" || s === "successful" || s === "paid";
-    } catch {
+      console.log("[confirmPaid]", res.status, "→", JSON.stringify(data));
+      if (!res.ok) return false;
+      const s = (data?.data?.status || "").toLowerCase();
+      return PAID_STATUSES.includes(s);
+    } catch (e) {
+      console.log("[confirmPaid] EXCEPTION", String(e));
       return false;
     }
   }
-}
+  }
