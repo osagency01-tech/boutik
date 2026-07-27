@@ -224,9 +224,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) return { error: humanError(error.message) };
 
-    /* Connexion simple : email + mot de passe suffisent. La vérification
-       par code reste active à l'inscription (confirmSignUp). On considère
-       l'appareil comme reconnu dès la connexion réussie. */
+    /* Appareil non reconnu (getDeviceId absent de la liste connue pour
+       cet email, ex. premier login sur un nouveau téléphone) : on coupe
+       tout de suite la session que signInWithPassword vient d'ouvrir et
+       on exige un code par email avant de la rétablir — sinon un mot de
+       passe volé suffirait à se connecter depuis n'importe quel appareil. */
+    if (!isKnownDevice(clean)) {
+      await sb.auth.signOut();
+      const { error: otpError } = await sb.auth.signInWithOtp({
+        email: clean,
+        options: { shouldCreateUser: false },
+      });
+      if (otpError) return { error: humanError(otpError.message) };
+      return { needsOtp: true };
+    }
+
     rememberDevice(clean);
     await waitForSession(sb);
     return {};

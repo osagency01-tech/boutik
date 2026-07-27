@@ -1,6 +1,6 @@
 "use client";
 
-import { BoutikLogo } from "@/components/brand";
+import AuthShell from "@/components/auth-shell";
 import { GoogleIcon } from "@/components/google-icon";
 import { LoadingScreen } from "@/components/states";
 import {
@@ -193,12 +193,8 @@ function AuthScreen() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="flex min-h-screen flex-col bg-cream">
-      <header className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-5">
-        <BoutikLogo className="h-7" />
-      </header>
-
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 pb-20">
+    <AuthShell>
+      <>
         {demoMode && (
           <div className="mb-5 rounded-xl border border-mango/40 bg-mango-soft px-4 py-3 text-xs leading-relaxed text-yellow-900">
             <strong>Mode démo</strong> — Supabase n&apos;est pas configuré. La connexion est
@@ -531,8 +527,8 @@ function AuthScreen() {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
-    </div>
+      </>
+    </AuthShell>
   );
 }
 
