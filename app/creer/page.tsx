@@ -50,7 +50,12 @@ function Wizard() {
 
   /* Créer une boutique demande d'être connecté (sauf en démo) */
   useEffect(() => {
-    if (!demoMode && !authLoading && !user) router.replace("/connexion");
+    /* mode=signup : quelqu'un qui arrive ici sans session vient quasi
+       toujours de cliquer "Créer ma boutique" depuis la landing — un
+       nouveau visiteur, pas quelqu'un qui a un compte à retrouver. Sans
+       ça, il atterrissait sur l'écran de connexion (identifiants qu'il
+       n'a jamais eus) au lieu de celui d'inscription. */
+    if (!demoMode && !authLoading && !user) router.replace("/connexion?mode=signup");
   }, [demoMode, authLoading, user, router]);
 
   /* Déjà une boutique : inutile de repasser par le wizard */

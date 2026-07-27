@@ -124,13 +124,18 @@ function Header() {
             Voir une boutique démo
           </Link>
         </div>
-        <button
-          className="rounded-lg p-2 md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label="Menu"
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <Link href="/connexion" className="btn-ghost btn-sm">
+            Connexion
+          </Link>
+          <button
+            className="rounded-lg p-2"
+            onClick={() => setOpen(!open)}
+            aria-label="Menu"
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
       {open && (
         <nav className="animate-drop border-t border-ink/5 bg-cream px-4 pb-5 pt-3 md:hidden">
@@ -181,9 +186,10 @@ function Hero() {
             <span className="text-primary">prête en 10 minutes.</span>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-ink/65">
-            Crée ta boutique en quelques minutes, reçois tes
-commandes sans discuter, encaisse par Mobile Money.
-Pensé pour les vendeurs africains, depuis un téléphone.
+            Crée ta boutique en quelques minutes, reçois des commandes
+            structurées et vends directement sur WhatsApp sans perdre de
+            temps en discussions inutiles. Pensé pour les vendeurs
+            africains, depuis un téléphone.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/creer" className="btn-primary btn-lg">

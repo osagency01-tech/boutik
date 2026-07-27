@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { getShopIcon } from "@/components/icons";
 import { WhatsAppIcon } from "@/components/phone-icon";
+import { demoImage } from "@/lib/demo-shops";
 import { Check, ChevronLeft, ChevronRight, FileText, Shirt, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -159,11 +159,11 @@ function ShopScreen() {
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {[
-          ["shirt", "Robe « Ama »", "18 500 F"],
-          ["bag", "Sac Bogolan", "12 000 F"],
-          ["sparkles", "Karité pur", "3 500 F"],
-          ["shirt", "Chemise wax", "15 000 F"],
-        ].map(([e, n, p], i) => (
+          ["Robe « Ama »", "18 500 F"],
+          ["Sac Bogolan", "12 000 F"],
+          ["Karité pur", "3 500 F"],
+          ["Chemise wax", "15 000 F"],
+        ].map(([n, p], i) => (
           <motion.div
             key={n}
             initial={{ opacity: 0, y: 10 }}
@@ -171,11 +171,13 @@ function ShopScreen() {
             transition={{ delay: 0.15 + i * 0.08 }}
             className="rounded-xl bg-white p-2 shadow-card"
           >
-            <div className="flex h-16 items-center justify-center rounded-lg bg-primary-soft">
-              {(() => {
-                const I = getShopIcon(e);
-                return <I size={22} className="text-primary/60" strokeWidth={1.5} />;
-              })()}
+            <div className="h-16 overflow-hidden rounded-lg bg-primary-soft">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={demoImage("classique", i)}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
             <p className="mt-1.5 truncate text-[10px] font-semibold">{n}</p>
             <p className="text-[10px] font-bold text-primary">{p}</p>

@@ -58,12 +58,19 @@ export default function ShopPreview({ template }: { template: TemplateId }) {
         className="flex items-center gap-1 px-2 py-1.5"
         style={{ backgroundColor: dark ? "#1b2b22" : p.surface }}
       >
-        <span
-          className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: p.accent + "26" }}
-        >
-          <Icon name={shop.logoIcon} size={7} color={p.accent} />
-        </span>
+        {shop.logo ? (
+          <div className="h-3.5 w-3.5 shrink-0 overflow-hidden rounded-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={shop.logo} alt="" className="h-full w-full object-cover" />
+          </div>
+        ) : (
+          <span
+            className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: p.accent + "26" }}
+          >
+            <Icon name={shop.logoIcon} size={7} color={p.accent} />
+          </span>
+        )}
         <span
           className="truncate text-[5px] font-bold"
           style={{ color: dark ? "#fff" : p.ink }}

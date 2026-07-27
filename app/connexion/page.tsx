@@ -68,6 +68,17 @@ function AuthScreen() {
 
   const suggestion = suggestEmailFix(email);
 
+  /* ?mode=signup (lien "Créer ma boutique" de la landing, via /creer)
+     : un visiteur qui arrive ici sans session vient quasi toujours
+     créer un compte, pas retrouver un mot de passe oublié. Lu depuis
+     window.location plutôt que useSearchParams pour ne pas sortir
+     cette page du rendu statique. */
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "signup") {
+      setStep("signup");
+    }
+  }, []);
+
   useEffect(() => {
     /* Ne pas rediriger pendant qu'une connexion est en cours (busy) ni sur
        un écran de code : signInWithPassword ouvre brièvement une session
