@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CreditCard,
   ExternalLink,
   Eye,
   Image as ImageIcon,
@@ -43,7 +44,7 @@ import {
 import Link from "next/link";
 import { useRef, useState } from "react";
 
-type Tab = "identite" | "design" | "accueil" | "contact" | "livraison";
+type Tab = "identite" | "design" | "accueil" | "contact" | "livraison" | "paiement";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "identite", label: "Identité", icon: Type },
@@ -51,6 +52,7 @@ const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "accueil", label: "Accueil", icon: ImageIcon },
   { id: "contact", label: "Contact", icon: Phone },
   { id: "livraison", label: "Livraison", icon: MapPin },
+  { id: "paiement", label: "Paiement", icon: CreditCard },
 ];
 
 export default function ShopEditor() {
@@ -132,6 +134,7 @@ export default function ShopEditor() {
             {tab === "accueil" && <AccueilTab touch={touch} />}
             {tab === "contact" && <ContactTab touch={touch} />}
             {tab === "livraison" && <LivraisonTab touch={touch} />}
+            {tab === "paiement" && <PaiementTab touch={touch} />}
           </motion.div>
 
           <button
@@ -1100,6 +1103,118 @@ function LivraisonTab({ touch }: { touch: () => void }) {
           maxLength={300}
           onChange={(e) => {
             setConfig({ deliveryNote: e.target.value });
+            touch();
+          }}
+        />
+      </Field>
+    </>
+  );
+}
+
+function PaiementTab({ touch }: { touch: () => void }) {
+  const { config, setConfig } = useStore();
+  const ready = Boolean(config.paymentMethod && config.paymentNumber && config.paymentAccountName);
+
+  return (
+    <>
+      <p className="text-sm text-ink/60">
+        Renseignés ici, ces moyens de paiement sont envoyés automatiquement au client dans le
+        message WhatsApp de confirmation de commande — plus besoin de les retaper à chaque fois.
+      </p>
+
+      <Field label="Mode de paiement de la boutique">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => {
+              setConfig({ paymentMode: "livraison" });
+              touch();
+            }}
+            className={`rounded-xl border p-3 text-left transition-all ${
+              config.paymentMode === "livraison"
+                ? "border-primary bg-primary-soft"
+                : "border-ink/10 bg-white hover:border-ink/30"
+            }`}
+          >
+            <p className="text-sm font-bold">À la livraison</p>
+            <p className="mt-0.5 text-xs text-ink/55">Le client paie le livreur.</p>
+          </button>
+          <button
+            onClick={() => {
+              if (!ready) {
+                alert(
+                  "Renseigne d'abord ton moyen de paiement, ton numéro et le nom du compte ci-dessous : le client en aura besoin pour payer avant l'expédition."
+                );
+                return;
+              }
+              setConfig({ paymentMode: "avant" });
+              touch();
+            }}
+            className={`rounded-xl border p-3 text-left transition-all ${
+              config.paymentMode === "avant"
+                ? "border-primary bg-primary-soft"
+                : "border-ink/10 bg-white hover:border-ink/30"
+            } ${!ready ? "opacity-55" : ""}`}
+          >
+            <p className="flex items-center gap-1.5 text-sm font-bold">
+              Avant livraison
+              {!ready && <Lock size={11} className="text-ink/35" />}
+            </p>
+            <p className="mt-0.5 text-xs text-ink/55">Paiement Mobile Money exigé avant envoi.</p>
+          </button>
+        </div>
+      </Field>
+
+      <Field label="Moyen de paiement">
+        <select
+          className="input"
+          value={config.paymentMethod}
+          onChange={(e) => {
+            setConfig({ paymentMethod: e.target.value });
+            touch();
+          }}
+        >
+          <option value="">Choisir…</option>
+          <option value="MTN MoMo">MTN MoMo</option>
+          <option value="Moov Money">Moov Money</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </Field>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Numéro de paiement">
+          <input
+            className="input"
+            type="tel"
+            inputMode="tel"
+            value={config.paymentNumber}
+            placeholder="97 00 00 00"
+            onChange={(e) => {
+              setConfig({ paymentNumber: e.target.value });
+              touch();
+            }}
+          />
+        </Field>
+        <Field label="Nom du compte">
+          <input
+            className="input"
+            value={config.paymentAccountName}
+            placeholder="Ex. Boutique ABC"
+            onChange={(e) => {
+              setConfig({ paymentAccountName: e.target.value });
+              touch();
+            }}
+          />
+        </Field>
+      </div>
+
+      <Field label="Instructions (optionnel)" hint="Ajoutées sous les coordonnées de paiement si besoin.">
+        <textarea
+          className="input min-h-[70px] resize-none"
+          value={config.paymentInstructions}
+          maxLength={300}
+          placeholder="Ex. Envoie la capture du paiement ici après transfert."
+          onChange={(e) => {
+            setConfig({ paymentInstructions: e.target.value });
             touch();
           }}
         />

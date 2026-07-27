@@ -13,6 +13,7 @@ import {
   type DbOrder,
   type DbOrderStatus,
 } from "@/lib/supabase";
+import type { ShopConfig } from "@/lib/store";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, FileText, MapPin } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -53,6 +54,36 @@ function demoToDb(): DbOrder[] {
       quantity: x.qty,
     })),
   }));
+}
+
+/* Message de confirmation envoyé au clic sur "Confirmer la commande" :
+   le vendeur n'a plus à retaper ses coordonnées de paiement à chaque
+   commande. Le contenu dépend du mode choisi une fois pour toutes dans
+   Ma boutique/Paiement (jamais un choix laissé au client, qui n'aurait
+   fait que multiplier les allers-retours WhatsApp). */
+function confirmMessage(o: DbOrder, config: ShopConfig): string {
+  const produits = (o.order_items ?? [])
+    .map((i) => `• ${i.product_name}${i.size ? ` (${i.size})` : ""} × ${i.quantity} — ${fcfa(i.quantity * i.unit_price)}`)
+    .join("\n");
+
+  const intro = `Bonjour ${o.customer_name.split(" ")[0]} 👋\n\nVotre commande chez ${config.name} est confirmée ✅\n\n📦 Commande :\n${produits}\n\n💰 Total :\n${fcfa(o.total)}`;
+
+  if (config.paymentMode === "avant") {
+    const method = config.paymentMethod || "Mobile Money";
+    const lines = [
+      `Pour finaliser votre commande, veuillez effectuer le paiement :`,
+      ``,
+      `📱 ${method}`,
+      config.paymentNumber ? `Numéro : ${config.paymentNumber}` : null,
+      config.paymentAccountName ? `Nom : ${config.paymentAccountName}` : null,
+      config.paymentInstructions || null,
+      ``,
+      `Après paiement, envoyez la capture de paiement ici pour validation.`,
+    ].filter((l) => l !== null);
+    return `${intro}\n\n${lines.join("\n")}\n\nMerci pour votre confiance 🙏`;
+  }
+
+  return `${intro}\n\nVotre commande sera livrée à l'adresse indiquée.\n\n💵 Paiement à effectuer lors de la livraison.\n\nMerci pour votre confiance 🙏`;
 }
 
 export default function OrdersPage() {
@@ -275,18 +306,29 @@ export default function OrdersPage() {
                                 Passer en « {STATUS_LABEL[next]} »
                               </button>
                             )}
-                            <a
-                              href={`https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                                `Bonjour ${o.customer_name.split(" ")[0]} 👋🏾 Votre commande ${o.reference} (${fcfa(
-                                  o.total
-                                )}) chez ${config.name} est bien reçue. Vous pouvez régler par Mobile Money au ${config.phone || "+" + config.whatsapp}.`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn bg-[#25D366] px-4 py-2 text-xs text-white hover:bg-[#1fb958]"
-                            >
-                              <WhatsAppIcon className="h-3.5 w-3.5" /> Écrire au client
-                            </a>
+                            {simplifyStatus(o.status) === "nouvelle" ? (
+                              <a
+                                href={`https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                  confirmMessage(o, config)
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn bg-[#25D366] px-4 py-2 text-xs text-white hover:bg-[#1fb958]"
+                              >
+                                <WhatsAppIcon className="h-3.5 w-3.5" /> Confirmer la commande
+                              </a>
+                            ) : (
+                              <a
+                                href={`https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                  `Bonjour ${o.customer_name.split(" ")[0]} 👋🏾 Concernant votre commande ${o.reference} chez ${config.name}.`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn bg-[#25D366] px-4 py-2 text-xs text-white hover:bg-[#1fb958]"
+                              >
+                                <WhatsAppIcon className="h-3.5 w-3.5" /> Écrire au client
+                              </a>
+                            )}
                             <button
                               className="btn-ghost btn-sm"
                               onClick={async () => {

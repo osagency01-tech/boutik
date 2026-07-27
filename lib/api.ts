@@ -46,6 +46,11 @@ export function configToShop(c: Partial<ShopConfig>): Partial<DbShop> {
   if (c.featuredEyebrow !== undefined) out.featured_eyebrow = c.featuredEyebrow;
   if (c.perks !== undefined) out.perks = c.perks;
   if (c.deliveryNote !== undefined) out.delivery_note = c.deliveryNote;
+  if (c.paymentMethod !== undefined) out.payment_method = c.paymentMethod;
+  if (c.paymentNumber !== undefined) out.payment_number = c.paymentNumber;
+  if (c.paymentAccountName !== undefined) out.payment_account_name = c.paymentAccountName;
+  if (c.paymentInstructions !== undefined) out.payment_instructions = c.paymentInstructions;
+  if (c.paymentMode !== undefined) out.payment_mode = c.paymentMode;
   /* plan et status volontairement absents : la base les refuse
      au vendeur (guard_shop_privileges). C'est le paiement qui décide. */
   return out as Partial<DbShop>;

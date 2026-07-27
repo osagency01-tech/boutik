@@ -52,6 +52,14 @@ export type ShopConfig = {
   featuredEyebrow: string;
   perks: string[];
   deliveryNote: string;
+  /* Moyens de paiement : coordonnées Mobile Money envoyées au client
+     dans le message automatique de confirmation, et mode global de la
+     boutique (jamais un choix par commande). */
+  paymentMethod: string;
+  paymentNumber: string;
+  paymentAccountName: string;
+  paymentInstructions: string;
+  paymentMode: "avant" | "livraison";
   plan: Plan;
   published: boolean;
 };
@@ -116,6 +124,11 @@ export const DEFAULT_CONFIG: ShopConfig = {
   perks: ["Livraison 24 h à Abidjan", "Articles vérifiés à la main", "Réponse WhatsApp en 1 h"],
   deliveryNote:
     "Paiement à la livraison ou par Mobile Money avant expédition. Vérifie ton article devant le livreur : échange sous 48 h en cas de défaut.",
+  paymentMethod: "MTN MoMo",
+  paymentNumber: "97 00 00 00",
+  paymentAccountName: "Kadi Store",
+  paymentInstructions: "",
+  paymentMode: "livraison",
   plan: "Business",
   published: true,
 };

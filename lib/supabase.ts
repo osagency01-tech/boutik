@@ -78,6 +78,11 @@ export type DbShop = {
   phone: string | null;
   instagram: string | null;
   hours: string | null;
+  payment_method: string | null;
+  payment_number: string | null;
+  payment_account_name: string | null;
+  payment_instructions: string | null;
+  payment_mode: "avant" | "livraison";
   plan: DbPlan;
   status: DbShopStatus;
   published_at: string | null;

@@ -36,6 +36,11 @@ export function shopToConfig(s: DbShop, zones: DbZone[]): ShopConfig {
     featuredEyebrow: s.featured_eyebrow ?? "Sélection",
     perks: s.perks ?? [],
     deliveryNote: s.delivery_note ?? "",
+    paymentMethod: s.payment_method ?? "",
+    paymentNumber: s.payment_number ?? "",
+    paymentAccountName: s.payment_account_name ?? "",
+    paymentInstructions: s.payment_instructions ?? "",
+    paymentMode: s.payment_mode ?? "livraison",
     /* `public_shops` (vue lue pour toute boutique publique) n'expose ni
        `plan` ni `status` — volontairement, ce sont des infos de facturation
        (voir son commentaire en base). Sans ce repli, un visiteur sur
