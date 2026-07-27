@@ -66,17 +66,17 @@ export function WhatsAppInput({
   return (
     <div>
       <div className="flex items-stretch gap-2">
-        {/* .input impose déjà w-full (globals.css) : le contraindre à
-            132px sur l'élément lui-même se ferait battre par cette
-            règle (même spécificité). On fixe la largeur sur un wrapper
-            à la place, pour ne pas dépendre de l'ordre des classes. */}
-        <div className="relative w-[132px] shrink-0">
-          <FlagIcon
-            iso={countryIso}
-            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-5 -translate-y-1/2"
-          />
+        {/* .input impose déjà w-full ET son propre padding (globals.css) :
+            une classe utilitaire (pl-9, w-[132px]) posée directement sur
+            le select se fait battre par cette règle de même spécificité.
+            Le drapeau et la largeur vivent donc sur un wrapper séparé qui
+            porte lui-même l'apparence (bordure, fond, arrondi) ; le
+            select devient transparent et sans bordure à l'intérieur —
+            aucun chevauchement possible entre le drapeau et le texte. */}
+        <div className="flex w-[136px] shrink-0 items-center gap-1.5 rounded-xl border border-ink/15 bg-white pl-2.5 pr-1">
+          <FlagIcon iso={countryIso} className="h-3.5 w-5 shrink-0" />
           <select
-            className="input pl-9"
+            className="w-full border-0 bg-transparent py-3 pr-1 text-sm outline-none"
             value={countryIso}
             onChange={(e) => {
               setCountryIso(e.target.value);

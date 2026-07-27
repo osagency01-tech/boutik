@@ -519,13 +519,14 @@ function CheckoutModal({ plan, onClose }: { plan: Plan; onClose: () => void }) {
             </div>
 
             <label className="mb-1.5 mt-5 block text-sm font-bold">Pays</label>
-            <div className="relative">
-              <FlagIcon
-                iso={countryIso}
-                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-5 -translate-y-1/2"
-              />
+            {/* Wrapper porteur de l'apparence : une classe utilitaire posée
+                directement sur .input se ferait battre par son propre
+                padding (même spécificité), et le drapeau chevaucherait le
+                début du nom du pays. */}
+            <div className="flex items-center gap-1.5 rounded-xl border border-ink/15 bg-white pl-2.5 pr-1">
+              <FlagIcon iso={countryIso} className="h-3.5 w-5 shrink-0" />
               <select
-                className="input pl-9"
+                className="w-full border-0 bg-transparent py-3 pr-1 text-sm outline-none"
                 value={countryIso}
                 onChange={(e) => changeCountry(e.target.value)}
               >

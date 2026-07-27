@@ -9,7 +9,7 @@ import * as api from "@/lib/api";
 import { cleanText, normalizePhone, safeWhatsAppNumber, safeWhatsAppText } from "@/lib/security";
 import type { OrderPdfData } from "@/lib/pdf";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Download, FileText } from "lucide-react";
+import { ArrowLeft, Check, Download, FileText, Info } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -35,10 +35,17 @@ export default function CheckoutPage() {
     grand: number;
     pdf: OrderPdfData;
   }>(null);
+  /* Aperçu de modèle (/apercu/<template>) ou boutique de démo générique
+     (/demo) : aucun vendeur réel derrière. Envoyer "la commande" ouvrirait
+     WhatsApp vers le numéro du vendeur de démonstration, pour de vrai —
+     trompeur pour un visiteur qui ne fait qu'essayer. On l'arrête ici
+     plutôt que de simuler une commande qui n'aboutira jamais. */
+  const [demoNotice, setDemoNotice] = useState(false);
 
   const zone = config.zones.find((z) => z.zone === form.zone) ?? config.zones[0];
   const grand = total + zone.price;
   const valid = form.name.trim().length > 1 && phoneValid && form.address.trim().length > 3;
+  const isPreviewShop = basePath === "/demo" || basePath.startsWith("/apercu/");
 
   const waMessage = useMemo(() => {
     const lines = detailed.map(
@@ -70,6 +77,13 @@ export default function CheckoutPage() {
 
   const placeOrder = async () => {
     if (!valid || busy) return;
+
+    if (isPreviewShop) {
+      setDemoNotice(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setBusy(true);
     setOrderError(null);
 
@@ -132,6 +146,32 @@ export default function CheckoutPage() {
     setBusy(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  /* ---- Aperçu / démo : pas de vraie commande ---- */
+  if (demoNotice)
+    return (
+      <div className="mx-auto max-w-md pt-16 text-center">
+        <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-ink/10 text-ink/60">
+          <Info size={36} strokeWidth={2} />
+        </span>
+        <h1 className="mt-6 font-display text-2xl font-extrabold">
+          Cette boutique est une démonstration
+        </h1>
+        <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed shop-muted">
+          Aucune vraie commande n&apos;est envoyée ici. Crée ta propre boutique pour recevoir de
+          vraies commandes sur ton WhatsApp.
+        </p>
+        <Link href="/creer" className="btn-primary btn-lg mt-6 w-full">
+          Créer ma boutique
+        </Link>
+        <Link
+          href={basePath}
+          className="mt-4 inline-block text-sm font-semibold text-ink/50 hover:text-ink"
+        >
+          Retour à la boutique
+        </Link>
+      </div>
+    );
 
   /* ---- Confirmation ---- */
   if (placed)

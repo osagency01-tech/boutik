@@ -385,7 +385,8 @@ export default function Overview() {
 
       <Reveal delay={0.22}>
         <div
-          className="wax-pattern-dense mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-br from-primary to-primary-dark px-6 py-5 text-white"
+          className="wax-pattern-dense mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 text-white"
+          style={{ background: "linear-gradient(135deg, #0D8450, #0A6B40)" }}
         >
           <div className="min-w-0">
             <p className="flex items-center gap-2 font-display font-extrabold">

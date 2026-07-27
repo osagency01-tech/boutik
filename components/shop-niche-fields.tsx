@@ -93,13 +93,15 @@ export function ShopNicheFields({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1.5 block text-sm font-bold">Pays</label>
-          <div className="relative">
-            <FlagIcon
-              iso={countryIso}
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-5 -translate-y-1/2"
-            />
+          {/* Le drapeau et le select vivent sur un wrapper qui porte
+              l'apparence (bordure, fond) : une classe utilitaire posée
+              directement sur .input se ferait battre par son propre
+              padding (même spécificité), et le drapeau chevaucherait le
+              début du nom du pays. */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-ink/15 bg-white pl-2.5 pr-1">
+            <FlagIcon iso={countryIso} className="h-3.5 w-5 shrink-0" />
             <select
-              className="input pl-9"
+              className="w-full border-0 bg-transparent py-3 pr-1 text-sm outline-none"
               value={countryIso}
               onChange={(e) => {
                 const iso = e.target.value;
