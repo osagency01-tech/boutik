@@ -466,42 +466,43 @@ export async function createOrder(input: {
   deliveryFee: number;
   items: { productId: string; name: string; size?: string; price: number; qty: number }[];
 }) {
-  const sb = supabase();
-  if (!sb) throw new Error("Supabase non configuré");
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) throw new Error("Supabase non configuré");
 
-  const subtotal = input.items.reduce((s, i) => s + i.price * i.qty, 0);
+  /* Le client n'a pas de compte : un INSERT direct est bloqué par RLS
+     (42501). On passe par une fonction serveur (security definer) qui,
+     en plus, relit les prix depuis la base — le navigateur ne décide
+     jamais des montants. */
+  const res = await fetch(`${url}/rest/v1/rpc/create_order`, {
+    method: "POST",
+    headers: {
+      apikey: anon,
+      Authorization: `Bearer ${anon}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      order_data: {
+        shop_id: input.shopId,
+        customer_name: input.customerName,
+        customer_phone: input.customerPhone,
+        customer_address: input.customerAddress,
+        customer_note: input.customerNote ?? "",
+        zone_label: input.zoneLabel,
+      },
+      items: input.items.map((i) => ({
+        product_id: i.productId,
+        size: i.size ?? "",
+        quantity: i.qty,
+      })),
+    }),
+  });
 
-  const { data: order, error } = await sb
-    .from("orders")
-    .insert({
-      shop_id: input.shopId,
-      customer_name: input.customerName,
-      customer_phone: input.customerPhone,
-      customer_address: input.customerAddress,
-      customer_note: input.customerNote || null,
-      zone_label: input.zoneLabel,
-      delivery_fee: input.deliveryFee,
-      subtotal,
-      total: subtotal + input.deliveryFee,
-    })
-    .select()
-    .single();
-  if (error) throw error;
-
-  const { error: itemsError } = await sb.from("order_items").insert(
-    input.items.map((i) => ({
-      order_id: order.id,
-      shop_id: input.shopId,
-      product_id: i.productId,
-      product_name: i.name,
-      size: i.size ?? null,
-      unit_price: i.price,
-      quantity: i.qty,
-    }))
-  );
-  if (itemsError) throw itemsError;
-
-  return order as DbOrder;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "La commande n'a pas pu être enregistrée.");
+  }
+  return (await res.json()) as DbOrder;
 }
 
 /* ------------------------------------------------------------------ *
