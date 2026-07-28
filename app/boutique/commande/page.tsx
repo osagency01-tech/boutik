@@ -42,7 +42,12 @@ export default function CheckoutPage() {
      plutôt que de simuler une commande qui n'aboutira jamais. */
   const [demoNotice, setDemoNotice] = useState(false);
 
-  const zone = config.zones.find((z) => z.zone === form.zone) ?? config.zones[0];
+  /* Filet de sécurité : une boutique sans aucune zone configurée (le
+     vendeur a supprimé la dernière) faisait planter cette page entière
+     pour l'acheteur — zone.price sur `undefined` — le rendant
+     totalement bloqué avant même de voir "Valider ma commande". */
+  const zone = config.zones.find((z) => z.zone === form.zone) ??
+    config.zones[0] ?? { zone: "Livraison à confirmer", price: 0, delay: "" };
   const grand = total + zone.price;
   const valid = form.name.trim().length > 1 && phoneValid && form.address.trim().length > 3;
   const isPreviewShop = basePath === "/demo" || basePath.startsWith("/apercu/");
@@ -272,6 +277,12 @@ export default function CheckoutPage() {
             />
           </Field>
           <Field label="Zone de livraison *">
+            {config.zones.length === 0 && (
+              <p className="rounded-xl bg-cream px-4 py-3 text-xs leading-relaxed text-ink/55">
+                Le vendeur n&apos;a pas encore renseigné de zone de livraison — les frais seront
+                confirmés directement avec toi.
+              </p>
+            )}
             <div className="space-y-2">
               {config.zones.map((z) => (
                 <label

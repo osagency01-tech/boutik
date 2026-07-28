@@ -125,7 +125,7 @@ export const DEFAULT_CONFIG: ShopConfig = {
   deliveryNote:
     "Paiement à la livraison ou par Mobile Money avant expédition. Vérifie ton article devant le livreur : échange sous 48 h en cas de défaut.",
   paymentMethod: "MTN MoMo",
-  paymentNumber: "97 00 00 00",
+  paymentNumber: "2250700000000",
   paymentAccountName: "Kadi Store",
   paymentInstructions: "",
   paymentMode: "livraison",

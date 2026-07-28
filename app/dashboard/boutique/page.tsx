@@ -1036,6 +1036,13 @@ function LivraisonTab({ touch }: { touch: () => void }) {
     touch();
   };
   const remove = (i: number) => {
+    /* Une boutique sans aucune zone fait planter la page de commande
+       pour l'acheteur (plus rien à quoi rattacher les frais de
+       livraison) : on garde toujours au moins une zone. */
+    if (config.zones.length <= 1) {
+      alert("Il faut garder au moins une zone de livraison — sinon tes clients ne pourront plus commander.");
+      return;
+    }
     setConfig({ zones: config.zones.filter((_, idx) => idx !== i) });
     touch();
   };
@@ -1113,7 +1120,16 @@ function LivraisonTab({ touch }: { touch: () => void }) {
 
 function PaiementTab({ touch }: { touch: () => void }) {
   const { config, setConfig } = useStore();
-  const ready = Boolean(config.paymentMethod && config.paymentNumber && config.paymentAccountName);
+  /* Un numéro non vide n'est pas forcément un numéro valide (bon
+     indicatif, bon nombre de chiffres) : sans ce contrôle, un numéro
+     mal saisi partait tel quel dans le message de paiement envoyé au
+     client. */
+  const [paymentNumberValid, setPaymentNumberValid] = useState(
+    () => !!config.paymentNumber
+  );
+  const ready = Boolean(
+    config.paymentMethod && config.paymentNumber && paymentNumberValid && config.paymentAccountName
+  );
 
   return (
     <>
@@ -1180,32 +1196,28 @@ function PaiementTab({ touch }: { touch: () => void }) {
         </select>
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Numéro de paiement">
-          <input
-            className="input"
-            type="tel"
-            inputMode="tel"
-            value={config.paymentNumber}
-            placeholder="97 00 00 00"
-            onChange={(e) => {
-              setConfig({ paymentNumber: e.target.value });
-              touch();
-            }}
-          />
-        </Field>
-        <Field label="Nom du compte">
-          <input
-            className="input"
-            value={config.paymentAccountName}
-            placeholder="Ex. Boutique ABC"
-            onChange={(e) => {
-              setConfig({ paymentAccountName: e.target.value });
-              touch();
-            }}
-          />
-        </Field>
-      </div>
+      <Field label="Numéro de paiement" hint="L'indicatif du pays et le nombre de chiffres sont vérifiés automatiquement.">
+        <WhatsAppInput
+          value={config.paymentNumber}
+          onChange={(digits) => {
+            setConfig({ paymentNumber: digits });
+            touch();
+          }}
+          onValidChange={setPaymentNumberValid}
+        />
+      </Field>
+
+      <Field label="Nom du compte">
+        <input
+          className="input"
+          value={config.paymentAccountName}
+          placeholder="Ex. Boutique ABC"
+          onChange={(e) => {
+            setConfig({ paymentAccountName: e.target.value });
+            touch();
+          }}
+        />
+      </Field>
 
       <Field label="Instructions (optionnel)" hint="Ajoutées sous les coordonnées de paiement si besoin.">
         <textarea

@@ -300,7 +300,12 @@ export default function AdminPage() {
       {/* ---------- L'argent ---------- */}
       <Stagger className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" gap={0.05}>
         <StaggerItem>
-          <div className="card bg-ink p-5 text-white">
+          {/* .card impose bg-white, qui se fait battre par bg-ink (même
+              spécificité, .card compilé après les utilitaires) : la
+              carte redevenait blanche avec du texte blanc, invisible.
+              On reprend directement les propriétés de .card sans le
+              bg-white qui entre en conflit. */}
+          <div className="rounded-2xl shadow-card bg-ink p-5 text-white">
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-white/50">
                 Revenu mensuel

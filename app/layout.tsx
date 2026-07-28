@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
+import Script from "next/script";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { SITE_URL } from "@/lib/config";
 import "./globals.css";
+
+/* Uniquement en production : pas de trafic de développement/tests dans
+   les statistiques, et aucune requête réseau superflue en local. */
+const GA_ID = "G-C8GG85X53D";
 
 /* ------------------------------------------------------------------ *
  * Polices
@@ -62,6 +67,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <InstallPrompt />
         <ServiceWorkerRegister />
+        {process.env.NODE_ENV === "production" && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

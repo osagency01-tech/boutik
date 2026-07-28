@@ -74,7 +74,7 @@ function confirmMessage(o: DbOrder, config: ShopConfig): string {
       `Pour finaliser votre commande, veuillez effectuer le paiement :`,
       ``,
       `📱 ${method}`,
-      config.paymentNumber ? `Numéro : ${config.paymentNumber}` : null,
+      config.paymentNumber ? `Numéro : +${config.paymentNumber}` : null,
       config.paymentAccountName ? `Nom : ${config.paymentAccountName}` : null,
       config.paymentInstructions || null,
       ``,

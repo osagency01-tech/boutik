@@ -18,8 +18,9 @@ const csp = [
   /* 'unsafe-inline'/'unsafe-eval' sont exigés par Next (hydratation,
      Fast Refresh). Les retirer casse l'app. Le vrai garde-fou reste
      de ne jamais injecter de HTML brut : aucun dangerouslySetInnerHTML
-     dans le projet (vérifié). */
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+     dans le projet (vérifié). googletagmanager.com : Google Analytics
+     (app/layout.tsx), chargé uniquement en production. */
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
 
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
@@ -27,10 +28,12 @@ const csp = [
   /* data: = aperçu d'image avant upload ; blob: = PDF généré côté client */
   `img-src 'self' data: blob: ${SUPABASE} https://*.supabase.co`,
 
-  /* Le navigateur ne peut appeler QUE notre backend. Si un script
-     malveillant s'exécutait, il ne pourrait pas exfiltrer les données
-     vers un serveur tiers. */
-  `connect-src 'self' ${SUPABASE} https://*.supabase.co wss://*.supabase.co`,
+  /* Le navigateur ne peut appeler QUE notre backend, plus les domaines
+     de collecte Google Analytics (mesure d'audience, aucune donnée
+     applicative n'y transite). Si un script malveillant s'exécutait,
+     il ne pourrait toujours pas exfiltrer les données vers un serveur
+     tiers arbitraire. */
+  `connect-src 'self' ${SUPABASE} https://*.supabase.co wss://*.supabase.co https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com`,
 
   "frame-src 'none'",
   "object-src 'none'",
