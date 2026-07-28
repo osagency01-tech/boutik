@@ -232,13 +232,29 @@ export default function OnboardingGuide() {
                       {isNext && <p className="text-xs text-ink/50">{s.hint}</p>}
                     </div>
 
-                    {isNext && s.href && (
-                      <Link href={s.href} className="btn btn-sm shrink-0 bg-primary text-white">
+                    {/* Le bouton d'action est visible pour TOUTE étape non
+                        faite, pas seulement la prochaine dans l'ordre —
+                        rien n'empêche réellement un vendeur d'installer les
+                        notifications avant d'avoir ajouté 3 produits, par
+                        exemple. Seul le style (surbrillance) distingue la
+                        prochaine étape suggérée des autres. */}
+                    {!s.done && s.href && (
+                      <Link
+                        href={s.href}
+                        className={`btn btn-sm shrink-0 ${
+                          isNext ? "bg-primary text-white" : "btn-ghost"
+                        }`}
+                      >
                         {s.cta} <ArrowRight size={13} />
                       </Link>
                     )}
-                    {isNext && !s.href && s.action && (
-                      <button onClick={s.action} className="btn btn-sm shrink-0 bg-primary text-white">
+                    {!s.done && !s.href && s.action && (
+                      <button
+                        onClick={s.action}
+                        className={`btn btn-sm shrink-0 ${
+                          isNext ? "bg-primary text-white" : "btn-ghost"
+                        }`}
+                      >
                         <Bell size={13} /> {s.cta}
                       </button>
                     )}

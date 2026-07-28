@@ -66,7 +66,7 @@ function confirmMessage(o: DbOrder, config: ShopConfig): string {
     .map((i) => `• ${i.product_name}${i.size ? ` (${i.size})` : ""} × ${i.quantity} — ${fcfa(i.quantity * i.unit_price)}`)
     .join("\n");
 
-  const intro = `Bonjour ${o.customer_name.split(" ")[0]} 👋\n\nVotre commande chez ${config.name} est confirmée ✅\n\n📦 Commande :\n${produits}\n\n💰 Total :\n${fcfa(o.total)}`;
+  const intro = `Bonjour ${o.customer_name.split(" ")[0]} 👋\n\nVotre commande ${o.reference} chez ${config.name} est confirmée ✅\n\n📦 Commande :\n${produits}\n\n💰 Total :\n${fcfa(o.total)}`;
 
   if (config.paymentMode === "avant") {
     const method = config.paymentMethod || "Mobile Money";
@@ -83,7 +83,7 @@ function confirmMessage(o: DbOrder, config: ShopConfig): string {
     return `${intro}\n\n${lines.join("\n")}\n\nMerci pour votre confiance 🙏`;
   }
 
-  return `${intro}\n\nVotre commande sera livrée à l'adresse indiquée.\n\n💵 Paiement à effectuer lors de la livraison.\n\nMerci pour votre confiance 🙏`;
+  return `${intro}\n\n🚚 Votre commande sera livrée à : ${o.customer_address ?? "l'adresse indiquée"}\n\n💵 Paiement à effectuer lors de la livraison.\n\nMerci pour votre confiance 🙏`;
 }
 
 export default function OrdersPage() {
@@ -130,6 +130,19 @@ export default function OrdersPage() {
     } catch {
       setOrders((os) => os.map((x) => (x.id === o.id ? { ...x, status: o.status } : x)));
     }
+  };
+
+  /* "Confirmer la commande" envoie le message WhatsApp ET fait passer la
+     commande au statut suivant, dans le même geste — avant ce correctif,
+     le bouton n'était qu'un lien WhatsApp qui ne changeait jamais le
+     statut, donc restait cliquable indéfiniment (une commande pouvait
+     être "confirmée" plusieurs fois). */
+  const confirmOrder = (o: DbOrder) => {
+    const waUrl = `https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+      confirmMessage(o, config)
+    )}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+    advance(o);
   };
 
   if (error) return <ErrorScreen onRetry={load} />;
@@ -307,16 +320,12 @@ export default function OrdersPage() {
                               </button>
                             )}
                             {simplifyStatus(o.status) === "nouvelle" ? (
-                              <a
-                                href={`https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                                  confirmMessage(o, config)
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                onClick={() => confirmOrder(o)}
                                 className="btn bg-[#25D366] px-4 py-2 text-xs text-white hover:bg-[#1fb958]"
                               >
                                 <WhatsAppIcon className="h-3.5 w-3.5" /> Confirmer la commande
-                              </a>
+                              </button>
                             ) : (
                               <a
                                 href={`https://wa.me/${o.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(

@@ -38,11 +38,15 @@ export default function ProductPage() {
   const currentColor = color ?? product.colors?.[0];
   const out = product.stock === 0;
 
-  const handleAdd = (goCart: boolean) => {
+  const handleAdd = (goCheckout: boolean) => {
     add(product.id, currentSize, currentColor, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1600);
-    if (goCart) router.push(`${basePath}/panier`);
+    /* "Commander maintenant" doit mener le client aussi vite que possible
+       au formulaire de commande — un détour par le panier (déjà visible
+       via l'icône panier pour qui veut ajouter plusieurs produits) est
+       une étape de trop qui décourage l'achat. */
+    if (goCheckout) router.push(`${basePath}/commande`);
   };
 
   return (

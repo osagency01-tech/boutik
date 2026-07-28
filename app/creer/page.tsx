@@ -19,8 +19,16 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Loader2, Lock, PartyPopper, Store, Upload } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+
+/* Installer Boutik (PWA) ne demande pas d'avoir déjà une boutique — c'est
+   même l'intérêt : un vendeur qui installe l'app dès son inscription la
+   retrouve plus tard, boutique ou pas encore. Avant ce correctif, ce
+   bandeau ne vivait que dans app/dashboard/layout.tsx, inaccessible tant
+   que l'assistant de création (cette page) n'était pas terminé. */
+const InstallPrompt = dynamic(() => import("@/components/install-prompt"), { ssr: false });
 
 export default function Page() {
   return (
@@ -246,6 +254,8 @@ function Wizard() {
           )}
         </div>
       </div>
+
+      <InstallPrompt />
     </div>
   );
 }

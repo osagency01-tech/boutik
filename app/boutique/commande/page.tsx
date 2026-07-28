@@ -11,7 +11,7 @@ import type { OrderPdfData } from "@/lib/pdf";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Download, FileText, Info } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 type Form = { name: string; phone: string; address: string; zone: string; note: string };
@@ -52,30 +52,34 @@ export default function CheckoutPage() {
   const valid = form.name.trim().length > 1 && phoneValid && form.address.trim().length > 3;
   const isPreviewShop = basePath === "/demo" || basePath.startsWith("/apercu/");
 
-  const waMessage = useMemo(() => {
-    const lines = detailed.map(
-      (l) => {
-        const opts = [l.size, l.color].filter(Boolean).join(", ");
-        return `• ${l.product.name}${opts ? ` (${opts})` : ""} × ${l.qty} — ${fcfa(
-          l.product.price * l.qty
-        )}`;
-      }
-    );
+  /* `id` (référence) n'est connu qu'après la création de la commande
+     (voir placeOrder) — le message final est donc construit par une
+     fonction plutôt qu'un useMemo, pour pouvoir placer la référence en
+     évidence juste sous le titre plutôt qu'ajoutée en bas, moins visible. */
+  const buildWaMessage = (id: string) => {
+    const lines = detailed.map((l) => {
+      const opts = [l.size, l.color].filter(Boolean).join(", ");
+      return `• ${l.product.name}${opts ? ` (${opts})` : ""} × ${l.qty} — ${fcfa(
+        l.product.price * l.qty
+      )}`;
+    });
     return [
-      `🧾 *Nouvelle commande — ${config.name}*`,
+      `🧾 *Nouvelle commande ${id}*`,
+      `🏪 ${config.name}`,
       "",
+      `📦 Articles :`,
       ...lines,
-      `Livraison (${zone.zone}) : ${fcfa(zone.price)}`,
-      `*Total : ${fcfa(grand)}*`,
+      `🚚 Livraison (${zone.zone}) : ${fcfa(zone.price)}`,
+      `💰 *Total : ${fcfa(grand)}*`,
       "",
-      `👤 ${form.name}`,
-      `📱 +${form.phone}`,
-      `📍 ${form.address} — ${zone.zone}`,
-      form.note ? `📝 ${form.note}` : "",
+      `👤 Client : ${form.name}`,
+      `📱 WhatsApp : +${form.phone}`,
+      `📍 Adresse : ${form.address} — ${zone.zone}`,
+      form.note ? `📝 Note : ${form.note}` : "",
     ]
       .filter(Boolean)
       .join("\n");
-  }, [detailed, form, zone, grand, config.name]);
+  };
 
   const [busy, setBusy] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -130,7 +134,7 @@ export default function CheckoutPage() {
     }
 
     const waUrl = `https://wa.me/${safeWhatsAppNumber(config.whatsapp)}?text=${safeWhatsAppText(
-      `${waMessage}\n\nN° de commande : ${id}`
+      buildWaMessage(id)
     )}`;
 
     /* Snapshot pour le PDF : le panier est vidé juste après. */
@@ -155,6 +159,13 @@ export default function CheckoutPage() {
     clear();
     setBusy(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+    /* Un clic sur "Valider ma commande" doit suffire à envoyer la
+       commande sur WhatsApp — obliger le client à cliquer une seconde
+       fois sur l'écran de confirmation était une étape de trop. On
+       ouvre dans un nouvel onglet (pas de redirection de la page
+       actuelle) : le bouton de secours reste visible juste en dessous
+       si le navigateur bloque l'ouverture automatique. */
+    window.open(waUrl, "_blank", "noopener,noreferrer");
   };
 
   /* ---- Aperçu / démo : pas de vraie commande ---- */
@@ -326,6 +337,11 @@ export default function CheckoutPage() {
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
+            {form.address.trim().length > 0 && form.address.trim().length <= 3 && (
+              <p className="mt-1.5 text-xs font-semibold text-terra">
+                Précise un peu plus — minimum 4 caractères (ex. un nom de quartier ou un repère).
+              </p>
+            )}
           </Field>
           <Field label="Note pour le vendeur (facultatif)">
             <textarea

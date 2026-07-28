@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
       return new Response("VAPID non configuré", { status: 500 });
     }
 
-    const { shop_id, reference, customer_name } = await req.json();
+    const { shop_id } = await req.json();
     if (!shop_id) return new Response("shop_id manquant", { status: 400 });
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -47,10 +47,8 @@ Deno.serve(async (req: Request) => {
     if (error) throw error;
 
     const payload = JSON.stringify({
-      title: "Nouvelle commande !",
-      body: reference
-        ? `Commande ${reference} de ${customer_name ?? "un client"}`
-        : "Tu as reçu une nouvelle commande.",
+      title: "Nouvelle commande…",
+      body: "Confirmez votre commande dans Boutik",
       url: "/dashboard/commandes",
       tag: "commande",
     });
