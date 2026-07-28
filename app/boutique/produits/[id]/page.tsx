@@ -66,8 +66,9 @@ export default function ProductPage() {
         >
           <ProductVisual
             product={product}
-            className="h-80 rounded-3xl sm:h-[420px]"
+            className="rounded-3xl"
             iconSize={90}
+            fit="contain"
           />
         </motion.div>
 

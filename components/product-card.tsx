@@ -10,6 +10,7 @@ export function ProductVisual({
   className = "",
   iconSize = 40,
   focusTop = false,
+  fit = "cover",
 }: {
   product: Product;
   className?: string;
@@ -23,16 +24,35 @@ export function ProductVisual({
      garde plus sûrement le produit visible (visage, sommet d'un
      vêtement porté, haut d'un objet) que le bas. */
   focusTop?: boolean;
+  /* "cover" (par défaut) remplit un cadre de hauteur fixe (passée via
+     className), quitte à couper les bords — acceptable pour une vignette
+     de grille (plusieurs produits alignés, l'uniformité prime). "contain"
+     n'impose PAS de hauteur : la photo garde ses proportions naturelles
+     et c'est elle qui donne sa hauteur au cadre (large pour une photo
+     large, haute pour une photo de robe...), sans jamais rien couper.
+     Utilisé sur la fiche produit, seul endroit où un client doit voir
+     tout l'article avant d'acheter — className ne doit alors PAS
+     contenir de classe de hauteur (h-*), seulement des styles comme
+     l'arrondi des coins. */
+  fit?: "cover" | "contain";
 }) {
   const { config, palette } = useStore();
+  /* Sans photo, rien ne dicte plus la hauteur du cadre en mode "contain"
+     (elle vient normalement de l'image elle-même) : l'icône de secours a
+     besoin d'une hauteur explicite pour rester visible. */
+  const noImageFallback = fit === "contain" && !product.image ? "h-80 sm:h-[420px]" : "";
   return (
-    <div className={`relative overflow-hidden bg-cream ${className}`}>
+    <div className={`relative overflow-hidden bg-cream ${className} ${noImageFallback}`}>
       {product.image ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={product.image}
           alt={product.name}
-          className={`h-full w-full object-cover ${focusTop ? "object-top" : ""}`}
+          className={
+            fit === "contain"
+              ? "mx-auto h-auto max-h-[70vh] w-full object-contain"
+              : `h-full w-full object-cover ${focusTop ? "object-top" : ""}`
+          }
           loading="lazy"
         />
       ) : (
