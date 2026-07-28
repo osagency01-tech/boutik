@@ -657,6 +657,9 @@ function Footer() {
           <Link href="/dashboard" className="hover:text-ink">Espace vendeur</Link>
           <Link href="/legal/cgu" className="hover:text-ink">CGU</Link>
           <Link href="/legal/confidentialite" className="hover:text-ink">Confidentialité</Link>
+          <a href="mailto:contact@boutik-app.com" className="hover:text-ink">
+            contact@boutik-app.com
+          </a>
         </div>
       </div>
     </footer>

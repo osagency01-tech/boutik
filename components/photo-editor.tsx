@@ -75,28 +75,39 @@ export default function PhotoEditor({
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  /* Rendu : toujours carré. Un catalogue avec des vignettes de
-     hauteurs différentes fait immédiatement amateur. */
+  /* Rendu : garde toujours le format d'origine de la photo (portrait,
+     paysage, carré...). Recadrer systématiquement en carré coupait une
+     partie réelle de la photo du vendeur — la robe entière, le produit
+     en pied — pour forcer une vignette uniforme. La taille du canvas
+     suit l'image (plafonnée à `maxDim` sur le plus grand côté, pour la
+     compression), jamais l'inverse. Le zoom (toujours ≥ 100 %) reste un
+     recadrage VOLONTAIRE du vendeur, pas un recadrage automatique. */
   const draw = useCallback(
-    (canvas: HTMLCanvasElement, size: number) => {
+    (canvas: HTMLCanvasElement, maxDim: number) => {
       if (!img) return;
-      canvas.width = size;
-      canvas.height = size;
+      const swapped = adj.rotate % 180 !== 0;
+      const baseW = swapped ? img.height : img.width;
+      const baseH = swapped ? img.width : img.height;
+      const fit = Math.min(1, maxDim / Math.max(baseW, baseH));
+      const cw = Math.max(1, Math.round(baseW * fit));
+      const ch = Math.max(1, Math.round(baseH * fit));
+      canvas.width = cw;
+      canvas.height = ch;
       const cx = canvas.getContext("2d");
       if (!cx) return;
 
       cx.fillStyle = adj.bg ?? "#F7F8F4";
-      cx.fillRect(0, 0, size, size);
+      cx.fillRect(0, 0, cw, ch);
 
       cx.save();
-      cx.translate(size / 2, size / 2);
+      cx.translate(cw / 2, ch / 2);
       cx.rotate((adj.rotate * Math.PI) / 180);
       cx.filter = `brightness(${adj.brightness}%) contrast(${adj.contrast}%)`;
 
-      /* On couvre le carré : l'image remplit sans déformer. */
-      const scale = (Math.max(size / img.width, size / img.height) * adj.zoom);
-      const w = img.width * scale;
-      const h = img.height * scale;
+      /* Cadre pré-rotation (celui dans lequel l'image se dessine) :
+         l'inverse du canvas quand la rotation a échangé largeur/hauteur. */
+      const w = (swapped ? ch : cw) * adj.zoom;
+      const h = (swapped ? cw : ch) * adj.zoom;
       cx.drawImage(img, -w / 2, -h / 2, w, h);
       cx.restore();
     },

@@ -14,11 +14,13 @@ export function ProductVisual({
   product: Product;
   className?: string;
   iconSize?: number;
-  /* Les photos vendeur sont recadrées en carré à l'import (photo-editor.tsx),
-     puis re-recadrées ici par object-cover pour chaque gabarit. Sur les
-     héros très hauts et étroits (Luxury, Fashion, Vitrine), un carré coupe
-     une bonne partie de la hauteur : privilégier le haut plutôt que le
-     centre garde plus sûrement le produit visible (visage, sommet d'un
+  /* Les photos vendeur gardent leur format d'origine (photo-editor.tsx
+     ne recadre plus en carré) ; seul l'affichage ici s'adapte au gabarit
+     de chaque template via object-cover, sans jamais toucher la photo
+     stockée. Sur les héros très hauts et étroits (Luxury, Fashion,
+     Vitrine), une photo au format large ou carré peut encore perdre de
+     la hauteur à l'affichage : privilégier le haut plutôt que le centre
+     garde plus sûrement le produit visible (visage, sommet d'un
      vêtement porté, haut d'un objet) que le bas. */
   focusTop?: boolean;
 }) {

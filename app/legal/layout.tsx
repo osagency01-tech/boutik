@@ -18,6 +18,9 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <Link href="/legal/cgu" className="hover:text-ink">Conditions générales</Link>
           <Link href="/legal/confidentialite" className="hover:text-ink">Confidentialité</Link>
           <Link href="/dashboard/aide" className="hover:text-ink">Aide</Link>
+          <a href="mailto:contact@boutik-app.com" className="hover:text-ink">
+            contact@boutik-app.com
+          </a>
         </div>
       </footer>
     </div>
