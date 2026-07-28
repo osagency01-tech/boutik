@@ -6,6 +6,7 @@ import { LoadingScreen, OfflineBanner } from "@/components/states";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { StoreProvider, useStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
+import dynamic from "next/dynamic";
 import {
   BookOpen,
   CreditCard,
@@ -25,6 +26,13 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+/* Le bandeau "Installe Boutik" concerne les commandes reçues par le
+   VENDEUR — il n'a rien à faire sur la boutique publique, où un
+   acheteur qui vient juste payer se le voyait pourtant afficher (il
+   était monté globalement dans app/layout.tsx, sur toutes les pages).
+   Monté ici, il ne s'affiche plus que dans l'espace vendeur connecté. */
+const InstallPrompt = dynamic(() => import("@/components/install-prompt"), { ssr: false });
 
 const NAV = [
   { l: "Aperçu", h: "/dashboard", icon: LayoutDashboard },
@@ -296,6 +304,8 @@ function Shell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </nav>
+
+      <InstallPrompt />
     </div>
   );
 }

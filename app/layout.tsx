@@ -32,8 +32,12 @@ const inter = Inter({
   display: "swap",
 });
 
-/* Ni l'un ni l'autre n'est visible au chargement : hors du bundle initial. */
-const InstallPrompt = dynamic(() => import("@/components/install-prompt"), { ssr: false });
+/* Pas visible au chargement : hors du bundle initial. InstallPrompt
+   (le bandeau "Installe Boutik pour recevoir tes commandes") n'est PAS
+   monté ici : c'est un message pour le VENDEUR, il vivait par erreur
+   sur toutes les pages y compris la boutique publique, où un acheteur
+   venu payer se le voyait afficher. Monté uniquement dans
+   app/dashboard/layout.tsx désormais. */
 const ServiceWorkerRegister = dynamic(() => import("@/components/sw-register"), { ssr: false });
 
 export const metadata: Metadata = {
@@ -65,7 +69,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${bricolage.variable} ${inter.variable}`}>
       <body>
         {children}
-        <InstallPrompt />
         <ServiceWorkerRegister />
         {process.env.NODE_ENV === "production" && (
           <>
