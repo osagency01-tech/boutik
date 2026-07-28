@@ -115,7 +115,12 @@ export default function CheckoutPage() {
           })),
         });
         id = order.reference;
-      } catch {
+      } catch (err) {
+        /* Le message affiché au client reste volontairement vague (pas
+           de détail technique exposé), mais on garde la vraie cause en
+           console : sans ça, un échec de commande est impossible à
+           diagnostiquer après coup (RLS, contrainte, réseau...). */
+        console.error("[commande] création impossible :", err);
         setBusy(false);
         setOrderError(
           "La commande n'a pas pu être enregistrée. Vérifie ta connexion et réessaie."
