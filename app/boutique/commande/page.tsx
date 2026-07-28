@@ -223,12 +223,21 @@ export default function CheckoutPage() {
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-terra-soft text-terra">
               <FileText size={18} />
             </span>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-bold">bon-commande-{placed.id}.pdf</p>
-              <p className="text-xs text-ink/50">
-                Total {fcfa(placed.grand)} · joint automatiquement au message
-              </p>
+              <p className="text-xs text-ink/50">Total {fcfa(placed.grand)}</p>
             </div>
+            <button
+              onClick={async () => {
+                const { downloadOrderPdf } = await import("@/lib/pdf");
+                downloadOrderPdf(config, palette, placed.pdf);
+              }}
+              className="shrink-0 rounded-full p-2 text-ink/40 hover:bg-cream hover:text-ink"
+              aria-label="Télécharger le bon de commande"
+              title="Télécharger"
+            >
+              <Download size={16} />
+            </button>
           </div>
           <a
             href={placed.waUrl}

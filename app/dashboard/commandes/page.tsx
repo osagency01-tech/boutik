@@ -16,6 +16,7 @@ import {
 import type { ShopConfig } from "@/lib/store";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, FileText, MapPin } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const FILTERS: ("Toutes" | DbOrderStatus)[] = ["Toutes", "nouvelle", "payee", "livree", "annulee"];
@@ -88,6 +89,7 @@ function confirmMessage(o: DbOrder, config: ShopConfig): string {
 
 export default function OrdersPage() {
   const { config, palette, shopId, demoMode } = useStore();
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -97,10 +99,15 @@ export default function OrdersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+    /* Un clic sur la notification push "Nouvelle commande" arrive avec
+       ?open=<id> (voir supabase/functions/notify-order) : la commande
+       concernée doit s'ouvrir directement plutôt que la première de la
+       liste, sinon le vendeur doit encore la chercher lui-même. */
+    const openParam = searchParams.get("open");
     if (demoMode) {
       const d = demoToDb();
       setOrders(d);
-      setOpenId(d[0]?.id ?? null);
+      setOpenId((openParam && d.some((o) => o.id === openParam) ? openParam : d[0]?.id) ?? null);
       setLoading(false);
       return;
     }
@@ -108,12 +115,14 @@ export default function OrdersPage() {
     try {
       const rows = await api.fetchOrders(shopId);
       setOrders(rows);
-      setOpenId(rows[0]?.id ?? null);
+      setOpenId(
+        (openParam && rows.some((o) => o.id === openParam) ? openParam : rows[0]?.id) ?? null
+      );
     } catch {
       setError(true);
     }
     setLoading(false);
-  }, [demoMode, shopId]);
+  }, [demoMode, shopId, searchParams]);
 
   useEffect(() => {
     load();

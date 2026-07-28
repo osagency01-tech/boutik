@@ -76,6 +76,7 @@ begin
     ),
     body := jsonb_build_object(
       'shop_id', new.shop_id,
+      'id', new.id,
       'reference', new.reference,
       'customer_name', new.customer_name
     )

@@ -32,6 +32,9 @@ const isIOS = () =>
   /iphone|ipad|ipod/i.test(navigator.userAgent) &&
   !/crios|fxios/i.test(navigator.userAgent);
 
+const isAndroid = () =>
+  typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+
 const isStandalone = () =>
   typeof window !== "undefined" &&
   (window.matchMedia("(display-mode: standalone)").matches ||
@@ -42,6 +45,7 @@ export default function InstallPrompt() {
   const [deferred, setDeferred] = useState<BIPEvent | null>(null);
   const [show, setShow] = useState(false);
   const [showIosHelp, setShowIosHelp] = useState(false);
+  const [showAndroidHelp, setShowAndroidHelp] = useState(false);
 
   useEffect(() => {
     /* Déjà installé, ou déjà refusé : on n'insiste pas. */
@@ -68,7 +72,18 @@ export default function InstallPrompt() {
       };
     }
 
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    /* Android/Chrome n'émet pas toujours beforeinstallprompt (déjà
+       proposé une fois, critères d'installabilité pas encore remplis,
+       Samsung Internet, Firefox…). Sans ce filet, le bandeau
+       n'apparaissait tout simplement jamais et le vendeur n'avait
+       aucun moyen d'installer l'app. Passé ce délai sans événement, on
+       propose quand même le bandeau — le clic tombera alors sur les
+       instructions manuelles (voir install() ci-dessous). */
+    const fallback = setTimeout(() => setShow((s) => s || true), 6000);
+    return () => {
+      clearTimeout(fallback);
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+    };
   }, []);
 
   const dismiss = () => {
@@ -77,6 +92,7 @@ export default function InstallPrompt() {
     } catch {}
     setShow(false);
     setShowIosHelp(false);
+    setShowAndroidHelp(false);
   };
 
   const install = async () => {
@@ -84,16 +100,22 @@ export default function InstallPrompt() {
       setShowIosHelp(true);
       return;
     }
-    if (!deferred) return;
-    await deferred.prompt();
-    const { outcome } = await deferred.userChoice;
-    if (outcome === "accepted") dismiss();
-    setShow(false);
+    if (deferred) {
+      await deferred.prompt();
+      const { outcome } = await deferred.userChoice;
+      if (outcome === "accepted") dismiss();
+      setShow(false);
+      return;
+    }
+    /* Pas d'événement natif disponible (Android sans beforeinstallprompt,
+       ou navigateur desktop) : on montre la marche à suivre manuelle
+       plutôt que de ne rien faire. */
+    setShowAndroidHelp(true);
   };
 
   return (
     <>
-      {show && !showIosHelp && (
+      {show && !showIosHelp && !showAndroidHelp && (
         <div className="animate-slide-up fixed inset-x-3 bottom-20 z-50 lg:bottom-4 lg:left-auto lg:right-4 lg:w-80">
             <div className="flex items-start gap-3 rounded-2xl bg-ink p-4 text-white shadow-lift">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -167,6 +189,54 @@ export default function InstallPrompt() {
                   <p className="text-sm">
                     <span className="font-bold">2.</span> Choisis{" "}
                     <span className="font-bold">Sur l&apos;écran d&apos;accueil</span>
+                  </p>
+                </div>
+              </div>
+
+            <button onClick={dismiss} className="btn-primary btn-md mt-5 w-full">
+              J&apos;ai compris
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Android sans invite native (déjà proposée une fois, Samsung
+          Internet, Firefox…) : même logique que l'aide iOS, avec le
+          geste propre à Chrome/Android. */}
+      {showAndroidHelp && (
+        <div
+          onClick={dismiss}
+          className="animate-fade fixed inset-0 z-[80] flex items-end justify-center bg-ink/60 backdrop-blur-sm sm:items-center sm:p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="animate-slide-up w-full max-w-sm rounded-t-3xl bg-white p-6 text-center sm:rounded-3xl"
+          >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icon-192.png" alt="" className="mx-auto h-14 w-14 rounded-2xl" />
+              <h3 className="mt-4 font-display text-lg font-extrabold">
+                Installer Boutik
+              </h3>
+              <p className="mt-1.5 text-sm text-ink/55">Deux gestes, dans Chrome :</p>
+
+              <div className="mt-5 space-y-3 text-left">
+                <div className="flex items-center gap-3 rounded-xl bg-cream p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-primary">
+                    <span className="text-lg leading-none">⋮</span>
+                  </span>
+                  <p className="text-sm">
+                    <span className="font-bold">1.</span> Appuie sur le menu{" "}
+                    <span className="font-bold">⋮</span> en haut à droite
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-cream p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-primary">
+                    <Download size={16} />
+                  </span>
+                  <p className="text-sm">
+                    <span className="font-bold">2.</span> Choisis{" "}
+                    <span className="font-bold">Installer l&apos;application</span> (ou{" "}
+                    <span className="font-bold">Ajouter à l&apos;écran d&apos;accueil</span>)
                   </p>
                 </div>
               </div>
