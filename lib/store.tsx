@@ -170,6 +170,21 @@ type StoreCtx = {
   hasShop: boolean;
 };
 
+/* Décode un data: URI en Blob sans passer par fetch() : fetch() sur un
+   data: URI est un "connect" au sens de la CSP (next.config.mjs,
+   connect-src) — sans data: dans cette liste, le navigateur bloque
+   silencieusement l'appel, et aucune image (logo, bannière, photo
+   produit) ne partait jamais vers le Storage. Décoder le base64 à la
+   main évite complètement ce garde-fou réseau, sans avoir à l'affaiblir. */
+function dataUriToBlob(dataUri: string): Blob {
+  const [header, base64] = dataUri.split(",");
+  const mime = /data:(.*?);base64/.exec(header)?.[1] ?? "image/jpeg";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 /* Envoie un data: URI (photo choisie par le vendeur, encodée en base64
    par fileToDataUrl) vers le Storage : jamais de base64 en base. Utilisé
    pour le logo/la bannière comme pour les photos produit — `path` sert
@@ -181,7 +196,7 @@ async function uploadDataUri(
   dataUri: string,
   name: string
 ): Promise<{ path: string; url: string }> {
-  const blob = await (await fetch(dataUri)).blob();
+  const blob = dataUriToBlob(dataUri);
   const path = await api.uploadImage(bucket, shopId, blob, name);
   return { path, url: api.publicImageUrl(bucket, path) };
 }
